@@ -1,7 +1,7 @@
 ---
 title: "Lec 01 - Welcome"
-subtitle: "<br/> Statistical Programming"
-author: "Fall 2021"
+subtitle: "<br/> Statistical Computing (Sta 323)"
+author: "Spring 2022"
 date: "<br/> Dr. Colin Rundel"
 output:
   xaringan::moon_reader:
@@ -37,43 +37,51 @@ class: middle, center
 * Dr. Colin Rundel - colin.rundel@duke.edu / rundel@gmail.com 
 
 
-### Tutors
-* Evan Knox
-* Sarah Mansfield  
+### TAs
+* Meredith Brown
+* Linda Tang
+* Sarah Mansfield
+* Nick Dahl
 
 ---
 
 ## Course website(s)
 
-* GitHub pages - https://sta523-fa21.github.io
+* GitHub pages - https://sta323-sp22.github.io
   - HTML, PDF, and Rmds of Slides
   - Lecture screencasts (youtube)
   - Readings
   - Links to course tools
 
 * Sakai - https://sakai.duke.edu
-  - Lecture capture (Panopto)
   - Link to GitHub page
+  - Announcements
+  - Gradebook
+  - Zoom recordings
 
 ---
 
 ## Course Timetable
 
 * Lectures (weekly) 
-  - Tuesdays, 12:00 - 1:15 pm - Old Chem 116
-  - Thursdays, 12:00 - 1:15 pm - Old Chem 116
+  - Wednesdays, 12:00 - 1:15 pm - Reuben-Cooke Building 130
+  - Fridays, 12:00 - 1:15 pm - Reuben-Cooke Building 130
   
 * Labs (weekly)
-  - Lab 01 - Mondays, 10:15 to 11:30 am - Reuben-Cooke Building 127
-  - Lab 02 - Tuesdays, 12:00 to 13:15 pm - Old Chem 101
+  - Lab 01 - Mondays, 10:15 to 11:30 am - Perkins LINK 071 (Classroom 5)
+  - Lab 02 - Tuesdays, 12:00 to 13:15 pm - Perkins LINK 087 (Classroom 3)
 
 ---
 
 ## Lectures
 
-- All lectures will be in person this semester 
-  - posted to Sakai (lecture capture)
-  - and Youtube (screencast)
+- Week 0 & 1 will be online (zoom)
+  - posted to Youtube (screencast)
+  - Zoom recordings on Sakai
+
+- Week 2 onward will be in person (tentatively)
+  - posted to Youtube (screencast)
+  - No live zoom sessions
 
 - Traditional lecture, live coding / coding demos, and short exercises + solution discussion
 
@@ -85,14 +93,15 @@ class: middle, center
 
 - You must attend the lab section you are enrolled in
 
-- Opportunity to work on course assignments with myself and TA support
+- Opportunity to work on course assignments with TA support
+
+- Labs will begin in Week 2 (January 18th) - no lab Week 1
 
 ---
 
 ## Announcements
 
 Will be posted on Sakai (Announcements tool) and sent via email, be sure to check both regularly.
-
 
 ---
 
@@ -105,7 +114,7 @@ This course is assessed 100% on your coursework (there is no exam). We will be a
 |Assignment|Type      |Value  | n  |Assigned             |
 |:---------|:---------|:------|:---|---------------------|
 |Homeworks |Team      |50%    | ~7 | ~ Every other week  |
-|Midterms  |Individual|40%    | 2  | ~ Week 6 and 13     |
+|Midterms  |Individual|40%    | 2  | ~ Week 6 and 14     |
 |Project   |Team      |10%    | 1  | ~ Week 10           | 
 
 ---
@@ -127,7 +136,7 @@ This course is assessed 100% on your coursework (there is no exam). We will be a
 
 ## Collaboration policy
 
-- Only work that is clearly assigned as team work should be completed collaboratively (Homeworks + Projects). 
+- Only work that is clearly assigned as team work should be completed collaboratively (Homeworks + Project). 
 
 - Individual assignments (Midterms) must be completed individually, you may not directly share or discuss answers / code with anyone other than the myself and the TAs.
 
@@ -163,24 +172,9 @@ class: center, middle
 
 ---
 
-## GitHub Discussions
-
-- Online forum for asking and answering questions
-
-- Accessible at https://github.com/Sta523-Fa21/Discussions/discussions 
-
-  - will be linked from course website 
-  - you will need to join the course organization for access
-
-- All course logistic, assignment, etc. type questions should be posted here
-
-- Personal question (e.g. extensions, illnesses, etc.) should be via email to the instructor
-
----
-
 ## RStudio 
 
-.center[.large[https://rstudio.stat.duke.edu:8787]]
+.center[.large[http://rstudio.stat.duke.edu:8787]]
 
 - Browser based, departmental RStudio instance(s)
 
@@ -188,21 +182,43 @@ class: center, middle
 
 - Provides consistency in hardware and software environments
 
-- Local R installations are fine but we will not guarantee support 
+- Local R installations are fine but we will not guarantee support
+
+- Common issues:
+
+  - If `This site can’t provide a secure connection` change `https` to `http` in the url.
+  
+  - If `This site can’t be reached` make sure you are on a Duke network and are not use an alternative DNS service.
+
+---
+
+## Local R + RStudio
+
+If working locally you should make sure that your environment meets the following requirements:
+
+* latest R (4.1.2)
+
+* latest RStudio (2021.09.1-372)
+
+* working git installation
+
+* ability to create ssh keys (for GitHub authentication)
+
+* *All* R packages updated to their latest version from CRAN
 
 ---
 
 ## GitHub
 
-- We will be using an organization specifically to this course <br/> https://github.com/sta523-fa21
+- We will be using an organization specifically to this course <br/> https://github.com/sta323-sp22
 
 - All assignments will be distributed and collected via GitHub
 
 - All of your work and your membership (enrollment) in the organization is private
 
-- We will be distributing a survey this afternoon to collection your account names 
+- We will be distributing a survey this weekend to collection your account names 
 
-    - Later this week you will be invited to the course organization.
+    - Next week you will be invited to the course organization.
 
 ---
 
@@ -223,13 +239,13 @@ Some brief advice about selecting your account names (particularly for GitHub),
 
 ---
 
-## Before Thursday
+## Before next Wednesday
 
 * Create a GitHub account if you don't have one
 
-* Complete the course survey (you will receive this later today)
+* Complete the course survey (you will receive before next Monday)
 
 * make sure you can login in to the Department's RStudio server
-  - https://rstudio.stat.duke.edu:8787
+  - http://rstudio.stat.duke.edu:8787
   
   
