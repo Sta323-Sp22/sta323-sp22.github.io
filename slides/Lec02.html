@@ -1,0 +1,1714 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Lec 02 - Logic and types in R</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Sta 323 | Spring 2022" />
+    <script src="libs/header-attrs/header-attrs.js"></script>
+    <link rel="stylesheet" href="slides.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Lec 02 - Logic and types in R
+## <br/> Statistical Programming
+### Sta 323 | Spring 2022
+### <br/> Dr. Colin Rundel
+
+---
+
+exclude: true
+
+
+
+
+---
+class: middle
+count: false
+
+# In R (almost) &lt;br/&gt; everything is a vector
+
+---
+
+## Vectors
+
+The fundamental building block of data in R are vectors (collections of related values, objects, data structures, etc). 
+
+&lt;br/&gt;
+
+R has two types of vectors:
+
+* **atomic** vectors (*vectors*)
+
+    - homogeneous collections of the *same* type (e.g. all `true`/`false` values, all numbers, or all character strings).
+
+* **generic** vectors (*lists*)
+  
+    - heterogeneous collections of *any* type of R object, even other lists &lt;br/&gt; 
+    (meaning they can have a hierarchical/tree-like structure).
+
+---
+class: middle
+count: false
+
+# Atomic Vectors
+
+---
+
+## Atomic Vectors
+
+R has six atomic vector types, we can check the type of any object in R using the `typeof()` function
+
+`typeof()`  |  `mode()`     
+:-----------|:------------
+logical     |  logical    
+double      |  numeric    
+integer     |  numeric    
+character   |  character  
+complex     |  complex    
+raw         |  raw        
+
+Mode is a higher level abstraction, we will discuss this in detail a bit later.
+
+.footnote[
+There are additional types in R, e.g. generic vectors have type `list`, but more on these later. See `?typeof` for more information.
+]
+
+
+---
+
+## `logical` - boolean values (`TRUE` and `FALSE`)
+
+.pull-left[
+
+```r
+typeof(TRUE)
+```
+
+```
+## [1] "logical"
+```
+
+```r
+typeof(FALSE)
+```
+
+```
+## [1] "logical"
+```
+]
+
+.pull-right[
+
+```r
+mode(TRUE)
+```
+
+```
+## [1] "logical"
+```
+
+```r
+mode(FALSE)
+```
+
+```
+## [1] "logical"
+```
+]
+
+--
+
+&lt;br/&gt;
+
+R will let you use `T` and `F` as shortcuts to `TRUE` and `FALSE`, this is a bad practice as these values are actually global variables that can be overwritten.
+
+
+```r
+T
+```
+
+```
+## [1] TRUE
+```
+
+```r
+T = FALSE
+```
+
+
+```r
+T
+```
+
+```
+## [1] FALSE
+```
+
+---
+
+## `character` - text strings
+
+Either single or double quotes are fine, opening and closing quote must match.
+
+.pull-left[
+
+```r
+typeof("hello")
+```
+
+```
+## [1] "character"
+```
+
+```r
+typeof('world')
+```
+
+```
+## [1] "character"
+```
+]
+
+.pull-right[
+
+```r
+mode("hello")
+```
+
+```
+## [1] "character"
+```
+
+```r
+mode('world')
+```
+
+```
+## [1] "character"
+```
+]
+
+--
+
+&lt;br/&gt;
+
+Quote characters can be included by escaping or using a non-matching quote.
+
+
+```r
+"abc'123"
+```
+
+```
+## [1] "abc'123"
+```
+
+```r
+'abc"123'
+```
+
+```
+## [1] "abc\"123"
+```
+
+```r
+"abc\"123"
+```
+
+```
+## [1] "abc\"123"
+```
+
+.footnote[RStudio's syntax highlighting is helpful here to indicate where it thinks a string begins and ends.]
+
+
+---
+
+## Numeric types
+
+`double` - floating point values (these are the default numerical type)
+
+.pull-left[
+
+```r
+typeof(1.33)
+```
+
+```
+## [1] "double"
+```
+
+```r
+typeof(7)
+```
+
+```
+## [1] "double"
+```
+]
+
+.pull-right[
+
+```r
+mode(1.33)
+```
+
+```
+## [1] "numeric"
+```
+
+```r
+mode(7)
+```
+
+```
+## [1] "numeric"
+```
+]
+
+--
+
+&lt;br/&gt;
+
+`integer` - integer values (literals are indicated with an `L` suffix)
+
+&lt;div&gt;
+
+.pull-left[
+
+```r
+typeof( 7L )
+```
+
+```
+## [1] "integer"
+```
+
+```r
+typeof( 1:3 )
+```
+
+```
+## [1] "integer"
+```
+]
+
+.pull-right[
+
+```r
+mode( 7L )
+```
+
+```
+## [1] "numeric"
+```
+
+```r
+mode( 1:3 )
+```
+
+```
+## [1] "numeric"
+```
+]
+
+&lt;/div&gt;
+
+---
+
+## Concatenation
+
+Atomic vectors can be grown (combined) using the concatenate `c()` function.
+
+
+```r
+c(1, 2, 3)
+```
+
+```
+## [1] 1 2 3
+```
+
+--
+
+
+```r
+c("Hello", "World!")
+```
+
+```
+## [1] "Hello"  "World!"
+```
+
+--
+
+
+```r
+c(1, 1:10)
+```
+
+```
+##  [1]  1  1  2  3  4  5  6  7  8  9 10
+```
+
+--
+
+
+```r
+c(1,c(2, c(3)))
+```
+
+```
+## [1] 1 2 3
+```
+
+.footnote[**Note** - atomic vectors are inherently flat.]
+
+---
+class: split-thirds
+
+## Inspecting types
+
+* `typeof(x)` - returns a character vector (length 1) of the *type* of object `x`.
+
+* `mode(x)` - returns a character vector (length 1) of the *mode* of object `x`.
+
+
+.pull-left[
+
+```r
+typeof(1)
+```
+
+```
+## [1] "double"
+```
+
+```r
+typeof(1L)
+```
+
+```
+## [1] "integer"
+```
+
+```r
+typeof("A")
+```
+
+```
+## [1] "character"
+```
+
+```r
+typeof(TRUE)
+```
+
+```
+## [1] "logical"
+```
+]
+
+.pull-right[
+
+```r
+mode(1)
+```
+
+```
+## [1] "numeric"
+```
+
+```r
+mode(1L)
+```
+
+```
+## [1] "numeric"
+```
+
+```r
+mode("A")
+```
+
+```
+## [1] "character"
+```
+
+```r
+mode(TRUE)
+```
+
+```
+## [1] "logical"
+```
+]
+
+---
+
+## Type Predicates
+
+* `is.logical(x)`   - returns `TRUE` if `x` has *type* `logical`.
+* `is.character(x)` - returns `TRUE` if `x` has *type* `character`.
+* `is.double(x)`    - returns `TRUE` if `x` has *type* `double`.
+* `is.integer(x)`   - returns `TRUE` if `x` has *type* `integer`.
+* `is.numeric(x)`   - returns `TRUE` if `x` has *mode* `numeric`.
+
+.col3_left[
+
+```r
+is.integer(1)
+```
+
+```
+## [1] FALSE
+```
+
+```r
+is.integer(1L)
+```
+
+```
+## [1] TRUE
+```
+
+```r
+is.integer(3:7)
+```
+
+```
+## [1] TRUE
+```
+]
+
+.col3_mid[
+
+```r
+is.double(1)
+```
+
+```
+## [1] TRUE
+```
+
+```r
+is.double(1L)
+```
+
+```
+## [1] FALSE
+```
+
+```r
+is.double(3:8)
+```
+
+```
+## [1] FALSE
+```
+]
+
+.col3_right[
+
+```r
+is.numeric(1)
+```
+
+```
+## [1] TRUE
+```
+
+```r
+is.numeric(1L)
+```
+
+```
+## [1] TRUE
+```
+
+```r
+is.numeric(3:7)
+```
+
+```
+## [1] TRUE
+```
+]
+
+
+---
+
+## Other useful predicates
+
+* `is.atomic(x)` - returns `TRUE` if `x` is an *atomic vector*.
+* `is.list(x)` - returns `TRUE` if `x` is a *list*.
+* `is.vector(x)` - returns `TRUE` if `x` is either an *atomic vector* or *list*.
+
+.pull-left[
+
+```r
+is.atomic(c(1,2,3))
+```
+
+```
+## [1] TRUE
+```
+
+```r
+is.list(c(1,2,3))
+```
+
+```
+## [1] FALSE
+```
+
+```r
+is.vector(c(1,2,3))
+```
+
+```
+## [1] TRUE
+```
+]
+
+.pull-right[
+
+```r
+is.atomic(list(1,2,3))
+```
+
+```
+## [1] FALSE
+```
+
+```r
+is.list(list(1,2,3))
+```
+
+```
+## [1] TRUE
+```
+
+```r
+is.vector(list(1,2,3))
+```
+
+```
+## [1] TRUE
+```
+]
+
+
+---
+
+## Type Coercion
+
+R is a dynamically typed language -- it will automatically convert between most types without raising warnings or errors. Keep in mind the rule that atomic vectors must always contain values of the same type.
+
+
+```r
+c(1, "Hello")
+```
+
+```
+## [1] "1"     "Hello"
+```
+
+--
+
+.top-pad[]
+
+
+```r
+c(FALSE, 3L)
+```
+
+```
+## [1] 0 3
+```
+
+--
+
+.top-pad[]
+
+
+```r
+c(1.2, 3L)
+```
+
+```
+## [1] 1.2 3.0
+```
+
+---
+
+## Operator coercion
+
+Operators and functions will generally attempt to coerce values to an appropriate type for the given operation
+
+&lt;div&gt;
+.pull-left[
+
+```r
+3.1+1L
+```
+
+```
+## [1] 4.1
+```
+
+```r
+5 + FALSE
+```
+
+```
+## [1] 5
+```
+]
+
+.pull-right[
+
+```r
+log(1)
+```
+
+```
+## [1] 0
+```
+
+```r
+log(TRUE)
+```
+
+```
+## [1] 0
+```
+]
+&lt;/div&gt;
+
+--
+
+&lt;br/&gt;&lt;br/&gt;
+
+.pull-left[
+
+```r
+TRUE &amp; FALSE
+```
+
+```
+## [1] FALSE
+```
+
+```r
+TRUE &amp; 7
+```
+
+```
+## [1] TRUE
+```
+]
+
+.pull-right[
+
+```r
+TRUE | FALSE
+```
+
+```
+## [1] TRUE
+```
+
+```r
+FALSE | !5
+```
+
+```
+## [1] FALSE
+```
+]
+
+
+---
+
+## Explicit Coercion
+
+Most of the `is` functions we just saw have an `as` variant which can be used for *explicit* coercion.
+
+.pull-left[
+
+```r
+as.logical(5.2)
+```
+
+```
+## [1] TRUE
+```
+
+```r
+as.character(TRUE)
+```
+
+```
+## [1] "TRUE"
+```
+
+```r
+as.integer(pi)
+```
+
+```
+## [1] 3
+```
+]
+
+.pull-right[
+
+```r
+as.numeric(FALSE)
+```
+
+```
+## [1] 0
+```
+
+```r
+as.double("7.2")
+```
+
+```
+## [1] 7.2
+```
+
+```r
+as.double("one")
+```
+
+```
+## Warning: NAs introduced by coercion
+```
+
+```
+## [1] NA
+```
+]
+
+---
+
+## Exercise 1
+
+**Part 1**
+
+What is the type of the following vectors? Explain why they have that type.
+
+* `c(1, NA+1L, "C")`
+* `c(1L / 0, NA)`
+* `c(1:3, 5)`
+* `c(3L, NaN+1L)`
+* `c(NA, TRUE)`
+
+
+**Part 2**
+
+Considering only the four (common) data types, what is R's implicit type conversion hierarchy (from highest priority to lowest priority)? 
+
+.footnote[*Hint* - think about the pairwise interactions between types.]
+
+---
+count: false
+class: middle
+
+# Conditionals &amp; Control Flow
+
+---
+
+## Logical (boolean) operators
+
+&lt;br/&gt;&lt;br/&gt;
+
+|  Operator                     |  Operation    |  Vectorized? 
+|:-----------------------------:|:-------------:|:------------:
+| &lt;code&gt;x &amp;#124; y&lt;/code&gt;       |  or           |   Yes        
+| `x &amp; y`                       |  and          |   Yes        
+| `!x`                          |  not          |   Yes        
+| &lt;code&gt;x &amp;#124;&amp;#124; y&lt;/code&gt; |  or           |   No         
+| `x &amp;&amp; y`                      |  and          |   No         
+|`xor(x, y)`                    |  exclusive or |   Yes        
+
+
+---
+
+## Vectorized?
+
+
+```r
+x = c(TRUE,FALSE,TRUE)
+y = c(FALSE,TRUE,TRUE)
+```
+
+
+
+--
+
+.pull-left[
+
+```r
+x | y
+```
+
+```
+## [1] TRUE TRUE TRUE
+```
+
+```r
+x &amp; y
+```
+
+```
+## [1] FALSE FALSE  TRUE
+```
+]
+
+--
+
+.pull-right[
+
+```r
+x || y
+```
+
+```
+## [1] TRUE
+```
+
+```r
+x &amp;&amp; y
+```
+
+```
+## [1] FALSE
+```
+]
+
+.footnote[
+**Note** both `||` and `&amp;&amp;` only use the *first* value in the vector, all other values are ignored, there is no warning about the ignored values.
+]
+---
+
+## Vectorization and math
+
+Almost all of the basic mathematical operations (and many other functions) in R are vectorized.
+
+.pull-left[
+
+```r
+c(1, 2, 3) + c(3, 2, 1)
+```
+
+```
+## [1] 4 4 4
+```
+
+```r
+c(1, 2, 3) / c(3, 2, 1)
+```
+
+```
+## [1] 0.3333333 1.0000000 3.0000000
+```
+]
+
+--
+
+.pull-right[
+
+```r
+log(c(1, 3, 0))
+```
+
+```
+## [1] 0.000000 1.098612     -Inf
+```
+
+```r
+sin(c(1, 2, 3))
+```
+
+```
+## [1] 0.8414710 0.9092974 0.1411200
+```
+]
+
+---
+
+## Length coercion (aka recycling)
+
+
+```r
+x = c(TRUE, FALSE, TRUE)
+y = c(TRUE)
+z = c(FALSE, TRUE)
+```
+
+--
+
+
+
+.pull-left[
+
+```r
+x | y
+```
+
+```
+## [1] TRUE TRUE TRUE
+```
+
+```r
+x &amp; y
+```
+
+```
+## [1]  TRUE FALSE  TRUE
+```
+]
+
+.pull-right[
+
+```r
+y | z
+```
+
+```
+## [1] TRUE TRUE
+```
+
+```r
+y &amp; z
+```
+
+```
+## [1] FALSE  TRUE
+```
+]
+
+&lt;div/&gt;
+
+--
+
+&lt;br/&gt;
+
+
+
+
+```r
+x | z
+```
+
+```
+## Warning in x | z: longer object length is not a multiple of shorter object
+## length
+```
+
+```
+## [1] TRUE TRUE TRUE
+```
+
+---
+
+## Length coercion and math
+
+The same length coercion rules apply for most basic mathematical operators as well
+
+
+```r
+x = c(1, 2, 3)
+y = c(5, 4)
+z = 10L
+```
+
+.pull-left[
+
+```r
+x + x
+```
+
+```
+## [1] 2 4 6
+```
+
+```r
+x + z
+```
+
+```
+## [1] 11 12 13
+```
+]
+
+--
+
+.pull-right[
+
+```r
+log(x)
+```
+
+```
+## [1] 0.0000000 0.6931472 1.0986123
+```
+
+```r
+y / z
+```
+
+```
+## [1] 0.5 0.4
+```
+]
+
+--
+
+&lt;br/&gt;
+
+
+
+
+```r
+x %% y
+```
+
+```
+## Warning in x%%y: longer object length is not a multiple of shorter object length
+```
+
+```
+## [1] 1 2 3
+```
+
+
+---
+
+## Comparison operators
+
+  Operator  |  Comparison                |  Vectorized?
+:----------:|:--------------------------:|:----------------:
+ `x &lt; y`    |  less than                 |  Yes
+ `x &gt; y`    |  greater than              |  Yes
+ `x &lt;= y`   |  less than or equal to     |  Yes
+ `x &gt;= y`   |  greater than or equal to  |  Yes
+ `x != y`   |  not equal to              |  Yes
+ `x == y`   |  equal to                  |  Yes
+ `x %in% y` |  contains                  |  Yes (over `x`)
+
+.footnote[over `x` here means the returned value will have the same length as `x`]
+
+---
+
+## Comparisons
+
+
+```r
+x = c("A","B","C")
+z = c("A")
+```
+
+
+
+.pull-left[
+
+```r
+x == z
+```
+
+```
+## [1]  TRUE FALSE FALSE
+```
+
+```r
+x != z
+```
+
+```
+## [1] FALSE  TRUE  TRUE
+```
+
+```r
+x &gt; z
+```
+
+```
+## [1] FALSE  TRUE  TRUE
+```
+]
+
+--
+
+.pull-right[
+
+```r
+x %in% z
+```
+
+```
+## [1]  TRUE FALSE FALSE
+```
+
+```r
+z %in% x
+```
+
+```
+## [1] TRUE
+```
+]
+ 
+
+---
+
+## Conditional Control Flow
+
+Conditional execution of code blocks is achieved via `if` statements. 
+
+
+```r
+x = c(1, 3)
+```
+
+--
+
+
+```r
+if (3 %in% x)
+  print("Contains 3!")
+```
+
+```
+## [1] "Contains 3!"
+```
+
+--
+
+
+```r
+if (1 %in% x)
+  print("Contains 1!")
+```
+
+```
+## [1] "Contains 1!"
+```
+
+--
+
+
+```r
+if (5 %in% x)
+  print("Contains 5!")
+```
+
+--
+
+
+```r
+if (5 %in% x) {
+  print("Contains 5!")
+} else {
+  print("Does not contain 5!")
+}
+```
+
+```
+## [1] "Does not contain 5!"
+```
+
+
+
+
+---
+
+## `if` is not vectorized
+
+
+```r
+x = c(1, 3)
+```
+
+--
+
+
+```r
+if (x == 1)
+  print("x is 1!")
+```
+
+```
+## Warning in if (x == 1) print("x is 1!"): the condition has length &gt; 1 and only
+## the first element will be used
+```
+
+```
+## [1] "x is 1!"
+```
+
+--
+
+&lt;br/&gt;
+
+
+```r
+if (x == 3)
+  print("x is 3!")
+```
+
+```
+## Warning in if (x == 3) print("x is 3!"): the condition has length &gt; 1 and only
+## the first element will be used
+```
+
+---
+
+## Collapsing logical vectors
+
+There are a couple of helper functions for collapsing a logical vector down to a single value: `any`, `all`
+
+
+```r
+x = c(3,4,1)
+```
+
+.top-pad[]
+
+.pull-left[
+
+```r
+x &gt;= 2
+```
+
+```
+## [1]  TRUE  TRUE FALSE
+```
+
+```r
+any(x &gt;= 2)
+```
+
+```
+## [1] TRUE
+```
+
+```r
+all(x &gt;= 2)
+```
+
+```
+## [1] FALSE
+```
+]
+
+.pull-right[
+
+```r
+x &lt;= 4
+```
+
+```
+## [1] TRUE TRUE TRUE
+```
+
+```r
+any(x &lt;= 4)
+```
+
+```
+## [1] TRUE
+```
+
+```r
+all(x &lt;= 4)
+```
+
+```
+## [1] TRUE
+```
+]
+
+&lt;div/&gt;
+
+--
+
+&lt;br/&gt;
+
+
+```r
+if (any(x == 3)) 
+  print("x contains 3!")
+```
+
+```
+## [1] "x contains 3!"
+```
+
+---
+
+## `else if` and `else`
+
+.pull-left[
+
+```r
+x = 3
+
+if (x &lt; 0) {
+  "x is negative"
+} else if (x &gt; 0) {
+  "x is positive"
+} else {
+  "x is zero"
+}
+```
+
+```
+## [1] "x is positive"
+```
+]
+
+.pull-right[
+
+```r
+x = 0
+
+if (x &lt; 0) {
+  "x is negative"
+} else if (x &gt; 0) {
+  "x is positive"
+} else {
+  "x is zero"
+}
+```
+
+```
+## [1] "x is zero"
+```
+]
+
+---
+
+## `if` and `return`
+
+R's `if` conditional statements return a value (invisibly), the two following implementations are equivalent.
+
+.pull-left[
+
+```r
+x = 5
+```
+
+
+```r
+s = if (x %% 2 == 0) {
+  x / 2
+} else {
+  3*x + 1
+}
+```
+
+
+```r
+s
+```
+
+```
+## [1] 16
+```
+]
+
+.pull-right[
+
+```r
+x = 5
+```
+
+
+```r
+if (x %% 2 == 0) {
+  s = x / 2
+} else {
+  s = 3*x + 1
+}
+```
+
+
+```r
+s
+```
+
+```
+## [1] 16
+```
+]
+
+.footnote[
+Notice that conditional expressions are evaluated in the parent scope.
+]
+
+---
+
+## Exercise 2
+
+Take a look at the following code, without running it in R,
+
+```r
+f = function(x) {
+  # Check small prime
+  if (x &gt; 10 || x &lt; -10) {
+    stop("Input too big")
+  } else if (x %in% c(2, 3, 5, 7)) {
+    cat("Input is prime!\n")
+  } else if (x %% 2 == 0) {
+    cat("Input is even!\n")
+  } else if (x %% 2 == 1) {
+    cat("Input is odd!\n")
+  }
+}
+```
+
+what do you expect the outcome will be for each of the following
+```r
+f(1)
+f(3)
+f(8)
+f(-1)
+f(-3)
+f(1:2)
+f("0")
+f("3")
+f("zero")
+```
+
+.footnote[More on functions next time]
+
+
+---
+
+class: middle
+count: false
+
+# Error Checking
+
+---
+
+## `stop` and `stopifnot`
+
+Often we want to validate user input or function arguments - if our assumptions are not met then we often want to report the error and stop execution. 
+
+
+```r
+ok = FALSE
+```
+
+
+```r
+if (!ok)
+  stop("Things are not ok.")
+```
+
+```
+## Error in eval(expr, envir, enclos): Things are not ok.
+```
+
+
+```r
+stopifnot(ok)
+```
+
+```
+## Error: ok is not TRUE
+```
+
+.footnote[*Note* - an error (like the one generated by `stop`) will prevent an RMarkdown document from compiling unless `error = TRUE` is set for that code chunk]
+
+---
+
+## Style choices
+
+.pull-left[
+Do stuff:
+
+```r
+if (condition_one) {
+  ##
+  ## Do stuff
+  ##
+} else if (condition_two) {
+  ##
+  ## Do other stuff
+  ##
+} else if (condition_error) {
+  stop("Condition error occured")
+}
+```
+]
+
+.pull-right[
+Do stuff (better):
+
+```r
+# Do stuff better
+if (condition_error) {
+  stop("Condition error occured")
+}
+
+if (condition_one) {
+  ##
+  ## Do stuff
+  ##
+} else if (condition_two) {
+  ##
+  ## Do other stuff
+  ##
+}
+```
+]
+
+---
+
+## Exercise 3
+
+Write a set of conditional(s) that satisfies the following requirements,
+
+* If `x` is greater than 3 and `y` is less than or equal to 3 then print "Hello world!"
+
+* Otherwise if `x` is greater than 3 print "!dlrow olleH"
+
+* If `x` is less than or equal to 3 then print "Something else ..."
+
+* Stop execution if x is odd and y is even and report an error, don't print any of the text strings above.
+
+
+Test out your code by trying various values of `x` and `y`.
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "solarized-light",
+"highlightLines": true,
+"countIncrementalSlides": false,
+"ratio": "16:9"
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
