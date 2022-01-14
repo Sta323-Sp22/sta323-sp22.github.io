@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Lec 03 - Intro to Git and GitHub</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Sta 323 | Spring 2022" />
+    <script src="libs/header-attrs-2.11/header-attrs.js"></script>
+    <link rel="stylesheet" href="slides.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Lec 03 - Intro to Git and GitHub
+## <br/> Statistical Programming
+### Sta 323 | Spring 2022
+### <br/> Dr. Colin Rundel
+
+---
+
+exclude: true
+
+
+
+---
+
+class: inverse, center, middle
+
+# Responsible research and reproducibility
+
+---
+
+## Seizure study retracted after authors realize data got "terribly mixed"
+
+- From the authors of **Low Dose Lidocaine for Refractory Seizures in 
+  Preterm Neonates**:
+
+- *"The article has been retracted at the request of the authors. After 
+  carefully re-examining the data presented in the article, they identified 
+  that data of two different hospitals got terribly mixed. The published 
+  results cannot be reproduced in accordance with scientific and clinical 
+  correctness."*
+  
+&lt;br/&gt;
+
+.footnote[
+From http://retractionwatch.com/2013/02/01/seizure-study-retracted-after-authors-realize-data-got-terribly-mixed/
+]
+
+---
+
+## Bad spreadsheet merge kills depression paper, quick fix resurrects it
+
+- The authors informed the journal that the merge of lab results and other 
+survey data used in the paper resulted in an error regarding the 
+identification codes. Results of the analyses were based on the data set 
+in which this error occurred. Further analyses established the results 
+reported in this manuscript and interpretation of the data are not correct.
+
+- **Original conclusion:** Lower levels of CSF IL-6 were associated with 
+current depression and with future depression [...].
+
+- **Revised conclusion:** Higher levels of CSF IL-6 and IL-8 were 
+associated with current depression [...].
+
+&lt;br/&gt;
+
+.footnote[
+From http://retractionwatch.com/2014/07/01/bad-spreadsheet-merge-kills-depression-paper-quick-fix-resurrects-it/
+]
+
+---
+
+## Study of social media retracted when authors can’t provide data
+
+- "*A business journal has retracted a 2016 paper about how social media can
+    encourage young consumers to become devoted to particular brands, after
+    discovering flaws in the data and findings.*"
+
+- Reasons for retraction:
+
+  - Error in data
+  - Error in results and/or conclusions
+  - Results not reproducible
+
+&lt;br/&gt;
+
+.footnote[
+From http://retractionwatch.com/2017/07/31/study-social-media-retracted-authors-cant-provide-data/
+]
+
+---
+
+## Heart pulls sodium meta-analysis over duplicated, and now missing, data
+
+- "*The journal Heart has retracted a 2012 meta-analysis after learning that 
+  two of the six studies included in the review contained duplicated data.
+  Those studies, it so happens, were conducted by one of the co-authors.*"
+
+- From the retraction notice, "*The Committee considered that without sight of 
+  the raw data on which the two papers containing the duplicate data were based,
+  their reliability could not be substantiated. Following inquiries, it turns 
+  out that the raw data are no longer available having been lost as a result of
+  computer failure.*"
+
+- Reasons for retraction:
+
+  - Duplication of data
+  - Results not reproducible
+
+&lt;br/&gt;
+
+.footnote[
+From http://retractionwatch.com/2013/05/02/heart-pulls-sodium-meta-analysis-over-duplicated-and-now-missing-data/
+]
+
+---
+
+## Teaching Reproducibility
+
+1. Convince researchers to adopt a reproducible research workflow.
+
+2. Train new researchers who don’t have any other workflow.
+
+---
+
+## Donald Knuth "Literate Programming" (1983)
+
+"Let us change our traditional attitude to the construction of programs: 
+Instead of imagining that our main task is to instruct a *computer* what 
+to do, let us concentrate rather on explaining to *human beings* what we 
+want a computer to do."
+
+"The practitioner of literate programming [...] strives for a program that 
+is comprehensible because its concepts have been introduced in an order 
+that is best for human understanding, using a mixture of formal and 
+informal methods that reinforce each other."
+
+- These ideas have been around for years!
+
+- Tools for putting them to practice have also been around.
+
+- They have never been as accessible as the current tools.
+
+---
+
+## Reproducibility checklist
+
+- Are the tables and figures reproducible from the code and data?
+&lt;br&gt;&lt;br&gt;
+- Does the code actually do what you think it does?
+&lt;br&gt;&lt;br&gt;
+- In addition to what was done, is it clear *why* it was done? (e.g., how 
+were parameter settings chosen?)
+&lt;br&gt;&lt;br&gt;
+- Can the code be used for other data, especially future updates to the
+  current data?
+&lt;br&gt;&lt;br&gt;
+- Can you extend the code to do other things?
+&lt;br&gt;&lt;br&gt;
+
+---
+
+## Ambitious goal
+
+We need an environment where
+
+- data, analysis, and results are tightly connected, or better yet, 
+inseparable,
+
+- reproducibility is built in,
+    + the original data remains untouched
+    + all data manipulations and analyses are inherently documented
+
+- documentation is human readable and syntax is minimal.
+
+---
+
+## Reproducible data analysis
+
+- Scriptability `\(\rightarrow\)` R *or* Python
+
+- Literate programming `\(\rightarrow\)` R Markdown *or* Jupyter Notebooks
+
+- Version control `\(\rightarrow\)` Git / GitHub
+
+--
+
+&lt;br&gt;&lt;br&gt;
+
+Could these tools have prevented some of the aforementioned retractions?
+
+---
+
+## What is markdown?
+
+- Markdown is a lightweight markup language for creating HTML (and other formatted) 
+documents.
+
+- Markup languages are designed to produce documents from human readable 
+text (and annotations).
+
+- Some of you may be familiar with LaTeX. This is another (less human 
+friendly) markup language for creating pdf documents.
+
+- Why markdown is great:
+
+  - Easy to learn and use.
+  - Focus on **content**, rather than **coding** and debugging **errors**.
+  - Once you have the basics down, you can get fancy via HTML, JavaScript, 
+    and CSS.
+  - Used by both R Markdown and Jupyter Notebooks  
+  
+    
+&lt;br/&gt;
+
+R supports R Markdown - an authoring framework for data science and
+statistical analysis.
+
+---
+
+## R Markdown
+
+.pull-left[
+  **Something simple**
+  &lt;br/&gt;&lt;br/&gt;
+  ![](imgs/simple-rmd.png)
+]
+
+.pull-right[
+  **Something fancy**
+  &lt;br/&gt;&lt;br/&gt;
+  ![](imgs/fancy-rmd.png)
+]
+
+---
+
+## R Markdown resources
+
+- In RStudio, go to `Help &gt; Cheatsheets` and select
+    - R Markdown Cheat Sheet
+    - R Markdown Reference Guide
+    
+- Check out the official R Markdown book: 
+  [R Markdown: The Definitive Guide](https://bookdown.org/yihui/R Markdown/) 
+  by Yihui Xie, J. J. Allaire, and Garrett Grolemund
+  
+- Check out 
+  [bookdown: Authoring Books and Technical Documents with R Markdown](https://bookdown.org/yihui/bookdown/) by Yihui Xie.
+
+- Take a look at [RPubs](http://rpubs.com/) web published R Markdown documents.
+
+---
+
+## A note on environments
+
+- Your R Markdown document and your Console do not share their global environments.
+
+- This is good for reproducibility, but can sometimes result in frustrating 
+  errors.
+
+- This also means any packages or data needed for your analysis need to be loaded in 
+  your R Markdown document as well.
+
+---
+
+## R Markdown suggestions
+
+- Remember to name your code chunks
+
+- Familiarize yourself with chunk options (https://yihui.org/knitr/options/)
+    - Use global chunk options to reduce duplication
+
+- Load packages at the start of a document, generally the chunk after your
+  setup chunk
+
+- Familiarize yourself with various outputs: 
+  Make slides with `output: ioslides_presentation` or 
+  `xaringan`, make websites with `blogdown`, author a book with `bookdown`, etc.
+  
+&lt;br/&gt;&lt;br/&gt;
+
+These slides were made with R Markdown and `xaringan`.
+
+---
+
+class: inverse, center, middle
+
+# Git and GitHub
+
+---
+
+## Why version control?
+
+.pull-left[
+
+- Simple formal system for tracking changes to a project over time
+
+- Time machine for your projects
+    + Track blame and/or praise
+    + Remove the fear of breaking things
+
+- Learning curve can be a bit steep, but when you need it you *REALLY* need it
+
+]
+
+.pull-right[
+
+![](imgs/local-vc-system.png)
+
+]
+
+---
+
+## Why Git?
+
+.pull-left[
+
+- Distributed
+    + Work online or offline
+    + Collaborate with large groups
+
+- Popular and Successful
+    + Active development
+    + Shiny new tools and ecosystems
+    + Fast
+
+- Tracks any type of file
+
+- Branching
+    + Smarter merges
+
+]
+
+.pull-right[
+
+&lt;img src="imgs/distributed-vc-system.png" width="75%" style="display: block; margin: auto;" /&gt;
+
+]
+
+---
+
+## Verifying Git is installed
+
+Git is already set-up on the DSS servers. In the terminal tab you
+can verify this by
+
+
+```bash
+[cr173@numeric1 ~]$ git --version
+git version 2.20.1
+```
+
+
+```bash
+[cr173@numeric1 ~]$ which git
+/usr/bin/git
+```
+
+&lt;br&gt;
+
+To install Git on your own computer follow the directions in [Happy Git and GitHub for the useR](https://happygitwithr.com/install-git.html).
+
+---
+
+## Git sitrep
+
+```r
+usethis::git_sitrep()
+## Git config (global)
+## ● Name: &lt;unset&gt;
+## ● Email: &lt;unset&gt;
+## ● Vaccinated: FALSE
+## ℹ See `?git_vaccinate` to learn more
+## ℹ Defaulting to https Git protocol
+## ● Default Git protocol: 'https'
+## GitHub
+## ● Default GitHub host: 'https://github.com'
+## ● Personal access token for 'https://github.com': &lt;unset&gt;
+## x Call `gh_token_help()` for help configuring a token
+## Git repo for current project
+## ℹ No active usethis project
+```
+
+---
+
+## Configure Git
+
+The following will tell Git who you are, and other common configuration tasks.
+
+```r
+usethis::use_git_config(
+  user.name = "Colin Rundel",
+  user.email = "rundel@gmail.com",
+  push.default = "simple"
+)
+```
+
+You will need to do this configuration once on each machine in which you choose 
+to use Git.
+
+This can also be done via the terminal with,
+
+
+
+```bash
+$ git config --global user.name "Colin Rundel"
+$ git config --global user.email "rundel@gmail.com"
+$ git config --global push.default simple
+```
+
+---
+
+## Configure Git verification
+
+To verify you configured Git correctly, run
+
+```r
+usethis::git_sitrep()
+## Git config (global)
+## ● Name: 'Colin Rundel'
+## ● Email: 'rundel@gmail.com'
+## ● Vaccinated: FALSE
+## ℹ See `?git_vaccinate` to learn more
+## ● Default Git protocol: 'https'
+## GitHub
+## ● Default GitHub host: 'https://github.com'
+## ● Personal access token for 'https://github.com': &lt;unset&gt;
+## x Call `gh_token_help()` for help configuring a token
+## Git repo for current project
+## ℹ No active usethis project
+```
+
+You should see output similar to above.
+
+---
+
+## Configure SSH and GitHub (authentication)
+
+We will be authenticating with GitHub using SSH based public / private keys. We can create a new key pair (if necessary) by running the following in RStudio's *console*:
+
+
+```r
+credentials::ssh_setup_github()
+```
+
+--
+
+
+```r
+## No SSH key found. Generate one now? 
+## 
+## 1: Yes
+## 2: No
+## 
+## Selection: 1
+## Generating new RSA keyspair at: /home/guest/.ssh/id_rsa
+## Your public key:
+## 
+*##  ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC/wH7pT3UXdOMJSX2wMaPVTyGnYkS8OPmcfjct6h8Q+44/9UG3sOibjjUCxIxVeCWAoYFB0rDI3/Ljf2EWozLlpeGzAe7xsg6A+MHtUObZnfzXSB/NnOhZymD2u8Nh+py07aojVdKAPBkRH3nHA+rljidc3gXZkqseetYEI1N79OQUshp2P+Qm6Vab4I5OCnfAwLFkR7Sw7J9hvZN1qUmM0DB0WTWSlNmPSMsASMe/6Nz30IRoBh35Z7tgF79rlIW385giCkEeD20Le9EOueGoTWarJWylE1RWnUyig2mZ9JK/rYTw4KBXacPhBwn+MgGC+r8xY5IEX78xkeXW9q2z
+## 
+## Please copy the line above to GitHub: https://github.com/settings/ssh/new
+## Would you like to open a browser now? 
+## 
+## 1: Yes
+## 2: No
+## 
+## Selection: 1
+```
+
+---
+
+## Getting started today
+
+In order to get started, you need to obtain today's files from GitHub. The
+steps below will give you access.
+
+1. Log in to GitHub
+
+2. Navigate to https://github.com/sta323-sp22/
+
+3. Find the repository named *username*`-git_demo` and open it
+
+4. Copy the link under `Clone or Download` to clone with *SSH*.
+
+5. In RStudio go to `File &gt; New Project &gt; Version Control &gt; Git`
+
+6. Paste the URL, that you copied in step 4, in the box under `Repository URL:`
+
+You now should have all the files in the repository in a directory on the
+server or your own computer.
+
+
+---
+
+## Version control best practices
+
+- Commit early, often, and with complete code.
+
+- Write clear and concise commit summary messages.
+
+- Test code before you commit.
+
+- Use branches.
+
+- Communicate with your team.
+
+---
+
+## Git and GitHub resources
+
+- Git's [Pro Git](https://git-scm.com/book/en/v2) book, Chapters [Getting Started](https://git-scm.com/book/en/v2/Getting-Started-About-Version-Control) 
+and [Git Basics](https://git-scm.com/book/en/v2/Git-Basics-Getting-a-Git-Repository) 
+will be most useful if you are new to Git and GitHub
+
+- [Git cheatsheet](https://www.atlassian.com/git/tutorials/atlassian-git-cheatsheet) 
+by Atlassian
+
+- GitHub's interactive [tutorial](https://try.github.io/)
+
+- [Free online course](https://www.udacity.com/course/version-control-with-git--ud123) 
+from Udacity
+
+- [Happy Git with R](http://happygitwithr.com/) by Jenny Bryan
+
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "solarized-light",
+"highlightLines": true,
+"countIncrementalSlides": false,
+"ratio": "16:9"
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
