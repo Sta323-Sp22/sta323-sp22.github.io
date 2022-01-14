@@ -475,7 +475,7 @@ steps below will give you access.
 
 2. Navigate to https://github.com/sta323-sp22/
 
-3. Find the repository named *username*`-git_demo` and open it
+3. Find the repository named `git_demo-`*username* and open it
 
 4. Copy the link under `Clone or Download` to clone with *SSH*.
 
