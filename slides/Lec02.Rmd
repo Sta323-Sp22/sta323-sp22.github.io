@@ -26,7 +26,6 @@ options(
 
 ---
 class: middle
-count: false
 
 # In R (almost) <br/> everything is a vector
 
@@ -51,7 +50,6 @@ R has two types of vectors:
 
 ---
 class: middle
-count: false
 
 # Atomic Vectors
 
@@ -418,7 +416,6 @@ Considering only the four (common) data types, what is R's implicit type convers
 .footnote[*Hint* - think about the pairwise interactions between types.]
 
 ---
-count: false
 class: middle
 
 # Conditionals & Control Flow
@@ -840,9 +837,7 @@ f("zero")
 
 
 ---
-
 class: middle
-count: false
 
 # Error Checking
 
