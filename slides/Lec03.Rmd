@@ -391,7 +391,8 @@ The following will tell Git who you are, and other common configuration tasks.
 usethis::use_git_config(
   user.name = "Colin Rundel",
   user.email = "rundel@gmail.com",
-  push.default = "simple"
+  push.default = "simple",
+  pull.rebase = FALSE
 )
 ```
 
