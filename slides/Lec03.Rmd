@@ -23,8 +23,7 @@ library(tidyverse)
 ```
 
 ---
-
-class: inverse, center, middle
+class: center, middle
 
 # Responsible research and reproducibility
 
@@ -284,7 +283,7 @@ These slides were made with R Markdown and `xaringan`.
 
 ---
 
-class: inverse, center, middle
+class: center, middle
 
 # Git and GitHub
 
