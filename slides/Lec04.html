@@ -1,0 +1,1852 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Lec 04 - NAs, functions, loops, and merge conflicts</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Sta 323 | Spring 2022" />
+    <script src="libs/header-attrs/header-attrs.js"></script>
+    <link rel="stylesheet" href="slides.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Lec 04 - NAs, functions, loops, and merge conflicts
+## <br/> Statistical Programming
+### Sta 323 | Spring 2022
+### <br/> Dr. Colin Rundel
+
+---
+
+exclude: true
+
+
+
+---
+class: middle, center
+
+# Missing Values
+
+---
+  
+## Missing Values
+  
+R uses `NA` to represent missing values in its data structures, what may not be obvious is that there are different `NA`s for different atomic types.
+
+.pull-left[
+
+```r
+typeof(NA)
+```
+
+```
+## [1] "logical"
+```
+
+```r
+typeof(NA+1)
+```
+
+```
+## [1] "double"
+```
+
+```r
+typeof(NA+1L)
+```
+
+```
+## [1] "integer"
+```
+
+```r
+typeof(c(NA,""))
+```
+
+```
+## [1] "character"
+```
+]
+
+--
+
+.pull-right[
+
+```r
+typeof(NA_character_)
+```
+
+```
+## [1] "character"
+```
+
+```r
+typeof(NA_real_)
+```
+
+```
+## [1] "double"
+```
+
+```r
+typeof(NA_integer_)
+```
+
+```
+## [1] "integer"
+```
+
+```r
+typeof(NA_complex_)
+```
+
+```
+## [1] "complex"
+```
+]
+
+---
+  
+## NA "stickiness" 
+
+Because `NA`s represent missing values it makes sense that any calculation using them should also be missing.
+
+.pull-left[
+
+```r
+1 + NA
+```
+
+```
+## [1] NA
+```
+
+```r
+1 / NA
+```
+
+```
+## [1] NA
+```
+
+```r
+NA * 5
+```
+
+```
+## [1] NA
+```
+]
+
+.pull-right[
+
+```r
+sqrt(NA)
+```
+
+```
+## [1] NA
+```
+
+```r
+3^NA
+```
+
+```
+## [1] NA
+```
+
+```r
+sum(c(1, 2, 3, NA))
+```
+
+```
+## [1] NA
+```
+]
+
+--
+
+&lt;br/&gt;
+
+Summarizing functions (e.g. `sum()`, `mean()`, `sd()`, etc.) will often have a `na.rm` argument which will allow you to *drop* missing values.
+
+
+```r
+sum(c(1, 2, 3, NA), na.rm = TRUE)
+```
+
+```
+## [1] 6
+```
+
+```r
+mean(c(1, 2, 3, NA), na.rm = TRUE)
+```
+
+```
+## [1] 2
+```
+
+
+---
+  
+## NAs are not always sticky 
+  
+A useful mental model for `NA`s is to consider them as a unknown value that could take any of the possible values for that type. 
+
+--
+
+For numbers or characters this isn't very helpful, but for a logical value we know that the value must either be `TRUE` or `FALSE` and we can use that when deciding what value to return.
+
+--
+
+
+```r
+TRUE &amp; NA
+```
+
+```
+## [1] NA
+```
+
+--
+
+
+```r
+FALSE &amp; NA
+```
+
+```
+## [1] FALSE
+```
+
+--
+
+
+```r
+TRUE | NA
+```
+
+```
+## [1] TRUE
+```
+
+--
+
+
+```r
+FALSE | NA
+```
+
+```
+## [1] NA
+```
+
+
+---
+
+## Conditionals and missing values
+
+`NA`s can be problematic in some cases (particularly for control flow)
+
+
+```r
+1 == NA
+```
+
+```
+## [1] NA
+```
+
+--
+
+
+```r
+if (2 != NA)
+  "Here"
+```
+
+```
+## Error in if (2 != NA) "Here": missing value where TRUE/FALSE needed
+```
+
+--
+
+
+```r
+if (all(c(1,2,NA,4) &gt;= 1))
+  "There"
+```
+
+```
+## Error in if (all(c(1, 2, NA, 4) &gt;= 1)) "There": missing value where TRUE/FALSE needed
+```
+
+--
+
+
+```r
+if (any(c(1,2,NA,4) &gt;= 1))
+  "There"
+```
+
+```
+## [1] "There"
+```
+
+
+---
+
+## Testing for `NA`
+
+To explicitly test if a value is missing it is necessary to use `is.na` (often along with `any` or `all`).
+
+.pull-left[
+
+```r
+NA == NA
+```
+
+```
+## [1] NA
+```
+
+```r
+is.na(NA)
+```
+
+```
+## [1] TRUE
+```
+
+```r
+is.na(1)
+```
+
+```
+## [1] FALSE
+```
+]
+
+--
+
+.pull-right[
+
+```r
+is.na(c(1,2,3,NA))
+```
+
+```
+## [1] FALSE FALSE FALSE  TRUE
+```
+
+```r
+any(is.na(c(1,2,3,NA)))
+```
+
+```
+## [1] TRUE
+```
+
+```r
+all(is.na(c(1,2,3,NA)))
+```
+
+```
+## [1] FALSE
+```
+]
+
+
+---
+
+## Other Special values (double)
+
+These are defined as part of the IEEE floating point standard (not unique to R)
+
+* `NaN` - Not a number
+* `Inf` - Positive infinity
+* `-Inf` - Negative infinity
+
+.pull-left[
+
+```r
+pi / 0
+```
+
+```
+## [1] Inf
+```
+
+```r
+0 / 0
+```
+
+```
+## [1] NaN
+```
+
+```r
+1/0 + 1/0
+```
+
+```
+## [1] Inf
+```
+]
+
+.pull-right[
+
+```r
+1/0 - 1/0
+```
+
+```
+## [1] NaN
+```
+
+```r
+NaN / NA
+```
+
+```
+## [1] NaN
+```
+
+```r
+NaN * NA
+```
+
+```
+## [1] NaN
+```
+]
+
+
+---
+
+## Testing for `Inf` and `NaN`
+
+`NaN` and `Inf` don't have the same testing issues that `NA`s do, but there are still convenience functions for testing for these types of values
+
+.pull-left[
+
+```r
+is.finite(Inf)
+```
+
+```
+## [1] FALSE
+```
+
+```r
+is.infinite(-Inf)
+```
+
+```
+## [1] TRUE
+```
+
+```r
+is.nan(Inf)
+```
+
+```
+## [1] FALSE
+```
+
+```r
+is.nan(-Inf)
+```
+
+```
+## [1] FALSE
+```
+
+```r
+Inf &gt; 1
+```
+
+```
+## [1] TRUE
+```
+
+```r
+-Inf &gt; 1
+```
+
+```
+## [1] FALSE
+```
+]
+
+--
+  
+.pull-right[
+
+```r
+is.finite(NaN)
+```
+
+```
+## [1] FALSE
+```
+
+```r
+is.infinite(NaN)
+```
+
+```
+## [1] FALSE
+```
+
+```r
+is.nan(NaN)
+```
+
+```
+## [1] TRUE
+```
+
+```r
+is.finite(NA)
+```
+
+```
+## [1] FALSE
+```
+
+```r
+is.infinite(NA)
+```
+
+```
+## [1] FALSE
+```
+
+```r
+is.nan(NA)
+```
+
+```
+## [1] FALSE
+```
+]
+
+
+---
+  
+## Coercion for infinity and NaN
+  
+First remember that `Inf`, `-Inf`, and `NaN` are doubles, however their coercion behavior is not the same as for other doubles
+
+
+```r
+as.integer(Inf)
+```
+
+```
+## Warning: NAs introduced by coercion to integer range
+```
+
+```
+## [1] NA
+```
+
+```r
+as.integer(NaN)
+```
+
+```
+## [1] NA
+```
+
+--
+
+.pull-left[
+
+```r
+as.logical(Inf)
+```
+
+```
+## [1] TRUE
+```
+
+```r
+as.logical(-Inf)
+```
+
+```
+## [1] TRUE
+```
+
+```r
+as.logical(NaN)
+```
+
+```
+## [1] NA
+```
+]
+
+--
+
+.pull-right[
+
+```r
+as.character(Inf)
+```
+
+```
+## [1] "Inf"
+```
+
+```r
+as.character(-Inf)
+```
+
+```
+## [1] "-Inf"
+```
+
+```r
+as.character(NaN)
+```
+
+```
+## [1] "NaN"
+```
+]
+
+---
+class: middle
+count: false
+
+# Functions
+
+---
+
+## Function Parts
+
+Functions are defined by two components: the arguments (`formals`) and the code (`body`). 
+
+Functions are assigned names like any other object in R (using `=` or `&lt;-`)
+
+
+```r
+gcd = function(x1, y1, x2 = 0, y2 = 0) {
+  R = 6371 # Earth mean radius in km
+  
+  # distance in km
+  acos(sin(y1)*sin(y2) + cos(y1)*cos(y2) * cos(x2-x1)) * R
+}
+```
+
+--
+
+.pull-left[
+
+```r
+typeof(gcd)
+```
+
+```
+## [1] "closure"
+```
+]
+
+.pull-right[
+
+```r
+mode(gcd)
+```
+
+```
+## [1] "function"
+```
+]
+
+--
+
+&lt;div&gt;
+.pull-left[
+
+```r
+formals(gcd)
+```
+
+```
+## $x1
+## 
+## 
+## $y1
+## 
+## 
+## $x2
+## [1] 0
+## 
+## $y2
+## [1] 0
+```
+]
+
+.pull-right[
+
+```r
+body(gcd)
+```
+
+```
+## {
+##     R = 6371
+##     acos(sin(y1) * sin(y2) + cos(y1) * cos(y2) * cos(x2 - x1)) * 
+##         R
+## }
+```
+]
+&lt;/div&gt;
+
+
+---
+
+## Return values
+
+There are two approaches to returning values from functions in R - explicit and implicit returns.
+
+--
+
+**Explicit** - using one or more `return` function calls
+
+
+```r
+f = function(x) {
+  return(x * x)
+}
+
+f(2)
+```
+
+```
+## [1] 4
+```
+
+--
+
+&lt;br/&gt;
+
+**Implicit** - return value of the last expression is returned.
+
+
+```r
+g = function(x) {
+  x * x
+}
+
+g(3)
+```
+
+```
+## [1] 9
+```
+
+---
+
+## Invisible returns
+
+Many functions in R make use of an invisible return value
+
+
+```r
+f = function(x) {
+  print(x)
+}
+
+y = f(1)
+```
+
+```
+## [1] 1
+```
+
+```r
+y
+```
+
+```
+## [1] 1
+```
+
+--
+
+
+```r
+g = function(x) {
+  invisible(x)
+}
+```
+
+
+```r
+g(2)
+```
+
+
+```r
+z = g(2)
+z
+```
+
+```
+## [1] 2
+```
+
+
+
+---
+
+## Returning multiple values
+
+If we want a function to return more than one value we can group things using atomic vectors or lists.
+
+
+```r
+f = function(x) {
+  c(x, x^2, x^3)
+}
+
+f(1:2)
+```
+
+```
+## [1] 1 2 1 4 1 8
+```
+
+--
+
+&lt;br/&gt;
+
+
+```r
+g = function(x) {
+  list(x, "hello")
+}
+
+g(1:2)
+```
+
+```
+## [[1]]
+## [1] 1 2
+## 
+## [[2]]
+## [1] "hello"
+```
+
+.footnote[More on lists next time]
+
+---
+class: split-50
+
+## Argument names
+
+When defining a function we explicitly define names for the arguments, which become variables within the scope of the function.
+
+When calling a function we can use these names to pass arguments in an alternative order.
+
+
+
+```r
+f = function(x, y, z) {
+  paste0("x=", x, " y=", y, " z=", z)
+}
+```
+
+--
+
+.pull-left[
+
+```r
+f(1, 2, 3)
+```
+
+```
+## [1] "x=1 y=2 z=3"
+```
+
+```r
+f(z=1, x=2, y=3)
+```
+
+```
+## [1] "x=2 y=3 z=1"
+```
+]
+
+--
+
+.pull-right[
+
+```r
+f(y=2, 1, 3)
+```
+
+```
+## [1] "x=1 y=2 z=3"
+```
+
+```r
+f(y=2, 1, x=3)
+```
+
+```
+## [1] "x=3 y=2 z=1"
+```
+]
+
+--
+
+
+```r
+f(1, 2, 3, 4)
+```
+
+```
+## Error in f(1, 2, 3, 4): unused argument (4)
+```
+
+```r
+f(1, 2, m=3)
+```
+
+```
+## Error in f(1, 2, m = 3): unused argument (m = 3)
+```
+
+---
+
+## Argument defaults
+
+It is also possible to give function arguments default values, so that they don't need to be provided every time the function is called.
+
+
+```r
+f = function(x, y=1, z=1) {
+  paste0("x=", x, " y=", y, " z=", z)
+}
+```
+
+--
+
+.pull-left[
+
+```r
+f(3)
+```
+
+```
+## [1] "x=3 y=1 z=1"
+```
+
+```r
+f(x=3)
+```
+
+```
+## [1] "x=3 y=1 z=1"
+```
+]
+
+--
+
+.pull-right[
+
+```r
+f(z=3, x=2)
+```
+
+```
+## [1] "x=2 y=1 z=3"
+```
+
+```r
+f(y=2, 2)
+```
+
+```
+## [1] "x=2 y=2 z=1"
+```
+]
+
+--
+
+&lt;br/&gt;
+
+
+```r
+f()
+```
+
+```
+## Error in paste0("x=", x, " y=", y, " z=", z): argument "x" is missing, with no default
+```
+
+---
+
+## Scope
+
+R has generous scoping rules, if it can't find a variable in the current scope (e.g. a function's body) it will look for it in the next higher scope, and so on.
+
+
+```r
+y = 1
+
+f = function(x) {
+  x + y
+}
+
+f(3)
+```
+
+```
+## [1] 4
+```
+
+--
+
+
+```r
+y = 1
+
+g = function(x) {
+  y = 2
+  x + y
+}
+
+g(3)
+```
+
+```
+## [1] 5
+```
+
+```r
+y
+```
+
+```
+## [1] 1
+```
+
+---
+
+Additionally, variables defined within a scope only persist for the duration of that scope, and do not overwrite variables at a higher scopes
+
+
+```r
+x = 1
+y = 1
+z = 1
+
+f = function() {
+    y = 2
+    g = function() {
+      z = 3
+      return(x + y + z)
+    }
+    return(g())
+}
+
+f()
+```
+
+```
+## [1] 6
+```
+
+```r
+c(x,y,z)
+```
+
+```
+## [1] 1 1 1
+```
+
+---
+
+## Exercise 1 - scope
+
+What is the output of the following code? Explain why.
+
+
+```r
+z = 1
+
+f = function(x, y, z) {
+  z = x+y
+
+  g = function(m = x, n = y) {
+    m/z + n/z
+  }
+
+  z * g()
+}
+
+f(1, 2, x = 3)
+```
+
+---
+
+## Lazy evaluation
+
+One interesting feature of R is that function arguments are lazily evaluated, which means they are only evaluated when needed.
+
+.pull-left[
+
+```r
+f = function(x) {
+  TRUE
+}
+```
+]
+
+.pull-right[
+
+```r
+g = function(x) {
+  x
+  TRUE
+}
+```
+]
+
+--
+
+&lt;div&gt;
+.pull-left[
+
+```r
+f(1)
+```
+
+```
+## [1] TRUE
+```
+]
+
+.pull-right[
+
+```r
+g(1)
+```
+
+```
+## [1] TRUE
+```
+]
+&lt;/div&gt;
+
+--
+
+&lt;div&gt;
+.pull-left[
+
+```r
+f(stop("Error"))
+```
+
+```
+## [1] TRUE
+```
+]
+
+.pull-right[
+
+```r
+g(stop("Error"))
+```
+
+```
+## Error in g(stop("Error")): Error
+```
+]
+&lt;/div&gt;
+
+
+---
+
+## Operators as functions
+
+In R, operators are actually a special type of function - using backticks around the operator we can write them as functions.
+ 
+
+```r
+`+`
+```
+
+```
+## function (e1, e2)  .Primitive("+")
+```
+
+```r
+typeof(`+`)
+```
+
+```
+## [1] "builtin"
+```
+
+--
+
+.pad-top[]
+
+
+```r
+x = 4:1
+x + 2
+```
+
+```
+## [1] 6 5 4 3
+```
+
+```r
+`+`(x, 2)
+```
+
+```
+## [1] 6 5 4 3
+```
+
+
+---
+
+## Getting Help
+
+Prefixing any function name with a `?` will open the related help file for that function.
+
+
+```r
+?`+`
+?sum
+```
+
+--
+
+For functions not in the base package, you can generally see their implementation by entering the function name without parentheses (or using the `body` function).
+
+
+```r
+lm
+```
+
+```
+## function (formula, data, subset, weights, na.action, method = "qr", 
+##     model = TRUE, x = FALSE, y = FALSE, qr = TRUE, singular.ok = TRUE, 
+##     contrasts = NULL, offset, ...) 
+## {
+##     ret.x &lt;- x
+##     ret.y &lt;- y
+##     cl &lt;- match.call()
+##     mf &lt;- match.call(expand.dots = FALSE)
+##     m &lt;- match(c("formula", "data", "subset", "weights", "na.action", 
+##         "offset"), names(mf), 0L)
+##     mf &lt;- mf[c(1L, m)]
+##     mf$drop.unused.levels &lt;- TRUE
+##     mf[[1L]] &lt;- quote(stats::model.frame)
+##     mf &lt;- eval(mf, parent.frame())
+##     if (method == "model.frame") 
+##         return(mf)
+##     else if (method != "qr") 
+##         warning(gettextf("method = '%s' is not supported. Using 'qr'", 
+##             method), domain = NA)
+##     mt &lt;- attr(mf, "terms")
+##     y &lt;- model.response(mf, "numeric")
+##     w &lt;- as.vector(model.weights(mf))
+##     if (!is.null(w) &amp;&amp; !is.numeric(w)) 
+##         stop("'weights' must be a numeric vector")
+##     offset &lt;- model.offset(mf)
+##     mlm &lt;- is.matrix(y)
+##     ny &lt;- if (mlm) 
+##         nrow(y)
+##     else length(y)
+##     if (!is.null(offset)) {
+##         if (!mlm) 
+##             offset &lt;- as.vector(offset)
+##         if (NROW(offset) != ny) 
+##             stop(gettextf("number of offsets is %d, should equal %d (number of observations)", 
+##                 NROW(offset), ny), domain = NA)
+##     }
+##     if (is.empty.model(mt)) {
+##         x &lt;- NULL
+##         z &lt;- list(coefficients = if (mlm) matrix(NA_real_, 0, 
+##             ncol(y)) else numeric(), residuals = y, fitted.values = 0 * 
+##             y, weights = w, rank = 0L, df.residual = if (!is.null(w)) sum(w != 
+##             0) else ny)
+##         if (!is.null(offset)) {
+##             z$fitted.values &lt;- offset
+##             z$residuals &lt;- y - offset
+##         }
+##     }
+##     else {
+##         x &lt;- model.matrix(mt, mf, contrasts)
+##         z &lt;- if (is.null(w)) 
+##             lm.fit(x, y, offset = offset, singular.ok = singular.ok, 
+##                 ...)
+##         else lm.wfit(x, y, w, offset = offset, singular.ok = singular.ok, 
+##             ...)
+##     }
+##     class(z) &lt;- c(if (mlm) "mlm", "lm")
+##     z$na.action &lt;- attr(mf, "na.action")
+##     z$offset &lt;- offset
+##     z$contrasts &lt;- attr(x, "contrasts")
+##     z$xlevels &lt;- .getXlevels(mt, mf)
+##     z$call &lt;- cl
+##     z$terms &lt;- mt
+##     if (model) 
+##         z$model &lt;- mf
+##     if (ret.x) 
+##         z$x &lt;- x
+##     if (ret.y) 
+##         z$y &lt;- y
+##     if (!qr) 
+##         z$qr &lt;- NULL
+##     z
+## }
+## &lt;bytecode: 0x7fbd68b1f3e0&gt;
+## &lt;environment: namespace:stats&gt;
+```
+
+---
+
+## Less Helpful Examples
+
+
+```r
+list
+```
+
+```
+## function (...)  .Primitive("list")
+```
+
+```r
+`[`
+```
+
+```
+## .Primitive("[")
+```
+
+```r
+sum
+```
+
+```
+## function (..., na.rm = FALSE)  .Primitive("sum")
+```
+
+```r
+`+`
+```
+
+```
+## function (e1, e2)  .Primitive("+")
+```
+
+
+.footnote[
+For the curious the [lookup package](https://github.com/jimhester/lookup) will help you track down the source for these functions.
+]
+
+---
+class: middle
+count: false
+
+# Loops
+
+---
+
+## for loops
+
+Simplest, and most common type of loop in R - given a vector iterate through the elements and evaluate the code block for each.
+
+
+
+```r
+is_even = function(x) {
+  res = c()
+  
+  for(val in x) {
+    res = c(res, val %% 2 == 0)
+  }
+  
+  res
+}
+
+is_even(1:10)
+```
+
+```
+##  [1] FALSE  TRUE FALSE  TRUE FALSE  TRUE FALSE  TRUE FALSE  TRUE
+```
+
+```r
+is_even(seq(1,5,2))
+```
+
+```
+## [1] FALSE FALSE FALSE
+```
+
+
+---
+
+## `while` loops
+
+Repeat until the given condition is **not** met (i.e. evaluates to `FALSE`)
+
+
+```r
+make_seq = function(from = 1, to = 1, by = 1) {
+  res = c(from)
+  cur = from
+  
+  while(cur+by &lt;= to) {
+    cur = cur + by
+    res = c(res, cur)
+  }
+  
+  res
+}
+
+make_seq(1, 6)
+```
+
+```
+## [1] 1 2 3 4 5 6
+```
+
+```r
+make_seq(1, 6, 2)
+```
+
+```
+## [1] 1 3 5
+```
+
+---
+
+## `repeat` loops
+
+Repeat the loop until a `break` is encountered
+
+
+```r
+make_seq2 = function(from = 1, to = 1, by = 1) {
+  res = c(from)
+  cur = from
+  
+  repeat {
+    cur = cur + by
+    
+    if (cur &gt; to)
+      break
+    
+    res = c(res, cur)
+  }
+  
+  res
+}
+
+make_seq2(1, 6)
+```
+
+```
+## [1] 1 2 3 4 5 6
+```
+
+```r
+make_seq2(1, 6, 2)
+```
+
+```
+## [1] 1 3 5
+```
+
+---
+
+## Special keywords - `break` and `next`
+
+These are special actions that only work *inside* of a loop
+
+* `break` - ends the current **loop** (inner-most)
+* `next` - ends the current **iteration**
+
+.pull-left[
+
+```r
+f = function(x) {
+  res = c()
+  
+  for(i in x) {
+    if (i %% 2 == 0)
+      break
+    
+    res = c(res, i)
+  }
+  
+  res
+}
+
+f(1:10)
+```
+
+```
+## [1] 1
+```
+
+```r
+f(c(1,1,1,2,2,3))
+```
+
+```
+## [1] 1 1 1
+```
+]
+
+.pull-right[
+
+```r
+g = function(x) {
+  res = c()
+  
+  for(i in x) {
+    if (i %% 2 == 0)
+      next
+  
+    res = c(res,i)
+  }
+  
+  res
+}
+
+g(1:10)
+```
+
+```
+## [1] 1 3 5 7 9
+```
+
+```r
+g(c(1,1,1,2,2,3))
+```
+
+```
+## [1] 1 1 1 3
+```
+]
+
+
+---
+
+## Some helpful functions
+
+Often we want to use a loop across the indexes of an object and not the elements themselves. There are several useful functions to help you do this: `:`, `length`, `seq`, `seq_along`, `seq_len`, etc.
+
+.pull-left[
+
+```r
+4:7
+```
+
+```
+## [1] 4 5 6 7
+```
+
+```r
+length(4:7)
+```
+
+```
+## [1] 4
+```
+
+```r
+seq(4,7)
+```
+
+```
+## [1] 4 5 6 7
+```
+]
+
+.pull-right[
+
+```r
+seq_along(4:7)
+```
+
+```
+## [1] 1 2 3 4
+```
+
+```r
+seq_len(length(4:7))
+```
+
+```
+## [1] 1 2 3 4
+```
+
+```r
+seq(4,7,by=2)
+```
+
+```
+## [1] 4 6
+```
+]
+
+
+---
+
+## Avoid using `1:length(x)`
+
+A common loop construction you'll see in a lot of R code is using `1:length(x)` to generate a vector of index values for the vector `x`. 
+
+.pull-left[ .midi[
+
+```r
+f = function(x) {
+  for(i in 1:length(x)) {
+    print(i)
+  }
+}
+
+f(2:1)
+```
+
+```
+## [1] 1
+## [1] 2
+```
+
+```r
+f(2)
+```
+
+```
+## [1] 1
+```
+
+```r
+f(integer())
+```
+
+```
+## [1] 1
+## [1] 0
+```
+] ]
+
+.pull-right[
+
+```r
+g = function(x) {
+  for(i in seq_along(x)) {
+    print(i)
+  }
+}
+
+g(2:1)
+```
+
+```
+## [1] 1
+## [1] 2
+```
+
+```r
+g(2)
+```
+
+```
+## [1] 1
+```
+
+```r
+g(integer())
+```
+]
+
+--
+
+&lt;div&gt; 
+
+.pull-left[
+
+```r
+1:length(integer())
+```
+
+```
+## [1] 1 0
+```
+]
+.pull-right[
+
+```r
+seq_along(integer())
+```
+
+```
+## integer(0)
+```
+]
+
+&lt;/div&gt;
+
+
+
+---
+
+## Exercise 2
+
+Below is a vector containing all prime numbers between 2 and 100:
+
+.center[
+```r
+primes = c( 2,  3,  5,  7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 
+      43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97)
+```
+]
+
+If you were given the vector `x = c(3,4,12,19,23,51,61,63,78)`, write the R code necessary to print only the values of `x` that are *not* prime (without using subsetting or the `%in%` operator). 
+
+Your code should use *nested* loops to iterate through the vector of primes and `x`.
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "solarized-light",
+"highlightLines": true,
+"countIncrementalSlides": false,
+"ratio": "16:9"
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
