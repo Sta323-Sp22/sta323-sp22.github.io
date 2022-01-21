@@ -1,5 +1,5 @@
 ---
-title: "Lec 04 - NAs, functions, loops, and merge conflicts"
+title: "Lec 04 - NAs, functions, and loops"
 subtitle: "<br/> Statistical Programming"
 author: "Sta 323 | Spring 2022"
 date: "<br/> Dr. Colin Rundel"
