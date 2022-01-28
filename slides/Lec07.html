@@ -1,0 +1,2281 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Lec 07 - Tidy data &amp; dplyr</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Sta 323 | Spring 2022" />
+    <script src="libs/header-attrs/header-attrs.js"></script>
+    <link rel="stylesheet" href="slides.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Lec 07 - Tidy data &amp; dplyr
+## <br/> Statistical Programming
+### Sta 323 | Spring 2022
+### <br/> Dr. Colin Rundel
+
+---
+
+exclude: true
+
+
+
+---
+class: middle
+
+
+.center[
+&lt;img src="imgs/hex-tidyverse.png" width="40%" /&gt;
+]
+
+---
+
+## Tidy data
+
+.pull-left[
+&lt;img src="imgs/tidy1.png" width="70%" style="display: block; margin: auto;" /&gt;
+]
+
+--
+
+.pull-right[
+&lt;img src="imgs/tidy2.png" width="70%" style="display: block; margin: auto;" /&gt;
+]
+
+--
+
+&lt;img src="imgs/tidy3.png" width="30%" style="display: block; margin: auto;" /&gt;
+
+
+
+.footnote[ From R4DS - [tidy data](http://r4ds.had.co.nz/tidy-data.html) ]
+
+---
+
+## Tidy vs Untidy
+
+&gt; Happy families are all alike; every unhappy family is unhappy in its own way 
+&gt;
+&gt; — Leo Tolstoy, Anna Karenina
+
+--
+
+&lt;br/&gt;
+
+
+```
+## # A tibble: 317 × 7
+##    artist         track                   date.entered   wk1   wk2   wk3   wk4
+##    &lt;chr&gt;          &lt;chr&gt;                   &lt;date&gt;       &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
+##  1 2 Pac          Baby Don't Cry (Keep... 2000-02-26      87    82    72    77
+##  2 2Ge+her        The Hardest Part Of ... 2000-09-02      91    87    92    NA
+##  3 3 Doors Down   Kryptonite              2000-04-08      81    70    68    67
+##  4 3 Doors Down   Loser                   2000-10-21      76    76    72    69
+##  5 504 Boyz       Wobble Wobble           2000-04-15      57    34    25    17
+##  6 98^0           Give Me Just One Nig... 2000-08-19      51    39    34    26
+##  7 A*Teens        Dancing Queen           2000-07-08      97    97    96    95
+##  8 Aaliyah        I Don't Wanna           2000-01-29      84    62    51    41
+##  9 Aaliyah        Try Again               2000-03-18      59    53    38    28
+## 10 Adams, Yolanda Open My Heart           2000-08-26      76    76    74    69
+## # … with 307 more rows
+```
+
+&lt;br/&gt;&lt;br/&gt;
+
+.center[
+Is the above data set tidy?
+]
+
+---
+
+## More tidy vs untidy
+
+Is the following data tidy?
+
+
+
+.pull-left[
+
+```
+## List of 3
+##  $ :List of 8
+##   ..$ name      : chr "Luke Skywalker"
+##   ..$ height    : chr "172"
+##   ..$ mass      : chr "77"
+##   ..$ hair_color: chr "blond"
+##   ..$ skin_color: chr "fair"
+##   ..$ eye_color : chr "blue"
+##   ..$ birth_year: chr "19BBY"
+##   ..$ gender    : chr "male"
+##  $ :List of 8
+##   ..$ name      : chr "C-3PO"
+##   ..$ height    : chr "167"
+##   ..$ mass      : chr "75"
+##   ..$ hair_color: chr "n/a"
+##   ..$ skin_color: chr "gold"
+##   ..$ eye_color : chr "yellow"
+##   ..$ birth_year: chr "112BBY"
+##   ..$ gender    : chr "n/a"
+##  $ :List of 8
+##   ..$ name      : chr "R2-D2"
+##   ..$ height    : chr "96"
+##   ..$ mass      : chr "32"
+##   ..$ hair_color: chr "n/a"
+##   ..$ skin_color: chr "white, blue"
+##   ..$ eye_color : chr "red"
+##   ..$ birth_year: chr "33BBY"
+##   ..$ gender    : chr "n/a"
+```
+]
+
+.pull-right[
+
+```
+## List of 3
+##  $ :List of 8
+##   ..$ name      : chr "Darth Vader"
+##   ..$ height    : chr "202"
+##   ..$ mass      : chr "136"
+##   ..$ hair_color: chr "none"
+##   ..$ skin_color: chr "white"
+##   ..$ eye_color : chr "yellow"
+##   ..$ birth_year: chr "41.9BBY"
+##   ..$ gender    : chr "male"
+##  $ :List of 8
+##   ..$ name      : chr "Leia Organa"
+##   ..$ height    : chr "150"
+##   ..$ mass      : chr "49"
+##   ..$ hair_color: chr "brown"
+##   ..$ skin_color: chr "light"
+##   ..$ eye_color : chr "brown"
+##   ..$ birth_year: chr "19BBY"
+##   ..$ gender    : chr "female"
+##  $ :List of 8
+##   ..$ name      : chr "Owen Lars"
+##   ..$ height    : chr "178"
+##   ..$ mass      : chr "120"
+##   ..$ hair_color: chr "brown, grey"
+##   ..$ skin_color: chr "light"
+##   ..$ eye_color : chr "blue"
+##   ..$ birth_year: chr "52BBY"
+##   ..$ gender    : chr "male"
+```
+]
+
+---
+class: middle
+
+
+.center[
+&lt;img src="imgs/hex-tibble.png" width="40%" /&gt;
+]
+
+---
+
+## Modern data frames
+
+Hadley Wickham / RStudio have a package that modifies data frames to be a bit more modern. The core features of tibbles is to have a nicer printing method as well as being "surly" and "lazy".
+
+
+```r
+library(tibble)
+```
+
+
+
+.pull-left[
+
+```r
+iris
+```
+
+```
+##     Sepal.Length Sepal.Width Petal.Length
+## 1            5.1         3.5          1.4
+## 2            4.9         3.0          1.4
+## 3            4.7         3.2          1.3
+## 4            4.6         3.1          1.5
+## 5            5.0         3.6          1.4
+## 6            5.4         3.9          1.7
+## 7            4.6         3.4          1.4
+## 8            5.0         3.4          1.5
+## 9            4.4         2.9          1.4
+## 10           4.9         3.1          1.5
+## 11           5.4         3.7          1.5
+## 12           4.8         3.4          1.6
+## 13           4.8         3.0          1.4
+## 14           4.3         3.0          1.1
+## 15           5.8         4.0          1.2
+## 16           5.7         4.4          1.5
+## 17           5.4         3.9          1.3
+## 18           5.1         3.5          1.4
+## 19           5.7         3.8          1.7
+## 20           5.1         3.8          1.5
+## 21           5.4         3.4          1.7
+## 22           5.1         3.7          1.5
+## 23           4.6         3.6          1.0
+## 24           5.1         3.3          1.7
+## 25           4.8         3.4          1.9
+## 26           5.0         3.0          1.6
+## 27           5.0         3.4          1.6
+## 28           5.2         3.5          1.5
+## 29           5.2         3.4          1.4
+## 30           4.7         3.2          1.6
+## 31           4.8         3.1          1.6
+## 32           5.4         3.4          1.5
+## 33           5.2         4.1          1.5
+## 34           5.5         4.2          1.4
+## 35           4.9         3.1          1.5
+## 36           5.0         3.2          1.2
+## 37           5.5         3.5          1.3
+## 38           4.9         3.6          1.4
+## 39           4.4         3.0          1.3
+## 40           5.1         3.4          1.5
+## 41           5.0         3.5          1.3
+## 42           4.5         2.3          1.3
+## 43           4.4         3.2          1.3
+## 44           5.0         3.5          1.6
+## 45           5.1         3.8          1.9
+## 46           4.8         3.0          1.4
+## 47           5.1         3.8          1.6
+## 48           4.6         3.2          1.4
+## 49           5.3         3.7          1.5
+## 50           5.0         3.3          1.4
+## 51           7.0         3.2          4.7
+## 52           6.4         3.2          4.5
+## 53           6.9         3.1          4.9
+## 54           5.5         2.3          4.0
+## 55           6.5         2.8          4.6
+## 56           5.7         2.8          4.5
+## 57           6.3         3.3          4.7
+## 58           4.9         2.4          3.3
+## 59           6.6         2.9          4.6
+## 60           5.2         2.7          3.9
+## 61           5.0         2.0          3.5
+## 62           5.9         3.0          4.2
+## 63           6.0         2.2          4.0
+## 64           6.1         2.9          4.7
+## 65           5.6         2.9          3.6
+## 66           6.7         3.1          4.4
+## 67           5.6         3.0          4.5
+## 68           5.8         2.7          4.1
+## 69           6.2         2.2          4.5
+## 70           5.6         2.5          3.9
+## 71           5.9         3.2          4.8
+## 72           6.1         2.8          4.0
+## 73           6.3         2.5          4.9
+## 74           6.1         2.8          4.7
+## 75           6.4         2.9          4.3
+## 76           6.6         3.0          4.4
+## 77           6.8         2.8          4.8
+## 78           6.7         3.0          5.0
+## 79           6.0         2.9          4.5
+## 80           5.7         2.6          3.5
+## 81           5.5         2.4          3.8
+## 82           5.5         2.4          3.7
+## 83           5.8         2.7          3.9
+## 84           6.0         2.7          5.1
+## 85           5.4         3.0          4.5
+## 86           6.0         3.4          4.5
+## 87           6.7         3.1          4.7
+## 88           6.3         2.3          4.4
+## 89           5.6         3.0          4.1
+## 90           5.5         2.5          4.0
+## 91           5.5         2.6          4.4
+## 92           6.1         3.0          4.6
+## 93           5.8         2.6          4.0
+## 94           5.0         2.3          3.3
+## 95           5.6         2.7          4.2
+## 96           5.7         3.0          4.2
+## 97           5.7         2.9          4.2
+## 98           6.2         2.9          4.3
+## 99           5.1         2.5          3.0
+## 100          5.7         2.8          4.1
+## 101          6.3         3.3          6.0
+## 102          5.8         2.7          5.1
+## 103          7.1         3.0          5.9
+## 104          6.3         2.9          5.6
+## 105          6.5         3.0          5.8
+## 106          7.6         3.0          6.6
+## 107          4.9         2.5          4.5
+## 108          7.3         2.9          6.3
+## 109          6.7         2.5          5.8
+## 110          7.2         3.6          6.1
+## 111          6.5         3.2          5.1
+## 112          6.4         2.7          5.3
+## 113          6.8         3.0          5.5
+## 114          5.7         2.5          5.0
+## 115          5.8         2.8          5.1
+## 116          6.4         3.2          5.3
+## 117          6.5         3.0          5.5
+## 118          7.7         3.8          6.7
+## 119          7.7         2.6          6.9
+## 120          6.0         2.2          5.0
+## 121          6.9         3.2          5.7
+## 122          5.6         2.8          4.9
+## 123          7.7         2.8          6.7
+## 124          6.3         2.7          4.9
+## 125          6.7         3.3          5.7
+## 126          7.2         3.2          6.0
+## 127          6.2         2.8          4.8
+## 128          6.1         3.0          4.9
+## 129          6.4         2.8          5.6
+## 130          7.2         3.0          5.8
+## 131          7.4         2.8          6.1
+## 132          7.9         3.8          6.4
+## 133          6.4         2.8          5.6
+## 134          6.3         2.8          5.1
+## 135          6.1         2.6          5.6
+## 136          7.7         3.0          6.1
+## 137          6.3         3.4          5.6
+## 138          6.4         3.1          5.5
+## 139          6.0         3.0          4.8
+## 140          6.9         3.1          5.4
+## 141          6.7         3.1          5.6
+## 142          6.9         3.1          5.1
+## 143          5.8         2.7          5.1
+## 144          6.8         3.2          5.9
+## 145          6.7         3.3          5.7
+## 146          6.7         3.0          5.2
+## 147          6.3         2.5          5.0
+## 148          6.5         3.0          5.2
+## 149          6.2         3.4          5.4
+## 150          5.9         3.0          5.1
+##     Petal.Width    Species
+## 1           0.2     setosa
+## 2           0.2     setosa
+## 3           0.2     setosa
+## 4           0.2     setosa
+## 5           0.2     setosa
+## 6           0.4     setosa
+## 7           0.3     setosa
+## 8           0.2     setosa
+## 9           0.2     setosa
+## 10          0.1     setosa
+## 11          0.2     setosa
+## 12          0.2     setosa
+## 13          0.1     setosa
+## 14          0.1     setosa
+## 15          0.2     setosa
+## 16          0.4     setosa
+## 17          0.4     setosa
+## 18          0.3     setosa
+## 19          0.3     setosa
+## 20          0.3     setosa
+## 21          0.2     setosa
+## 22          0.4     setosa
+## 23          0.2     setosa
+## 24          0.5     setosa
+## 25          0.2     setosa
+## 26          0.2     setosa
+## 27          0.4     setosa
+## 28          0.2     setosa
+## 29          0.2     setosa
+## 30          0.2     setosa
+## 31          0.2     setosa
+## 32          0.4     setosa
+## 33          0.1     setosa
+## 34          0.2     setosa
+## 35          0.2     setosa
+## 36          0.2     setosa
+## 37          0.2     setosa
+## 38          0.1     setosa
+## 39          0.2     setosa
+## 40          0.2     setosa
+## 41          0.3     setosa
+## 42          0.3     setosa
+## 43          0.2     setosa
+## 44          0.6     setosa
+## 45          0.4     setosa
+## 46          0.3     setosa
+## 47          0.2     setosa
+## 48          0.2     setosa
+## 49          0.2     setosa
+## 50          0.2     setosa
+## 51          1.4 versicolor
+## 52          1.5 versicolor
+## 53          1.5 versicolor
+## 54          1.3 versicolor
+## 55          1.5 versicolor
+## 56          1.3 versicolor
+## 57          1.6 versicolor
+## 58          1.0 versicolor
+## 59          1.3 versicolor
+## 60          1.4 versicolor
+## 61          1.0 versicolor
+## 62          1.5 versicolor
+## 63          1.0 versicolor
+## 64          1.4 versicolor
+## 65          1.3 versicolor
+## 66          1.4 versicolor
+## 67          1.5 versicolor
+## 68          1.0 versicolor
+## 69          1.5 versicolor
+## 70          1.1 versicolor
+## 71          1.8 versicolor
+## 72          1.3 versicolor
+## 73          1.5 versicolor
+## 74          1.2 versicolor
+## 75          1.3 versicolor
+## 76          1.4 versicolor
+## 77          1.4 versicolor
+## 78          1.7 versicolor
+## 79          1.5 versicolor
+## 80          1.0 versicolor
+## 81          1.1 versicolor
+## 82          1.0 versicolor
+## 83          1.2 versicolor
+## 84          1.6 versicolor
+## 85          1.5 versicolor
+## 86          1.6 versicolor
+## 87          1.5 versicolor
+## 88          1.3 versicolor
+## 89          1.3 versicolor
+## 90          1.3 versicolor
+## 91          1.2 versicolor
+## 92          1.4 versicolor
+## 93          1.2 versicolor
+## 94          1.0 versicolor
+## 95          1.3 versicolor
+## 96          1.2 versicolor
+## 97          1.3 versicolor
+## 98          1.3 versicolor
+## 99          1.1 versicolor
+## 100         1.3 versicolor
+## 101         2.5  virginica
+## 102         1.9  virginica
+## 103         2.1  virginica
+## 104         1.8  virginica
+## 105         2.2  virginica
+## 106         2.1  virginica
+## 107         1.7  virginica
+## 108         1.8  virginica
+## 109         1.8  virginica
+## 110         2.5  virginica
+## 111         2.0  virginica
+## 112         1.9  virginica
+## 113         2.1  virginica
+## 114         2.0  virginica
+## 115         2.4  virginica
+## 116         2.3  virginica
+## 117         1.8  virginica
+## 118         2.2  virginica
+## 119         2.3  virginica
+## 120         1.5  virginica
+## 121         2.3  virginica
+## 122         2.0  virginica
+## 123         2.0  virginica
+## 124         1.8  virginica
+## 125         2.1  virginica
+## 126         1.8  virginica
+## 127         1.8  virginica
+## 128         1.8  virginica
+## 129         2.1  virginica
+## 130         1.6  virginica
+## 131         1.9  virginica
+## 132         2.0  virginica
+## 133         2.2  virginica
+## 134         1.5  virginica
+## 135         1.4  virginica
+## 136         2.3  virginica
+## 137         2.4  virginica
+## 138         1.8  virginica
+## 139         1.8  virginica
+## 140         2.1  virginica
+## 141         2.4  virginica
+## 142         2.3  virginica
+## 143         1.9  virginica
+## 144         2.3  virginica
+## 145         2.5  virginica
+## 146         2.3  virginica
+## 147         1.9  virginica
+## 148         2.0  virginica
+## 149         2.3  virginica
+## 150         1.8  virginica
+```
+]
+
+.pull-right[
+
+```r
+(tbl_iris = as_tibble(iris))
+```
+
+```
+## # A tibble: 150 × 5
+##    Sepal.Length Sepal.Width Petal.Length
+##           &lt;dbl&gt;       &lt;dbl&gt;        &lt;dbl&gt;
+##  1          5.1         3.5          1.4
+##  2          4.9         3            1.4
+##  3          4.7         3.2          1.3
+##  4          4.6         3.1          1.5
+##  5          5           3.6          1.4
+##  6          5.4         3.9          1.7
+##  7          4.6         3.4          1.4
+##  8          5           3.4          1.5
+##  9          4.4         2.9          1.4
+## 10          4.9         3.1          1.5
+## # … with 140 more rows, and 2 more variables:
+## #   Petal.Width &lt;dbl&gt;, Species &lt;fct&gt;
+```
+]
+
+
+
+---
+
+## Tibbles are lazy
+
+By default, subsetting tibbles always results in another tibble (`$` or `[[` can still be used to subset for a specific column).
+
+
+```r
+tbl_iris[1,]
+```
+
+```
+## # A tibble: 1 × 5
+##   Sepal.Length Sepal.Width Petal.Length Petal.Width Species
+##          &lt;dbl&gt;       &lt;dbl&gt;        &lt;dbl&gt;       &lt;dbl&gt; &lt;fct&gt;  
+## 1          5.1         3.5          1.4         0.2 setosa
+```
+
+--
+
+.pull-left[
+
+```r
+tbl_iris[,1]
+```
+
+```
+## # A tibble: 150 × 1
+##    Sepal.Length
+##           &lt;dbl&gt;
+##  1          5.1
+##  2          4.9
+##  3          4.7
+##  4          4.6
+##  5          5  
+##  6          5.4
+##  7          4.6
+##  8          5  
+##  9          4.4
+## 10          4.9
+## # … with 140 more rows
+```
+]
+
+.pull-right[
+
+```r
+tbl_iris[[1]]
+```
+
+```
+##   [1] 5.1 4.9 4.7 4.6 5.0 5.4 4.6 5.0 4.4 4.9 5.4 4.8 4.8 4.3 5.8 5.7 5.4 5.1
+##  [19] 5.7 5.1 5.4 5.1 4.6 5.1 4.8 5.0 5.0 5.2 5.2 4.7 4.8 5.4 5.2 5.5 4.9 5.0
+##  [37] 5.5 4.9 4.4 5.1 5.0 4.5 4.4 5.0 5.1 4.8 5.1 4.6 5.3 5.0 7.0 6.4 6.9 5.5
+##  [55] 6.5 5.7 6.3 4.9 6.6 5.2 5.0 5.9 6.0 6.1 5.6 6.7 5.6 5.8 6.2 5.6 5.9 6.1
+##  [73] 6.3 6.1 6.4 6.6 6.8 6.7 6.0 5.7 5.5 5.5 5.8 6.0 5.4 6.0 6.7 6.3 5.6 5.5
+##  [91] 5.5 6.1 5.8 5.0 5.6 5.7 5.7 6.2 5.1 5.7 6.3 5.8 7.1 6.3 6.5 7.6 4.9 7.3
+## [109] 6.7 7.2 6.5 6.4 6.8 5.7 5.8 6.4 6.5 7.7 7.7 6.0 6.9 5.6 7.7 6.3 6.7 7.2
+## [127] 6.2 6.1 6.4 7.2 7.4 7.9 6.4 6.3 6.1 7.7 6.3 6.4 6.0 6.9 6.7 6.9 5.8 6.8
+## [145] 6.7 6.7 6.3 6.5 6.2 5.9
+```
+
+```r
+head(tbl_iris$Species)
+```
+
+```
+## [1] setosa setosa setosa setosa setosa setosa
+## Levels: setosa versicolor virginica
+```
+]
+
+
+---
+
+## More laziness - partial matching
+
+Tibbles do not use partial matching when the `$` operator is used.
+
+.pull-left[
+
+```r
+head( iris$Sp )
+```
+
+```
+## [1] setosa setosa setosa setosa setosa setosa
+## Levels: setosa versicolor virginica
+```
+
+```r
+head( iris$Species )
+```
+
+```
+## [1] setosa setosa setosa setosa setosa setosa
+## Levels: setosa versicolor virginica
+```
+]
+--
+
+.pull-right[
+
+```r
+head( tbl_iris$Sp )
+```
+
+```
+## Warning: Unknown or uninitialised column: `Sp`.
+```
+
+```
+## NULL
+```
+
+```r
+head( tbl_iris$Species )
+```
+
+```
+## [1] setosa setosa setosa setosa setosa setosa
+## Levels: setosa versicolor virginica
+```
+]
+
+---
+
+## More laziness - stringsAsFactors
+
+Tibbles also have always had `stringsAsFactors = FALSE` as default behavior.
+
+.pull-left[
+
+```r
+(t = tibble(
+  x = 1:3, 
+  y = c("A","B","C"),
+  z = factor(c("X","Y","Z"))
+))
+```
+
+```
+## # A tibble: 3 × 3
+##       x y     z    
+##   &lt;int&gt; &lt;chr&gt; &lt;fct&gt;
+## 1     1 A     X    
+## 2     2 B     Y    
+## 3     3 C     Z
+```
+]
+
+.pull-right[
+
+```r
+(d = data.frame(
+  x = 1:3, 
+  y = c("A","B","C"),
+  z = factor(c("X","Y","Z")),
+  stringsAsFactors = TRUE
+))
+```
+
+```
+##   x y z
+## 1 1 A X
+## 2 2 B Y
+## 3 3 C Z
+```
+]
+
+&lt;div/&gt;
+
+--
+
+.pull-left[
+
+```r
+str(t)
+```
+
+```
+## tibble [3 × 3] (S3: tbl_df/tbl/data.frame)
+##  $ x: int [1:3] 1 2 3
+##  $ y: chr [1:3] "A" "B" "C"
+##  $ z: Factor w/ 3 levels "X","Y","Z": 1 2 3
+```
+]
+
+.pull-right[
+
+```r
+str(d)
+```
+
+```
+## 'data.frame':	3 obs. of  3 variables:
+##  $ x: int  1 2 3
+##  $ y: Factor w/ 3 levels "A","B","C": 1 2 3
+##  $ z: Factor w/ 3 levels "X","Y","Z": 1 2 3
+```
+]
+
+---
+
+## Tibbles and length coercion
+
+.pull-left[
+
+```r
+data.frame(x = 1:4, y = 1)
+```
+
+```
+##   x y
+## 1 1 1
+## 2 2 1
+## 3 3 1
+## 4 4 1
+```
+]
+
+.pull-right[
+
+```r
+tibble(x = 1:4, y = 1)
+```
+
+```
+## # A tibble: 4 × 2
+##       x     y
+##   &lt;int&gt; &lt;dbl&gt;
+## 1     1     1
+## 2     2     1
+## 3     3     1
+## 4     4     1
+```
+]
+
+--
+
+&lt;div&gt;
+.pull-left[
+
+```r
+data.frame(x = 1:4, y = 1:2)
+```
+
+```
+##   x y
+## 1 1 1
+## 2 2 2
+## 3 3 1
+## 4 4 2
+```
+]
+
+.pull-right[
+
+```r
+tibble(x = 1:4, y = 1:2)
+```
+
+```
+## Error: Tibble columns must have compatible sizes.
+## * Size 4: Existing data.
+## * Size 2: Column `y`.
+## ℹ Only values of size one are recycled.
+```
+]
+&lt;/div&gt;
+
+--
+
+&lt;div&gt;
+.pull-left[
+
+```r
+data.frame(x = 1:4, y = 1:3)
+```
+
+```
+## Error in data.frame(x = 1:4, y = 1:3): arguments imply differing number of rows: 4, 3
+```
+]
+
+.pull-right[
+
+```r
+tibble(x = 1:4, y = 1:3)
+```
+
+```
+## Error: Tibble columns must have compatible sizes.
+## * Size 4: Existing data.
+## * Size 3: Column `y`.
+## ℹ Only values of size one are recycled.
+```
+]
+&lt;/div&gt;
+
+--
+
+Only vectors with length 1 will undergo length coercion - everything else will throw an error.
+
+
+---
+
+## Tibbles and S3
+
+.pull-left[
+
+```r
+t = tibble(
+  x = 1:3, 
+  y = c("A","B","C")
+)
+
+class(t)
+```
+
+```
+## [1] "tbl_df"     "tbl"        "data.frame"
+```
+]
+
+.pull-right[
+
+```r
+d = data.frame(
+  x = 1:3, 
+  y = c("A","B","C")
+)
+
+class(d)
+```
+
+```
+## [1] "data.frame"
+```
+]
+
+--
+
+
+```r
+methods(class="tbl_df")
+```
+
+```
+##  [1] [             [[            [[&lt;-          [&lt;-           $            
+##  [6] $&lt;-           as.data.frame coerce        initialize    names&lt;-      
+## [11] Ops           row.names&lt;-   show          slotsFromS3   str          
+## [16] tbl_sum      
+## see '?methods' for accessing help and source code
+```
+
+```r
+methods(class="tbl")
+```
+
+```
+##  [1] [[&lt;-        [&lt;-         $&lt;-         coerce      format      glimpse    
+##  [7] initialize  Ops         print       show        slotsFromS3 tbl_sum    
+## see '?methods' for accessing help and source code
+```
+
+---
+
+
+```r
+d = tibble(
+  x = rnorm(100),
+  y = 3 + x + rnorm(100, sd = 0.1) 
+)
+```
+
+
+```r
+lm(y~x, data = d)
+```
+
+```
+## 
+## Call:
+## lm(formula = y ~ x, data = d)
+## 
+## Coefficients:
+## (Intercept)            x  
+##       3.011        0.996
+```
+
+
+&lt;br/&gt; &lt;br/&gt;
+
+.center[
+Why did this work?
+]
+
+---
+class: middle
+
+
+&lt;img src="imgs/hex-magrittr.png" width="35%" style="display: block; margin: auto;" /&gt;
+
+.center[ .large[
+magrittr
+] ]
+
+---
+
+## What is a pipe
+
+&gt; In software engineering, a pipeline consists of a chain of processing elements (processes, threads, coroutines, functions, etc.), arranged so that the output of each 
+element is the input of the next;
+&gt; - [Wikipedia - Pipeline (software)](https://en.wikipedia.org/wiki/Pipeline_%28software%29)
+
+--
+
+Magrittr's pipe is a new infix operator that allows us to link two functions together in a way that is readable from left to right.
+
+
+The two code examples below are equivalent, 
+
+.pull-left[
+```r
+f(g(x=1, y=2), n=2)
+```
+]
+
+.pull-right[
+```r
+g(x=1, y=2) %&gt;% f(n=2)
+```
+
+]
+
+
+---
+
+## Readability
+
+Consider the following sequence of actions that describe the process of getting to campus in the morning:
+
+I need to find my key, then unlock my car, then start my car, then drive to school, then park.
+
+--
+
+&lt;br/&gt;
+
+Expressed as a set of nested functions in R pseudocode this would look like:
+
+
+```r
+park(drive(start_car(find("keys")), to="campus"))
+```
+
+--
+&lt;br/&gt;
+
+Writing it out using pipes give it a more natural (and easier to read) structure:
+
+
+```r
+find("keys") %&gt;%
+    start_car() %&gt;%
+    drive(to="campus") %&gt;%
+    park()
+```
+
+---
+
+## Approaches
+
+All of the following are fine, it comes down to personal preference:
+
+&lt;br/&gt;
+Nested:
+
+```r
+h( g( f(x), y=1), z=1 )
+```
+
+&lt;br/&gt;
+Piped:
+
+```r
+f(x) %&gt;% 
+  g(y=1) %&gt;% 
+  h(z=1)
+```
+
+&lt;br/&gt;
+Intermediate:
+
+```r
+res = f(x)
+res = g(res, y=1)
+res = h(res, z=1)
+```
+
+---
+
+## What about other arguments?
+
+Sometimes we want to send our results to an function argument other than first one or we want to use the previous result for multiple arguments. In these cases we can refer to the previous result using `.`.
+
+--
+
+
+```r
+data.frame(a = 1:3, b = 3:1) %&gt;% lm(a~b, data=.)
+```
+
+```
+## 
+## Call:
+## lm(formula = a ~ b, data = .)
+## 
+## Coefficients:
+## (Intercept)            b  
+##           4           -1
+```
+
+--
+
+
+```r
+data.frame(a = 1:3, b = 3:1) %&gt;% .[[1]]
+```
+
+```
+## [1] 1 2 3
+```
+
+--
+
+
+```r
+data.frame(a = 1:3, b = 3:1) %&gt;% .[[length(.)]]
+```
+
+```
+## [1] 3 2 1
+```
+
+---
+
+## The base R pipe
+
+As of R v4.1.0 a pipe operator has been added to the base language in R, it is implemented as `|&gt;`.
+
+
+```r
+1:10 |&gt; cumsum()
+```
+
+```
+##  [1]  1  3  6 10 15 21 28 36 45 55
+```
+
+```r
+1:10 |&gt; cumsum() |&gt; mean()
+```
+
+```
+## [1] 22
+```
+
+--
+
+The current version of RStudio on the departmental servers is v4.0.5 but you can install a newer version on your personal machine if you want to try it out.
+
+For this reason and a couple of other caveats listed below we will be relying on the magrittr pipe for this course.
+
+--
+
+Base R pipe considerations:
+
+* Depending an R version &gt;= 4.1 is a harder dependency than depending on the magrittr package
+
+* `|&gt;` does not support using `.` to pass returned values to other argument positions
+
+* `|&gt;` will likely have less overhead than `%&gt;%` but the difference is unlikely to matter in practice
+
+
+
+---
+class: middle
+
+.center[
+&lt;img src="imgs/hex-dplyr.png" width="40%" /&gt;
+]
+
+---
+
+## A Grammar of Data Manipulation
+
+dplyr is based on the concepts of functions as verbs that manipulate data frames.
+
+
+Core single data frame functions / verbs:
+
+* `filter()` / `slice()`: pick rows based on criteria
+* `select()` / `rename()`: select columns by name
+* `pull()`: grab a column as a vector
+* `arrange()`: reorder rows
+* `mutate()` / `transmute()`: create or modify columns
+* `distinct()`: filter for unique rows
+* `summarise()` / `count()`: reduce variables to values
+* `group_by()` / `ungroup()`: modify other verbs to act on subsets
+* `relocate()`: change column order
+* ... (many more)
+
+---
+
+## dplyr rules
+
+1. First argument is *always* a data frame
+
+2. Subsequent arguments say what to do with that data frame
+
+3. *Always* return a data frame
+
+4. Don't modify in place
+
+5. Lazy evaluation magic
+
+
+---
+
+## Example Data
+
+We will demonstrate dplyr's functionality using the nycflights13 data.
+
+
+```r
+library(dplyr)
+library(nycflights13)
+
+flights
+```
+
+```
+## # A tibble: 336,776 × 19
+##     year month   day dep_time sched_dep_time dep_delay arr_time sched_arr_time
+##    &lt;int&gt; &lt;int&gt; &lt;int&gt;    &lt;int&gt;          &lt;int&gt;     &lt;dbl&gt;    &lt;int&gt;          &lt;int&gt;
+##  1  2013     1     1      517            515         2      830            819
+##  2  2013     1     1      533            529         4      850            830
+##  3  2013     1     1      542            540         2      923            850
+##  4  2013     1     1      544            545        -1     1004           1022
+##  5  2013     1     1      554            600        -6      812            837
+##  6  2013     1     1      554            558        -4      740            728
+##  7  2013     1     1      555            600        -5      913            854
+##  8  2013     1     1      557            600        -3      709            723
+##  9  2013     1     1      557            600        -3      838            846
+## 10  2013     1     1      558            600        -2      753            745
+## # … with 336,766 more rows, and 11 more variables: arr_delay &lt;dbl&gt;,
+## #   carrier &lt;chr&gt;, flight &lt;int&gt;, tailnum &lt;chr&gt;, origin &lt;chr&gt;, dest &lt;chr&gt;,
+## #   air_time &lt;dbl&gt;, distance &lt;dbl&gt;, hour &lt;dbl&gt;, minute &lt;dbl&gt;, time_hour &lt;dttm&gt;
+```
+
+---
+
+## filter() - March flights
+
+
+```r
+flights %&gt;% filter(month == 3)
+```
+
+```
+## # A tibble: 28,834 × 19
+##     year month   day dep_time sched_dep_time dep_delay arr_time sched_arr_time
+##    &lt;int&gt; &lt;int&gt; &lt;int&gt;    &lt;int&gt;          &lt;int&gt;     &lt;dbl&gt;    &lt;int&gt;          &lt;int&gt;
+##  1  2013     3     1        4           2159       125      318             56
+##  2  2013     3     1       50           2358        52      526            438
+##  3  2013     3     1      117           2245       152      223           2354
+##  4  2013     3     1      454            500        -6      633            648
+##  5  2013     3     1      505            515       -10      746            810
+##  6  2013     3     1      521            530        -9      813            827
+##  7  2013     3     1      537            540        -3      856            850
+##  8  2013     3     1      541            545        -4     1014           1023
+##  9  2013     3     1      549            600       -11      639            703
+## 10  2013     3     1      550            600       -10      747            801
+## # … with 28,824 more rows, and 11 more variables: arr_delay &lt;dbl&gt;,
+## #   carrier &lt;chr&gt;, flight &lt;int&gt;, tailnum &lt;chr&gt;, origin &lt;chr&gt;, dest &lt;chr&gt;,
+## #   air_time &lt;dbl&gt;, distance &lt;dbl&gt;, hour &lt;dbl&gt;, minute &lt;dbl&gt;, time_hour &lt;dttm&gt;
+```
+
+---
+
+## filter() - Flights in the first 7 days of March
+
+
+```r
+flights %&gt;% filter(month == 3, day &lt;= 7)
+```
+
+```
+## # A tibble: 6,530 × 19
+##     year month   day dep_time sched_dep_time dep_delay arr_time sched_arr_time
+##    &lt;int&gt; &lt;int&gt; &lt;int&gt;    &lt;int&gt;          &lt;int&gt;     &lt;dbl&gt;    &lt;int&gt;          &lt;int&gt;
+##  1  2013     3     1        4           2159       125      318             56
+##  2  2013     3     1       50           2358        52      526            438
+##  3  2013     3     1      117           2245       152      223           2354
+##  4  2013     3     1      454            500        -6      633            648
+##  5  2013     3     1      505            515       -10      746            810
+##  6  2013     3     1      521            530        -9      813            827
+##  7  2013     3     1      537            540        -3      856            850
+##  8  2013     3     1      541            545        -4     1014           1023
+##  9  2013     3     1      549            600       -11      639            703
+## 10  2013     3     1      550            600       -10      747            801
+## # … with 6,520 more rows, and 11 more variables: arr_delay &lt;dbl&gt;,
+## #   carrier &lt;chr&gt;, flight &lt;int&gt;, tailnum &lt;chr&gt;, origin &lt;chr&gt;, dest &lt;chr&gt;,
+## #   air_time &lt;dbl&gt;, distance &lt;dbl&gt;, hour &lt;dbl&gt;, minute &lt;dbl&gt;, time_hour &lt;dttm&gt;
+```
+
+---
+
+## filter() - Flights to LAX *or* JFK in March
+
+
+```r
+flights %&gt;% filter(dest == "LAX" | dest == "JFK", month==3)
+```
+
+```
+## # A tibble: 1,178 × 19
+##     year month   day dep_time sched_dep_time dep_delay arr_time sched_arr_time
+##    &lt;int&gt; &lt;int&gt; &lt;int&gt;    &lt;int&gt;          &lt;int&gt;     &lt;dbl&gt;    &lt;int&gt;          &lt;int&gt;
+##  1  2013     3     1      607            610        -3      832            925
+##  2  2013     3     1      629            632        -3      844            952
+##  3  2013     3     1      657            700        -3      953           1034
+##  4  2013     3     1      714            715        -1      939           1037
+##  5  2013     3     1      716            710         6      958           1035
+##  6  2013     3     1      727            730        -3     1007           1100
+##  7  2013     3     1      836            840        -4     1111           1157
+##  8  2013     3     1      857            900        -3     1202           1221
+##  9  2013     3     1      903            900         3     1157           1220
+## 10  2013     3     1      904            831        33     1150           1151
+## # … with 1,168 more rows, and 11 more variables: arr_delay &lt;dbl&gt;,
+## #   carrier &lt;chr&gt;, flight &lt;int&gt;, tailnum &lt;chr&gt;, origin &lt;chr&gt;, dest &lt;chr&gt;,
+## #   air_time &lt;dbl&gt;, distance &lt;dbl&gt;, hour &lt;dbl&gt;, minute &lt;dbl&gt;, time_hour &lt;dttm&gt;
+```
+
+---
+
+## slice() - First 10 flights
+
+
+```r
+flights %&gt;% slice(1:10)
+```
+
+```
+## # A tibble: 10 × 19
+##     year month   day dep_time sched_dep_time dep_delay arr_time sched_arr_time
+##    &lt;int&gt; &lt;int&gt; &lt;int&gt;    &lt;int&gt;          &lt;int&gt;     &lt;dbl&gt;    &lt;int&gt;          &lt;int&gt;
+##  1  2013     1     1      517            515         2      830            819
+##  2  2013     1     1      533            529         4      850            830
+##  3  2013     1     1      542            540         2      923            850
+##  4  2013     1     1      544            545        -1     1004           1022
+##  5  2013     1     1      554            600        -6      812            837
+##  6  2013     1     1      554            558        -4      740            728
+##  7  2013     1     1      555            600        -5      913            854
+##  8  2013     1     1      557            600        -3      709            723
+##  9  2013     1     1      557            600        -3      838            846
+## 10  2013     1     1      558            600        -2      753            745
+## # … with 11 more variables: arr_delay &lt;dbl&gt;, carrier &lt;chr&gt;, flight &lt;int&gt;,
+## #   tailnum &lt;chr&gt;, origin &lt;chr&gt;, dest &lt;chr&gt;, air_time &lt;dbl&gt;, distance &lt;dbl&gt;,
+## #   hour &lt;dbl&gt;, minute &lt;dbl&gt;, time_hour &lt;dttm&gt;
+```
+
+---
+
+## slice() - Last 5 flights
+
+
+```r
+flights %&gt;% slice((n()-4):n())
+```
+
+```
+## # A tibble: 5 × 19
+##    year month   day dep_time sched_dep_time dep_delay arr_time sched_arr_time
+##   &lt;int&gt; &lt;int&gt; &lt;int&gt;    &lt;int&gt;          &lt;int&gt;     &lt;dbl&gt;    &lt;int&gt;          &lt;int&gt;
+## 1  2013     9    30       NA           1455        NA       NA           1634
+## 2  2013     9    30       NA           2200        NA       NA           2312
+## 3  2013     9    30       NA           1210        NA       NA           1330
+## 4  2013     9    30       NA           1159        NA       NA           1344
+## 5  2013     9    30       NA            840        NA       NA           1020
+## # … with 11 more variables: arr_delay &lt;dbl&gt;, carrier &lt;chr&gt;, flight &lt;int&gt;,
+## #   tailnum &lt;chr&gt;, origin &lt;chr&gt;, dest &lt;chr&gt;, air_time &lt;dbl&gt;, distance &lt;dbl&gt;,
+## #   hour &lt;dbl&gt;, minute &lt;dbl&gt;, time_hour &lt;dttm&gt;
+```
+
+---
+
+
+```r
+flights %&gt;% slice_tail(n = 5)
+```
+
+```
+## # A tibble: 5 × 19
+##    year month   day dep_time sched_dep_time dep_delay arr_time sched_arr_time
+##   &lt;int&gt; &lt;int&gt; &lt;int&gt;    &lt;int&gt;          &lt;int&gt;     &lt;dbl&gt;    &lt;int&gt;          &lt;int&gt;
+## 1  2013     9    30       NA           1455        NA       NA           1634
+## 2  2013     9    30       NA           2200        NA       NA           2312
+## 3  2013     9    30       NA           1210        NA       NA           1330
+## 4  2013     9    30       NA           1159        NA       NA           1344
+## 5  2013     9    30       NA            840        NA       NA           1020
+## # … with 11 more variables: arr_delay &lt;dbl&gt;, carrier &lt;chr&gt;, flight &lt;int&gt;,
+## #   tailnum &lt;chr&gt;, origin &lt;chr&gt;, dest &lt;chr&gt;, air_time &lt;dbl&gt;, distance &lt;dbl&gt;,
+## #   hour &lt;dbl&gt;, minute &lt;dbl&gt;, time_hour &lt;dttm&gt;
+```
+
+---
+
+## select() - Individual Columns
+
+
+```r
+flights %&gt;% select(year, month, day)
+```
+
+```
+## # A tibble: 336,776 × 3
+##     year month   day
+##    &lt;int&gt; &lt;int&gt; &lt;int&gt;
+##  1  2013     1     1
+##  2  2013     1     1
+##  3  2013     1     1
+##  4  2013     1     1
+##  5  2013     1     1
+##  6  2013     1     1
+##  7  2013     1     1
+##  8  2013     1     1
+##  9  2013     1     1
+## 10  2013     1     1
+## # … with 336,766 more rows
+```
+
+---
+
+## select() - Exclude Columns
+
+
+```r
+flights %&gt;% select(-year, -month, -day)
+```
+
+```
+## # A tibble: 336,776 × 16
+##    dep_time sched_dep_time dep_delay arr_time sched_arr_time arr_delay carrier
+##       &lt;int&gt;          &lt;int&gt;     &lt;dbl&gt;    &lt;int&gt;          &lt;int&gt;     &lt;dbl&gt; &lt;chr&gt;  
+##  1      517            515         2      830            819        11 UA     
+##  2      533            529         4      850            830        20 UA     
+##  3      542            540         2      923            850        33 AA     
+##  4      544            545        -1     1004           1022       -18 B6     
+##  5      554            600        -6      812            837       -25 DL     
+##  6      554            558        -4      740            728        12 UA     
+##  7      555            600        -5      913            854        19 B6     
+##  8      557            600        -3      709            723       -14 EV     
+##  9      557            600        -3      838            846        -8 B6     
+## 10      558            600        -2      753            745         8 AA     
+## # … with 336,766 more rows, and 9 more variables: flight &lt;int&gt;, tailnum &lt;chr&gt;,
+## #   origin &lt;chr&gt;, dest &lt;chr&gt;, air_time &lt;dbl&gt;, distance &lt;dbl&gt;, hour &lt;dbl&gt;,
+## #   minute &lt;dbl&gt;, time_hour &lt;dttm&gt;
+```
+
+---
+
+## select() - Ranges
+
+
+```r
+flights %&gt;% select(year:day)
+```
+
+```
+## # A tibble: 336,776 × 3
+##     year month   day
+##    &lt;int&gt; &lt;int&gt; &lt;int&gt;
+##  1  2013     1     1
+##  2  2013     1     1
+##  3  2013     1     1
+##  4  2013     1     1
+##  5  2013     1     1
+##  6  2013     1     1
+##  7  2013     1     1
+##  8  2013     1     1
+##  9  2013     1     1
+## 10  2013     1     1
+## # … with 336,766 more rows
+```
+
+---
+
+## select() - Exclusion Ranges
+
+
+```r
+flights %&gt;% select(-(year:day))
+```
+
+```
+## # A tibble: 336,776 × 16
+##    dep_time sched_dep_time dep_delay arr_time sched_arr_time arr_delay carrier
+##       &lt;int&gt;          &lt;int&gt;     &lt;dbl&gt;    &lt;int&gt;          &lt;int&gt;     &lt;dbl&gt; &lt;chr&gt;  
+##  1      517            515         2      830            819        11 UA     
+##  2      533            529         4      850            830        20 UA     
+##  3      542            540         2      923            850        33 AA     
+##  4      544            545        -1     1004           1022       -18 B6     
+##  5      554            600        -6      812            837       -25 DL     
+##  6      554            558        -4      740            728        12 UA     
+##  7      555            600        -5      913            854        19 B6     
+##  8      557            600        -3      709            723       -14 EV     
+##  9      557            600        -3      838            846        -8 B6     
+## 10      558            600        -2      753            745         8 AA     
+## # … with 336,766 more rows, and 9 more variables: flight &lt;int&gt;, tailnum &lt;chr&gt;,
+## #   origin &lt;chr&gt;, dest &lt;chr&gt;, air_time &lt;dbl&gt;, distance &lt;dbl&gt;, hour &lt;dbl&gt;,
+## #   minute &lt;dbl&gt;, time_hour &lt;dttm&gt;
+```
+
+---
+
+## select() - Matching
+
+
+```r
+flights %&gt;% select(contains("dep"), 
+                   contains("arr"))
+```
+
+```
+## # A tibble: 336,776 × 7
+##    dep_time sched_dep_time dep_delay arr_time sched_arr_time arr_delay carrier
+##       &lt;int&gt;          &lt;int&gt;     &lt;dbl&gt;    &lt;int&gt;          &lt;int&gt;     &lt;dbl&gt; &lt;chr&gt;  
+##  1      517            515         2      830            819        11 UA     
+##  2      533            529         4      850            830        20 UA     
+##  3      542            540         2      923            850        33 AA     
+##  4      544            545        -1     1004           1022       -18 B6     
+##  5      554            600        -6      812            837       -25 DL     
+##  6      554            558        -4      740            728        12 UA     
+##  7      555            600        -5      913            854        19 B6     
+##  8      557            600        -3      709            723       -14 EV     
+##  9      557            600        -3      838            846        -8 B6     
+## 10      558            600        -2      753            745         8 AA     
+## # … with 336,766 more rows
+```
+
+---
+
+
+```r
+flights %&gt;% select(starts_with("dep"), 
+                   starts_with("arr"))
+```
+
+```
+## # A tibble: 336,776 × 4
+##    dep_time dep_delay arr_time arr_delay
+##       &lt;int&gt;     &lt;dbl&gt;    &lt;int&gt;     &lt;dbl&gt;
+##  1      517         2      830        11
+##  2      533         4      850        20
+##  3      542         2      923        33
+##  4      544        -1     1004       -18
+##  5      554        -6      812       -25
+##  6      554        -4      740        12
+##  7      555        -5      913        19
+##  8      557        -3      709       -14
+##  9      557        -3      838        -8
+## 10      558        -2      753         8
+## # … with 336,766 more rows
+```
+
+.footnote[
+Other helpers provide by [tidyselect](https://tidyselect.r-lib.org/): 
+
+`starts_with`, `ends_with`, `everything`, `matches`, `num_range`, `one_of`, `everything`, `last_col`.
+]
+---
+
+## select() + where() - Get numeric columns
+
+
+```r
+flights %&gt;% select(where(is.numeric))
+```
+
+```
+## # A tibble: 336,776 × 14
+##     year month   day dep_time sched_dep_time dep_delay arr_time sched_arr_time
+##    &lt;int&gt; &lt;int&gt; &lt;int&gt;    &lt;int&gt;          &lt;int&gt;     &lt;dbl&gt;    &lt;int&gt;          &lt;int&gt;
+##  1  2013     1     1      517            515         2      830            819
+##  2  2013     1     1      533            529         4      850            830
+##  3  2013     1     1      542            540         2      923            850
+##  4  2013     1     1      544            545        -1     1004           1022
+##  5  2013     1     1      554            600        -6      812            837
+##  6  2013     1     1      554            558        -4      740            728
+##  7  2013     1     1      555            600        -5      913            854
+##  8  2013     1     1      557            600        -3      709            723
+##  9  2013     1     1      557            600        -3      838            846
+## 10  2013     1     1      558            600        -2      753            745
+## # … with 336,766 more rows, and 6 more variables: arr_delay &lt;dbl&gt;,
+## #   flight &lt;int&gt;, air_time &lt;dbl&gt;, distance &lt;dbl&gt;, hour &lt;dbl&gt;, minute &lt;dbl&gt;
+```
+
+
+--
+
+
+```r
+flights %&gt;% select(where(function(x) !is.numeric(x)))
+```
+
+```
+## # A tibble: 336,776 × 5
+##    carrier tailnum origin dest  time_hour          
+##    &lt;chr&gt;   &lt;chr&gt;   &lt;chr&gt;  &lt;chr&gt; &lt;dttm&gt;             
+##  1 UA      N14228  EWR    IAH   2013-01-01 05:00:00
+##  2 UA      N24211  LGA    IAH   2013-01-01 05:00:00
+##  3 AA      N619AA  JFK    MIA   2013-01-01 05:00:00
+##  4 B6      N804JB  JFK    BQN   2013-01-01 05:00:00
+##  5 DL      N668DN  LGA    ATL   2013-01-01 06:00:00
+##  6 UA      N39463  EWR    ORD   2013-01-01 05:00:00
+##  7 B6      N516JB  EWR    FLL   2013-01-01 06:00:00
+##  8 EV      N829AS  LGA    IAD   2013-01-01 06:00:00
+##  9 B6      N593JB  JFK    MCO   2013-01-01 06:00:00
+## 10 AA      N3ALAA  LGA    ORD   2013-01-01 06:00:00
+## # … with 336,766 more rows
+```
+
+---
+
+## relocate - to the front
+
+
+```r
+flights %&gt;% relocate(carrier, origin, dest)
+```
+
+```
+## # A tibble: 336,776 × 19
+##    carrier origin dest   year month   day dep_time sched_dep_time dep_delay
+##    &lt;chr&gt;   &lt;chr&gt;  &lt;chr&gt; &lt;int&gt; &lt;int&gt; &lt;int&gt;    &lt;int&gt;          &lt;int&gt;     &lt;dbl&gt;
+##  1 UA      EWR    IAH    2013     1     1      517            515         2
+##  2 UA      LGA    IAH    2013     1     1      533            529         4
+##  3 AA      JFK    MIA    2013     1     1      542            540         2
+##  4 B6      JFK    BQN    2013     1     1      544            545        -1
+##  5 DL      LGA    ATL    2013     1     1      554            600        -6
+##  6 UA      EWR    ORD    2013     1     1      554            558        -4
+##  7 B6      EWR    FLL    2013     1     1      555            600        -5
+##  8 EV      LGA    IAD    2013     1     1      557            600        -3
+##  9 B6      JFK    MCO    2013     1     1      557            600        -3
+## 10 AA      LGA    ORD    2013     1     1      558            600        -2
+## # … with 336,766 more rows, and 10 more variables: arr_time &lt;int&gt;,
+## #   sched_arr_time &lt;int&gt;, arr_delay &lt;dbl&gt;, flight &lt;int&gt;, tailnum &lt;chr&gt;,
+## #   air_time &lt;dbl&gt;, distance &lt;dbl&gt;, hour &lt;dbl&gt;, minute &lt;dbl&gt;, time_hour &lt;dttm&gt;
+```
+
+---
+
+## relocate - to the end
+
+
+```r
+flights %&gt;%
+  relocate(year, month, day, .after = last_col())
+```
+
+```
+## # A tibble: 336,776 × 19
+##    dep_time sched_dep_time dep_delay arr_time sched_arr_time arr_delay carrier
+##       &lt;int&gt;          &lt;int&gt;     &lt;dbl&gt;    &lt;int&gt;          &lt;int&gt;     &lt;dbl&gt; &lt;chr&gt;  
+##  1      517            515         2      830            819        11 UA     
+##  2      533            529         4      850            830        20 UA     
+##  3      542            540         2      923            850        33 AA     
+##  4      544            545        -1     1004           1022       -18 B6     
+##  5      554            600        -6      812            837       -25 DL     
+##  6      554            558        -4      740            728        12 UA     
+##  7      555            600        -5      913            854        19 B6     
+##  8      557            600        -3      709            723       -14 EV     
+##  9      557            600        -3      838            846        -8 B6     
+## 10      558            600        -2      753            745         8 AA     
+## # … with 336,766 more rows, and 12 more variables: flight &lt;int&gt;, tailnum &lt;chr&gt;,
+## #   origin &lt;chr&gt;, dest &lt;chr&gt;, air_time &lt;dbl&gt;, distance &lt;dbl&gt;, hour &lt;dbl&gt;,
+## #   minute &lt;dbl&gt;, time_hour &lt;dttm&gt;, year &lt;int&gt;, month &lt;int&gt;, day &lt;int&gt;
+```
+
+
+---
+
+## rename() - Change column names
+
+
+```r
+flights %&gt;% rename(tail_number = tailnum)
+```
+
+```
+## # A tibble: 336,776 × 19
+##     year month   day dep_time sched_dep_time dep_delay arr_time sched_arr_time
+##    &lt;int&gt; &lt;int&gt; &lt;int&gt;    &lt;int&gt;          &lt;int&gt;     &lt;dbl&gt;    &lt;int&gt;          &lt;int&gt;
+##  1  2013     1     1      517            515         2      830            819
+##  2  2013     1     1      533            529         4      850            830
+##  3  2013     1     1      542            540         2      923            850
+##  4  2013     1     1      544            545        -1     1004           1022
+##  5  2013     1     1      554            600        -6      812            837
+##  6  2013     1     1      554            558        -4      740            728
+##  7  2013     1     1      555            600        -5      913            854
+##  8  2013     1     1      557            600        -3      709            723
+##  9  2013     1     1      557            600        -3      838            846
+## 10  2013     1     1      558            600        -2      753            745
+## # … with 336,766 more rows, and 11 more variables: arr_delay &lt;dbl&gt;,
+## #   carrier &lt;chr&gt;, flight &lt;int&gt;, tail_number &lt;chr&gt;, origin &lt;chr&gt;, dest &lt;chr&gt;,
+## #   air_time &lt;dbl&gt;, distance &lt;dbl&gt;, hour &lt;dbl&gt;, minute &lt;dbl&gt;, time_hour &lt;dttm&gt;
+```
+ 
+---
+
+## select() vs. rename()
+
+.xsmall[
+
+```r
+flights %&gt;% select(tail_number = tailnum)
+```
+
+```
+## # A tibble: 336,776 × 1
+##    tail_number
+##    &lt;chr&gt;      
+##  1 N14228     
+##  2 N24211     
+##  3 N619AA     
+##  4 N804JB     
+##  5 N668DN     
+##  6 N39463     
+##  7 N516JB     
+##  8 N829AS     
+##  9 N593JB     
+## 10 N3ALAA     
+## # … with 336,766 more rows
+```
+
+```r
+flights %&gt;% rename(tail_number = tailnum)
+```
+
+```
+## # A tibble: 336,776 × 19
+##     year month   day dep_time sched_dep_time dep_delay arr_time sched_arr_time
+##    &lt;int&gt; &lt;int&gt; &lt;int&gt;    &lt;int&gt;          &lt;int&gt;     &lt;dbl&gt;    &lt;int&gt;          &lt;int&gt;
+##  1  2013     1     1      517            515         2      830            819
+##  2  2013     1     1      533            529         4      850            830
+##  3  2013     1     1      542            540         2      923            850
+##  4  2013     1     1      544            545        -1     1004           1022
+##  5  2013     1     1      554            600        -6      812            837
+##  6  2013     1     1      554            558        -4      740            728
+##  7  2013     1     1      555            600        -5      913            854
+##  8  2013     1     1      557            600        -3      709            723
+##  9  2013     1     1      557            600        -3      838            846
+## 10  2013     1     1      558            600        -2      753            745
+## # … with 336,766 more rows, and 11 more variables: arr_delay &lt;dbl&gt;,
+## #   carrier &lt;chr&gt;, flight &lt;int&gt;, tail_number &lt;chr&gt;, origin &lt;chr&gt;, dest &lt;chr&gt;,
+## #   air_time &lt;dbl&gt;, distance &lt;dbl&gt;, hour &lt;dbl&gt;, minute &lt;dbl&gt;, time_hour &lt;dttm&gt;
+```
+]
+
+---
+
+## pull()
+
+
+```r
+names(flights)
+```
+
+```
+##  [1] "year"           "month"          "day"            "dep_time"      
+##  [5] "sched_dep_time" "dep_delay"      "arr_time"       "sched_arr_time"
+##  [9] "arr_delay"      "carrier"        "flight"         "tailnum"       
+## [13] "origin"         "dest"           "air_time"       "distance"      
+## [17] "hour"           "minute"         "time_hour"
+```
+
+--
+
+
+```r
+flights %&gt;% pull("year") %&gt;% head()
+```
+
+```
+## [1] 2013 2013 2013 2013 2013 2013
+```
+
+--
+
+
+```r
+flights %&gt;% pull(1) %&gt;% head()
+```
+
+```
+## [1] 2013 2013 2013 2013 2013 2013
+```
+
+--
+
+
+```r
+flights %&gt;% pull(-1) %&gt;% head()
+```
+
+```
+## [1] "2013-01-01 05:00:00 EST" "2013-01-01 05:00:00 EST"
+## [3] "2013-01-01 05:00:00 EST" "2013-01-01 05:00:00 EST"
+## [5] "2013-01-01 06:00:00 EST" "2013-01-01 05:00:00 EST"
+```
+
+--
+
+
+```r
+flights %&gt;% .[["year"]] %&gt;% head()
+```
+
+```
+## [1] 2013 2013 2013 2013 2013 2013
+```
+
+---
+
+## arrange() - Sort data
+
+
+```r
+flights %&gt;% filter(month==3,day==2) %&gt;% arrange(origin, dest)
+```
+
+```
+## # A tibble: 765 × 19
+##     year month   day dep_time sched_dep_time dep_delay arr_time sched_arr_time
+##    &lt;int&gt; &lt;int&gt; &lt;int&gt;    &lt;int&gt;          &lt;int&gt;     &lt;dbl&gt;    &lt;int&gt;          &lt;int&gt;
+##  1  2013     3     2     1336           1329         7     1426           1432
+##  2  2013     3     2      628            629        -1      837            849
+##  3  2013     3     2      637            640        -3      903            915
+##  4  2013     3     2      743            745        -2      945           1010
+##  5  2013     3     2      857            900        -3     1117           1126
+##  6  2013     3     2     1027           1030        -3     1234           1247
+##  7  2013     3     2     1134           1145       -11     1332           1359
+##  8  2013     3     2     1412           1415        -3     1636           1630
+##  9  2013     3     2     1633           1636        -3     1848           1908
+## 10  2013     3     2     1655           1700        -5     1857           1924
+## # … with 755 more rows, and 11 more variables: arr_delay &lt;dbl&gt;, carrier &lt;chr&gt;,
+## #   flight &lt;int&gt;, tailnum &lt;chr&gt;, origin &lt;chr&gt;, dest &lt;chr&gt;, air_time &lt;dbl&gt;,
+## #   distance &lt;dbl&gt;, hour &lt;dbl&gt;, minute &lt;dbl&gt;, time_hour &lt;dttm&gt;
+```
+
+---
+
+## arrange() &amp; desc() - Descending order
+
+
+```r
+flights %&gt;% 
+  filter(month==3, day==2) %&gt;% 
+  arrange(desc(origin), dest) %&gt;% 
+  select(origin, dest, tailnum)
+```
+
+```
+## # A tibble: 765 × 3
+##    origin dest  tailnum
+##    &lt;chr&gt;  &lt;chr&gt; &lt;chr&gt;  
+##  1 LGA    ATL   N928AT 
+##  2 LGA    ATL   N623DL 
+##  3 LGA    ATL   N680DA 
+##  4 LGA    ATL   N996AT 
+##  5 LGA    ATL   N510MQ 
+##  6 LGA    ATL   N663DN 
+##  7 LGA    ATL   N942DL 
+##  8 LGA    ATL   N511MQ 
+##  9 LGA    ATL   N910DE 
+## 10 LGA    ATL   N902DE 
+## # … with 755 more rows
+```
+
+---
+
+## mutate() - Modify columns
+
+
+```r
+flights %&gt;% 
+  select(year:day) %&gt;% 
+  mutate(date = paste(year, month, day, sep="/"))
+```
+
+```
+## # A tibble: 336,776 × 4
+##     year month   day date    
+##    &lt;int&gt; &lt;int&gt; &lt;int&gt; &lt;chr&gt;   
+##  1  2013     1     1 2013/1/1
+##  2  2013     1     1 2013/1/1
+##  3  2013     1     1 2013/1/1
+##  4  2013     1     1 2013/1/1
+##  5  2013     1     1 2013/1/1
+##  6  2013     1     1 2013/1/1
+##  7  2013     1     1 2013/1/1
+##  8  2013     1     1 2013/1/1
+##  9  2013     1     1 2013/1/1
+## 10  2013     1     1 2013/1/1
+## # … with 336,766 more rows
+```
+
+---
+
+## distinct() - Find unique rows
+
+
+```r
+flights %&gt;% 
+  select(origin, dest) %&gt;% 
+  distinct() %&gt;% 
+  arrange(origin,dest)
+```
+
+```
+## # A tibble: 224 × 2
+##    origin dest 
+##    &lt;chr&gt;  &lt;chr&gt;
+##  1 EWR    ALB  
+##  2 EWR    ANC  
+##  3 EWR    ATL  
+##  4 EWR    AUS  
+##  5 EWR    AVL  
+##  6 EWR    BDL  
+##  7 EWR    BNA  
+##  8 EWR    BOS  
+##  9 EWR    BQN  
+## 10 EWR    BTV  
+## # … with 214 more rows
+```
+
+---
+
+## summarise()
+
+
+```r
+flights %&gt;% 
+  summarize(n(), min(dep_delay), max(dep_delay))
+```
+
+```
+## # A tibble: 1 × 3
+##    `n()` `min(dep_delay)` `max(dep_delay)`
+##    &lt;int&gt;            &lt;dbl&gt;            &lt;dbl&gt;
+## 1 336776               NA               NA
+```
+
+--
+
+.pad-top[]
+
+
+```r
+flights %&gt;% 
+  summarize(
+    n = n(), 
+    min_dep_delay = min(dep_delay, na.rm = TRUE), 
+    max_dep_delay = max(dep_delay, na.rm = TRUE)
+  )
+```
+
+```
+## # A tibble: 1 × 3
+##        n min_dep_delay max_dep_delay
+##    &lt;int&gt;         &lt;dbl&gt;         &lt;dbl&gt;
+## 1 336776           -43          1301
+```
+
+---
+
+## group_by()
+
+
+```r
+flights %&gt;% group_by(origin)
+```
+
+```
+## # A tibble: 336,776 × 19
+## # Groups:   origin [3]
+##     year month   day dep_time sched_dep_time dep_delay arr_time sched_arr_time
+##    &lt;int&gt; &lt;int&gt; &lt;int&gt;    &lt;int&gt;          &lt;int&gt;     &lt;dbl&gt;    &lt;int&gt;          &lt;int&gt;
+##  1  2013     1     1      517            515         2      830            819
+##  2  2013     1     1      533            529         4      850            830
+##  3  2013     1     1      542            540         2      923            850
+##  4  2013     1     1      544            545        -1     1004           1022
+##  5  2013     1     1      554            600        -6      812            837
+##  6  2013     1     1      554            558        -4      740            728
+##  7  2013     1     1      555            600        -5      913            854
+##  8  2013     1     1      557            600        -3      709            723
+##  9  2013     1     1      557            600        -3      838            846
+## 10  2013     1     1      558            600        -2      753            745
+## # … with 336,766 more rows, and 11 more variables: arr_delay &lt;dbl&gt;,
+## #   carrier &lt;chr&gt;, flight &lt;int&gt;, tailnum &lt;chr&gt;, origin &lt;chr&gt;, dest &lt;chr&gt;,
+## #   air_time &lt;dbl&gt;, distance &lt;dbl&gt;, hour &lt;dbl&gt;, minute &lt;dbl&gt;, time_hour &lt;dttm&gt;
+```
+
+---
+
+## summarise() with group_by()
+
+
+```r
+flights %&gt;% 
+  group_by(origin) %&gt;%
+  summarize(
+    n = n(), 
+    min_dep_delay = min(dep_delay, na.rm = TRUE), 
+    max_dep_delay = max(dep_delay, na.rm = TRUE)
+  )
+```
+
+```
+## # A tibble: 3 × 4
+##   origin      n min_dep_delay max_dep_delay
+##   &lt;chr&gt;   &lt;int&gt;         &lt;dbl&gt;         &lt;dbl&gt;
+## 1 EWR    120835           -25          1126
+## 2 JFK    111279           -43          1301
+## 3 LGA    104662           -33           911
+```
+
+---
+
+## Groups after summarise
+
+.pull-left[
+
+```r
+flights %&gt;% 
+  group_by(origin) %&gt;%
+  summarize(
+    n = n(), 
+    min_dep_delay = min(dep_delay, na.rm = TRUE), 
+    max_dep_delay = max(dep_delay, na.rm = TRUE),
+    .groups = "drop_last"
+  )
+```
+
+```
+## # A tibble: 3 × 4
+##   origin      n min_dep_delay max_dep_delay
+##   &lt;chr&gt;   &lt;int&gt;         &lt;dbl&gt;         &lt;dbl&gt;
+## 1 EWR    120835           -25          1126
+## 2 JFK    111279           -43          1301
+## 3 LGA    104662           -33           911
+```
+]
+
+.pull-right[
+
+```r
+flights %&gt;% 
+  group_by(origin) %&gt;%
+  summarize(
+    n = n(), 
+    min_dep_delay = min(dep_delay, na.rm = TRUE), 
+    max_dep_delay = max(dep_delay, na.rm = TRUE),
+    .groups = "keep"
+  )
+```
+
+```
+## # A tibble: 3 × 4
+## # Groups:   origin [3]
+##   origin      n min_dep_delay max_dep_delay
+##   &lt;chr&gt;   &lt;int&gt;         &lt;dbl&gt;         &lt;dbl&gt;
+## 1 EWR    120835           -25          1126
+## 2 JFK    111279           -43          1301
+## 3 LGA    104662           -33           911
+```
+]
+
+
+---
+
+
+```r
+flights %&gt;% 
+  group_by(origin, carrier) %&gt;%
+  summarize(
+    n = n(), 
+    min_dep_delay = min(dep_delay, na.rm = TRUE), 
+    max_dep_delay = max(dep_delay, na.rm = TRUE)
+  ) %&gt;%
+  filter(n &gt; 10000)
+```
+
+```
+## `summarise()` has grouped output by 'origin'. You can override using the `.groups` argument.
+```
+
+```
+## # A tibble: 10 × 5
+## # Groups:   origin [3]
+##    origin carrier     n min_dep_delay max_dep_delay
+##    &lt;chr&gt;  &lt;chr&gt;   &lt;int&gt;         &lt;dbl&gt;         &lt;dbl&gt;
+##  1 EWR    EV      43939           -25           548
+##  2 EWR    UA      46087           -18           424
+##  3 JFK    9E      14651           -24           747
+##  4 JFK    AA      13783           -15          1014
+##  5 JFK    B6      42076           -43           453
+##  6 JFK    DL      20701           -18           960
+##  7 LGA    AA      15459           -24           803
+##  8 LGA    DL      23067           -33           911
+##  9 LGA    MQ      16928           -26           366
+## 10 LGA    US      13136           -18           500
+```
+
+---
+
+## count()
+
+.pull-left[
+
+```r
+flights %&gt;% 
+  group_by(origin, carrier) %&gt;%
+  summarize(n = n(), .groups = "drop")
+```
+
+```
+## # A tibble: 35 × 3
+##    origin carrier     n
+##    &lt;chr&gt;  &lt;chr&gt;   &lt;int&gt;
+##  1 EWR    9E       1268
+##  2 EWR    AA       3487
+##  3 EWR    AS        714
+##  4 EWR    B6       6557
+##  5 EWR    DL       4342
+##  6 EWR    EV      43939
+##  7 EWR    MQ       2276
+##  8 EWR    OO          6
+##  9 EWR    UA      46087
+## 10 EWR    US       4405
+## # … with 25 more rows
+```
+]
+
+.pull-right[
+
+```r
+flights %&gt;% 
+  count(origin, carrier)
+```
+
+```
+## # A tibble: 35 × 3
+##    origin carrier     n
+##    &lt;chr&gt;  &lt;chr&gt;   &lt;int&gt;
+##  1 EWR    9E       1268
+##  2 EWR    AA       3487
+##  3 EWR    AS        714
+##  4 EWR    B6       6557
+##  5 EWR    DL       4342
+##  6 EWR    EV      43939
+##  7 EWR    MQ       2276
+##  8 EWR    OO          6
+##  9 EWR    UA      46087
+## 10 EWR    US       4405
+## # … with 25 more rows
+```
+]
+
+---
+
+## mutate() with group_by()
+
+
+```r
+flights %&gt;% group_by(origin) %&gt;%
+  mutate(
+    n = n(), 
+  ) %&gt;%
+  select(origin, n)
+```
+
+```
+## # A tibble: 336,776 × 2
+## # Groups:   origin [3]
+##    origin      n
+##    &lt;chr&gt;   &lt;int&gt;
+##  1 EWR    120835
+##  2 LGA    104662
+##  3 JFK    111279
+##  4 JFK    111279
+##  5 LGA    104662
+##  6 EWR    120835
+##  7 EWR    120835
+##  8 LGA    104662
+##  9 JFK    111279
+## 10 LGA    104662
+## # … with 336,766 more rows
+```
+
+---
+
+## Demos
+
+.wide-list[ .large[
+1. How many flights to Los Angeles (LAX) did each of the legacy carriers (AA, UA, DL or US) have in May from JFK, and what was their average duration?
+
+2. What was the shortest flight out of each airport in terms of distance? In terms of duration?
+] ]
+
+---
+
+## Exercise 1
+
+.wide-list[ .large[
+1. Which plane (check the tail number) flew out of each New York airport the most?
+
+2. Which date should you fly on if you want to have the lowest possible average departure delay? What about arrival delay?
+] ]
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "solarized-light",
+"highlightLines": true,
+"countIncrementalSlides": false,
+"ratio": "16:9"
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
