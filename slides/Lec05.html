@@ -111,7 +111,7 @@ str( list("A", c(TRUE,FALSE), (1:4)/2, list(TRUE, 1), function(x) x^2) )
 ##   ..$ : num 1
 ##  $ :function (x)  
 ##   ..- attr(*, "srcref")= 'srcref' int [1:8] 1 55 1 69 55 69 1 1
-##   .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' &lt;environment: 0x7fc4159f1c40&gt;
+##   .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' &lt;environment: 0x11e4fc608&gt;
 ```
 
 
@@ -950,7 +950,7 @@ print
 ```
 ## function (x, ...) 
 ## UseMethod("print")
-## &lt;bytecode: 0x7fc41624c5e8&gt;
+## &lt;bytecode: 0x123459348&gt;
 ## &lt;environment: namespace:base&gt;
 ```
 
@@ -967,7 +967,7 @@ mean
 ```
 ## function (x, ...) 
 ## UseMethod("mean")
-## &lt;bytecode: 0x7fc415b328d0&gt;
+## &lt;bytecode: 0x11e2770f8&gt;
 ## &lt;environment: namespace:base&gt;
 ```
 
@@ -978,7 +978,7 @@ t.test
 ```
 ## function (x, ...) 
 ## UseMethod("t.test")
-## &lt;bytecode: 0x7fc41057f0a8&gt;
+## &lt;bytecode: 0x123435860&gt;
 ## &lt;environment: namespace:stats&gt;
 ```
 ]
@@ -992,7 +992,7 @@ summary
 ```
 ## function (object, ...) 
 ## UseMethod("summary")
-## &lt;bytecode: 0x7fc410766e20&gt;
+## &lt;bytecode: 0x12301f078&gt;
 ## &lt;environment: namespace:base&gt;
 ```
 
@@ -1003,7 +1003,7 @@ plot
 ```
 ## function (x, y, ...) 
 ## UseMethod("plot")
-## &lt;bytecode: 0x7fc4107ce1e0&gt;
+## &lt;bytecode: 0x1229bb990&gt;
 ## &lt;environment: namespace:base&gt;
 ```
 ]
@@ -1076,226 +1076,247 @@ methods("print")
 ##   [1] print.acf*                                          
 ##   [2] print.AES*                                          
 ##   [3] print.anova*                                        
-##   [4] print.aov*                                          
-##   [5] print.aovlist*                                      
-##   [6] print.ar*                                           
-##   [7] print.Arima*                                        
-##   [8] print.arima0*                                       
-##   [9] print.AsIs                                          
-##  [10] print.aspell*                                       
-##  [11] print.aspell_inspect_context*                       
-##  [12] print.bibentry*                                     
-##  [13] print.Bibtex*                                       
-##  [14] print.browseVignettes*                              
-##  [15] print.bslib_fragment*                               
-##  [16] print.bslib_page*                                   
-##  [17] print.by                                            
-##  [18] print.changedFiles*                                 
-##  [19] print.check_bogus_return*                           
-##  [20] print.check_code_usage_in_package*                  
-##  [21] print.check_compiled_code*                          
-##  [22] print.check_demo_index*                             
-##  [23] print.check_depdef*                                 
-##  [24] print.check_details*                                
-##  [25] print.check_details_changes*                        
-##  [26] print.check_doi_db*                                 
-##  [27] print.check_dotInternal*                            
-##  [28] print.check_make_vars*                              
-##  [29] print.check_nonAPI_calls*                           
-##  [30] print.check_package_code_assign_to_globalenv*       
-##  [31] print.check_package_code_attach*                    
-##  [32] print.check_package_code_data_into_globalenv*       
-##  [33] print.check_package_code_startup_functions*         
-##  [34] print.check_package_code_syntax*                    
-##  [35] print.check_package_code_unload_functions*          
-##  [36] print.check_package_compact_datasets*               
-##  [37] print.check_package_CRAN_incoming*                  
-##  [38] print.check_package_datalist*                       
-##  [39] print.check_package_datasets*                       
-##  [40] print.check_package_depends*                        
-##  [41] print.check_package_description*                    
-##  [42] print.check_package_description_encoding*           
-##  [43] print.check_package_license*                        
-##  [44] print.check_packages_in_dir*                        
-##  [45] print.check_packages_used*                          
-##  [46] print.check_po_files*                               
-##  [47] print.check_pragmas*                                
-##  [48] print.check_Rd_line_widths*                         
-##  [49] print.check_Rd_metadata*                            
-##  [50] print.check_Rd_xrefs*                               
-##  [51] print.check_RegSym_calls*                           
-##  [52] print.check_S3_methods_needing_delayed_registration*
-##  [53] print.check_so_symbols*                             
-##  [54] print.check_T_and_F*                                
-##  [55] print.check_url_db*                                 
-##  [56] print.check_vignette_index*                         
-##  [57] print.checkDocFiles*                                
-##  [58] print.checkDocStyle*                                
-##  [59] print.checkFF*                                      
-##  [60] print.checkRd*                                      
-##  [61] print.checkRdContents*                              
-##  [62] print.checkReplaceFuns*                             
-##  [63] print.checkS3methods*                               
-##  [64] print.checkTnF*                                     
-##  [65] print.checkVignettes*                               
-##  [66] print.citation*                                     
-##  [67] print.codoc*                                        
-##  [68] print.codocClasses*                                 
-##  [69] print.codocData*                                    
-##  [70] print.colorConverter*                               
-##  [71] print.compactPDF*                                   
-##  [72] print.condition                                     
-##  [73] print.connection                                    
-##  [74] print.CRAN_package_reverse_dependencies_and_views*  
-##  [75] print.css*                                          
-##  [76] print.data.frame                                    
-##  [77] print.Date                                          
-##  [78] print.default                                       
-##  [79] print.dendrogram*                                   
-##  [80] print.density*                                      
-##  [81] print.difftime                                      
-##  [82] print.dist*                                         
-##  [83] print.Dlist                                         
-##  [84] print.DLLInfo                                       
-##  [85] print.DLLInfoList                                   
-##  [86] print.DLLRegisteredRoutines                         
-##  [87] print.dummy_coef*                                   
-##  [88] print.dummy_coef_list*                              
-##  [89] print.ecdf*                                         
-##  [90] print.eigen                                         
-##  [91] print.factanal*                                     
-##  [92] print.factor                                        
-##  [93] print.family*                                       
-##  [94] print.fileSnapshot*                                 
-##  [95] print.findLineNumResult*                            
-##  [96] print.formula*                                      
-##  [97] print.frame*                                        
-##  [98] print.fseq*                                         
-##  [99] print.ftable*                                       
-## [100] print.function                                      
-## [101] print.getAnywhere*                                  
-## [102] print.glm*                                          
-## [103] print.hclust*                                       
-## [104] print.help_files_with_topic*                        
-## [105] print.hexmode                                       
-## [106] print.HoltWinters*                                  
-## [107] print.hsearch*                                      
-## [108] print.hsearch_db*                                   
-## [109] print.htest*                                        
-## [110] print.html*                                         
-## [111] print.html_dependency*                              
-## [112] print.htmltools.selector*                           
-## [113] print.htmltools.selector.list*                      
-## [114] print.infl*                                         
-## [115] print.integrate*                                    
-## [116] print.isoreg*                                       
-## [117] print.json*                                         
-## [118] print.key_missing*                                  
-## [119] print.kmeans*                                       
-## [120] print.knitr_kable*                                  
-## [121] print.Latex*                                        
-## [122] print.LaTeX*                                        
-## [123] print.libraryIQR                                    
-## [124] print.listof                                        
-## [125] print.lm*                                           
-## [126] print.loadings*                                     
-## [127] print.loess*                                        
-## [128] print.logLik*                                       
-## [129] print.ls_str*                                       
-## [130] print.medpolish*                                    
-## [131] print.MethodsFunction*                              
-## [132] print.mtable*                                       
-## [133] print.NativeRoutineList                             
-## [134] print.news_db*                                      
-## [135] print.nls*                                          
-## [136] print.noquote                                       
-## [137] print.numeric_version                               
-## [138] print.object_size*                                  
-## [139] print.octmode                                       
-## [140] print.packageDescription*                           
-## [141] print.packageInfo                                   
-## [142] print.packageIQR*                                   
-## [143] print.packageStatus*                                
-## [144] print.pairwise.htest*                               
-## [145] print.person*                                       
-## [146] print.POSIXct                                       
-## [147] print.POSIXlt                                       
-## [148] print.power.htest*                                  
-## [149] print.ppr*                                          
-## [150] print.prcomp*                                       
-## [151] print.princomp*                                     
-## [152] print.proc_time                                     
-## [153] print.quosure*                                      
-## [154] print.quosures*                                     
-## [155] print.R6*                                           
-## [156] print.R6ClassGenerator*                             
-## [157] print.raster*                                       
-## [158] print.Rd*                                           
-## [159] print.recordedplot*                                 
-## [160] print.restart                                       
-## [161] print.RGBcolorConverter*                            
-## [162] print.rlang_box_done*                               
-## [163] print.rlang_box_splice*                             
-## [164] print.rlang_data_pronoun*                           
-## [165] print.rlang_envs*                                   
-## [166] print.rlang_error*                                  
-## [167] print.rlang_fake_data_pronoun*                      
-## [168] print.rlang_lambda_function*                        
-## [169] print.rlang_trace*                                  
-## [170] print.rlang_zap*                                    
-## [171] print.rle                                           
-## [172] print.roman*                                        
-## [173] print.sass*                                         
-## [174] print.sass_bundle*                                  
-## [175] print.sass_layer*                                   
-## [176] print.scalar*                                       
-## [177] print.sessionInfo*                                  
-## [178] print.shiny.tag*                                    
-## [179] print.shiny.tag.env*                                
-## [180] print.shiny.tag.list*                               
-## [181] print.shiny.tag.query*                              
-## [182] print.simple.list                                   
-## [183] print.smooth.spline*                                
-## [184] print.socket*                                       
-## [185] print.srcfile                                       
-## [186] print.srcref                                        
-## [187] print.stepfun*                                      
-## [188] print.stl*                                          
-## [189] print.StructTS*                                     
-## [190] print.subdir_tests*                                 
-## [191] print.summarize_CRAN_check_status*                  
-## [192] print.summary.aov*                                  
-## [193] print.summary.aovlist*                              
-## [194] print.summary.ecdf*                                 
-## [195] print.summary.glm*                                  
-## [196] print.summary.lm*                                   
-## [197] print.summary.loess*                                
-## [198] print.summary.manova*                               
-## [199] print.summary.nls*                                  
-## [200] print.summary.packageStatus*                        
-## [201] print.summary.ppr*                                  
-## [202] print.summary.prcomp*                               
-## [203] print.summary.princomp*                             
-## [204] print.summary.table                                 
-## [205] print.summary.warnings                              
-## [206] print.summaryDefault                                
-## [207] print.table                                         
-## [208] print.tables_aov*                                   
-## [209] print.terms*                                        
-## [210] print.ts*                                           
-## [211] print.tskernel*                                     
-## [212] print.TukeyHSD*                                     
-## [213] print.tukeyline*                                    
-## [214] print.tukeysmooth*                                  
-## [215] print.undoc*                                        
-## [216] print.vignette*                                     
-## [217] print.warnings                                      
-## [218] print.xfun_raw_string*                              
-## [219] print.xfun_rename_seq*                              
-## [220] print.xfun_strict_list*                             
-## [221] print.xgettext*                                     
-## [222] print.xngettext*                                    
-## [223] print.xtabs*                                        
+##   [4] print.ansi_string*                                  
+##   [5] print.ansi_style*                                   
+##   [6] print.aov*                                          
+##   [7] print.aovlist*                                      
+##   [8] print.ar*                                           
+##   [9] print.Arima*                                        
+##  [10] print.arima0*                                       
+##  [11] print.AsIs                                          
+##  [12] print.aspell*                                       
+##  [13] print.aspell_inspect_context*                       
+##  [14] print.bibentry*                                     
+##  [15] print.Bibtex*                                       
+##  [16] print.boxx*                                         
+##  [17] print.browseVignettes*                              
+##  [18] print.bslib_fragment*                               
+##  [19] print.bslib_page*                                   
+##  [20] print.by                                            
+##  [21] print.changedFiles*                                 
+##  [22] print.check_bogus_return*                           
+##  [23] print.check_code_usage_in_package*                  
+##  [24] print.check_compiled_code*                          
+##  [25] print.check_demo_index*                             
+##  [26] print.check_depdef*                                 
+##  [27] print.check_details*                                
+##  [28] print.check_details_changes*                        
+##  [29] print.check_doi_db*                                 
+##  [30] print.check_dotInternal*                            
+##  [31] print.check_make_vars*                              
+##  [32] print.check_nonAPI_calls*                           
+##  [33] print.check_package_code_assign_to_globalenv*       
+##  [34] print.check_package_code_attach*                    
+##  [35] print.check_package_code_data_into_globalenv*       
+##  [36] print.check_package_code_startup_functions*         
+##  [37] print.check_package_code_syntax*                    
+##  [38] print.check_package_code_unload_functions*          
+##  [39] print.check_package_compact_datasets*               
+##  [40] print.check_package_CRAN_incoming*                  
+##  [41] print.check_package_datalist*                       
+##  [42] print.check_package_datasets*                       
+##  [43] print.check_package_depends*                        
+##  [44] print.check_package_description*                    
+##  [45] print.check_package_description_encoding*           
+##  [46] print.check_package_license*                        
+##  [47] print.check_packages_in_dir*                        
+##  [48] print.check_packages_used*                          
+##  [49] print.check_po_files*                               
+##  [50] print.check_pragmas*                                
+##  [51] print.check_Rd_line_widths*                         
+##  [52] print.check_Rd_metadata*                            
+##  [53] print.check_Rd_xrefs*                               
+##  [54] print.check_RegSym_calls*                           
+##  [55] print.check_S3_methods_needing_delayed_registration*
+##  [56] print.check_so_symbols*                             
+##  [57] print.check_T_and_F*                                
+##  [58] print.check_url_db*                                 
+##  [59] print.check_vignette_index*                         
+##  [60] print.checkDocFiles*                                
+##  [61] print.checkDocStyle*                                
+##  [62] print.checkFF*                                      
+##  [63] print.checkRd*                                      
+##  [64] print.checkRdContents*                              
+##  [65] print.checkReplaceFuns*                             
+##  [66] print.checkS3methods*                               
+##  [67] print.checkTnF*                                     
+##  [68] print.checkVignettes*                               
+##  [69] print.citation*                                     
+##  [70] print.cli_ansi_html_style*                          
+##  [71] print.cli_diff_chr*                                 
+##  [72] print.cli_doc*                                      
+##  [73] print.cli_progress_demo*                            
+##  [74] print.cli_sitrep*                                   
+##  [75] print.cli_spark*                                    
+##  [76] print.cli_spinner*                                  
+##  [77] print.codoc*                                        
+##  [78] print.codocClasses*                                 
+##  [79] print.codocData*                                    
+##  [80] print.colorConverter*                               
+##  [81] print.compactPDF*                                   
+##  [82] print.condition                                     
+##  [83] print.connection                                    
+##  [84] print.CRAN_package_reverse_dependencies_and_views*  
+##  [85] print.css*                                          
+##  [86] print.data.frame                                    
+##  [87] print.Date                                          
+##  [88] print.default                                       
+##  [89] print.dendrogram*                                   
+##  [90] print.density*                                      
+##  [91] print.difftime                                      
+##  [92] print.dist*                                         
+##  [93] print.Dlist                                         
+##  [94] print.DLLInfo                                       
+##  [95] print.DLLInfoList                                   
+##  [96] print.DLLRegisteredRoutines                         
+##  [97] print.document_context*                             
+##  [98] print.document_position*                            
+##  [99] print.document_range*                               
+## [100] print.document_selection*                           
+## [101] print.dummy_coef*                                   
+## [102] print.dummy_coef_list*                              
+## [103] print.ecdf*                                         
+## [104] print.eigen                                         
+## [105] print.factanal*                                     
+## [106] print.factor                                        
+## [107] print.family*                                       
+## [108] print.fileSnapshot*                                 
+## [109] print.findLineNumResult*                            
+## [110] print.formula*                                      
+## [111] print.fseq*                                         
+## [112] print.ftable*                                       
+## [113] print.function                                      
+## [114] print.getAnywhere*                                  
+## [115] print.glm*                                          
+## [116] print.hclust*                                       
+## [117] print.help_files_with_topic*                        
+## [118] print.hexmode                                       
+## [119] print.HoltWinters*                                  
+## [120] print.hsearch*                                      
+## [121] print.hsearch_db*                                   
+## [122] print.htest*                                        
+## [123] print.html*                                         
+## [124] print.html_dependency*                              
+## [125] print.htmltools.selector*                           
+## [126] print.htmltools.selector.list*                      
+## [127] print.infl*                                         
+## [128] print.integrate*                                    
+## [129] print.isoreg*                                       
+## [130] print.json*                                         
+## [131] print.key_missing*                                  
+## [132] print.kmeans*                                       
+## [133] print.knitr_kable*                                  
+## [134] print.Latex*                                        
+## [135] print.LaTeX*                                        
+## [136] print.libraryIQR                                    
+## [137] print.listof                                        
+## [138] print.lm*                                           
+## [139] print.loadings*                                     
+## [140] print.loess*                                        
+## [141] print.logLik*                                       
+## [142] print.ls_str*                                       
+## [143] print.medpolish*                                    
+## [144] print.MethodsFunction*                              
+## [145] print.mtable*                                       
+## [146] print.NativeRoutineList                             
+## [147] print.news_db*                                      
+## [148] print.nls*                                          
+## [149] print.noquote                                       
+## [150] print.numeric_version                               
+## [151] print.object_size*                                  
+## [152] print.octmode                                       
+## [153] print.packageDescription*                           
+## [154] print.packageInfo                                   
+## [155] print.packageIQR*                                   
+## [156] print.packageStatus*                                
+## [157] print.pairwise.htest*                               
+## [158] print.person*                                       
+## [159] print.POSIXct                                       
+## [160] print.POSIXlt                                       
+## [161] print.power.htest*                                  
+## [162] print.ppr*                                          
+## [163] print.prcomp*                                       
+## [164] print.princomp*                                     
+## [165] print.proc_time                                     
+## [166] print.quosure*                                      
+## [167] print.quosures*                                     
+## [168] print.R6*                                           
+## [169] print.R6ClassGenerator*                             
+## [170] print.raster*                                       
+## [171] print.Rd*                                           
+## [172] print.recordedplot*                                 
+## [173] print.restart                                       
+## [174] print.RGBcolorConverter*                            
+## [175] print.rlang_box_done*                               
+## [176] print.rlang_box_splice*                             
+## [177] print.rlang_data_pronoun*                           
+## [178] print.rlang_dict*                                   
+## [179] print.rlang_dyn_array*                              
+## [180] print.rlang_envs*                                   
+## [181] print.rlang_error*                                  
+## [182] print.rlang_fake_data_pronoun*                      
+## [183] print.rlang_lambda_function*                        
+## [184] print.rlang_message*                                
+## [185] print.rlang_trace*                                  
+## [186] print.rlang_warning*                                
+## [187] print.rlang_zap*                                    
+## [188] print.rlang:::list_of_conditions*                   
+## [189] print.rle                                           
+## [190] print.rlib_bytes*                                   
+## [191] print.roman*                                        
+## [192] print.rule*                                         
+## [193] print.sass*                                         
+## [194] print.sass_bundle*                                  
+## [195] print.sass_layer*                                   
+## [196] print.scalar*                                       
+## [197] print.sessionInfo*                                  
+## [198] print.shiny.tag*                                    
+## [199] print.shiny.tag.env*                                
+## [200] print.shiny.tag.list*                               
+## [201] print.shiny.tag.query*                              
+## [202] print.simple.list                                   
+## [203] print.smooth.spline*                                
+## [204] print.socket*                                       
+## [205] print.srcfile                                       
+## [206] print.srcref                                        
+## [207] print.stepfun*                                      
+## [208] print.stl*                                          
+## [209] print.StructTS*                                     
+## [210] print.subdir_tests*                                 
+## [211] print.summarize_CRAN_check_status*                  
+## [212] print.summary.aov*                                  
+## [213] print.summary.aovlist*                              
+## [214] print.summary.ecdf*                                 
+## [215] print.summary.glm*                                  
+## [216] print.summary.lm*                                   
+## [217] print.summary.loess*                                
+## [218] print.summary.manova*                               
+## [219] print.summary.nls*                                  
+## [220] print.summary.packageStatus*                        
+## [221] print.summary.ppr*                                  
+## [222] print.summary.prcomp*                               
+## [223] print.summary.princomp*                             
+## [224] print.summary.table                                 
+## [225] print.summary.warnings                              
+## [226] print.summaryDefault                                
+## [227] print.table                                         
+## [228] print.tables_aov*                                   
+## [229] print.terms*                                        
+## [230] print.tree*                                         
+## [231] print.ts*                                           
+## [232] print.tskernel*                                     
+## [233] print.TukeyHSD*                                     
+## [234] print.tukeyline*                                    
+## [235] print.tukeysmooth*                                  
+## [236] print.undoc*                                        
+## [237] print.vignette*                                     
+## [238] print.warnings                                      
+## [239] print.xfun_raw_string*                              
+## [240] print.xfun_rename_seq*                              
+## [241] print.xfun_strict_list*                             
+## [242] print.xgettext*                                     
+## [243] print.xngettext*                                    
+## [244] print.xtabs*                                        
 ## see '?methods' for accessing help and source code
 ```
 ]
@@ -1354,7 +1375,7 @@ print.factor
 ##         warning(val)
 ##     invisible(x)
 ## }
-## &lt;bytecode: 0x7fc4114e0fd0&gt;
+## &lt;bytecode: 0x11e76c348&gt;
 ## &lt;environment: namespace:base&gt;
 ```
 ---
@@ -1390,7 +1411,7 @@ print.default
 ##         missing(useSource))
 ##     .Internal(print.default(x, args, missings))
 ## }
-## &lt;bytecode: 0x7fc41057e628&gt;
+## &lt;bytecode: 0x11e9a9530&gt;
 ## &lt;environment: namespace:base&gt;
 ```
 
@@ -1560,7 +1581,7 @@ shuffle( 1:10 )
 ```
 
 ```
-##  [1]  1  7  2  9  8  4 10  3  6  5
+##  [1]  4  8  1  5  9  2  7 10  6  3
 ```
 
 ```r
@@ -1568,7 +1589,7 @@ shuffle( factor(c("A","B","C","A")) )
 ```
 
 ```
-## [1] A C A B
+## [1] B A A C
 ## Levels: C A B
 ```
 ]
