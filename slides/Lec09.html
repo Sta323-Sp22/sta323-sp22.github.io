@@ -1,0 +1,3022 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Lec 09 - Functional programming &amp; purrr</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Sta 323 | Spring 2022" />
+    <script src="libs/header-attrs/header-attrs.js"></script>
+    <link rel="stylesheet" href="slides.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Lec 09 - Functional programming &amp; purrr
+## <br/> Statistical Programming
+### Sta 323 | Spring 2022
+### <br/> Dr. Colin Rundel
+
+---
+
+exclude: true
+
+
+
+---
+class: middle
+
+
+# Functional Programming
+
+---
+
+## Functions as objects
+
+We have mentioned in passing that functions in R are treated as 1st class objects (like vectors) 
+
+.pull-left[
+
+```r
+f = function(x) {
+  x*x
+}
+
+f(2)
+```
+
+```
+## [1] 4
+```
+
+```r
+g = f
+
+g(2)
+```
+
+```
+## [1] 4
+```
+]
+
+--
+
+.pull-right[
+
+```r
+l = list(f = f, g = g)
+
+l$f(3)
+```
+
+```
+## [1] 9
+```
+
+```r
+l[[2]](4)
+```
+
+```
+## [1] 16
+```
+]
+
+--
+
+
+```r
+l[1](3)
+```
+
+```
+## Error in eval(expr, envir, enclos): attempt to apply non-function
+```
+
+---
+
+## Functions as arguments
+
+We can pass in functions as arguments to other functions,
+
+
+```r
+do_calc = function(v, func) {
+  func(v)
+}
+```
+
+--
+
+
+```r
+do_calc(1:3, sum)
+```
+
+```
+## [1] 6
+```
+
+```r
+do_calc(1:3, mean)
+```
+
+```
+## [1] 2
+```
+
+```r
+do_calc(1:3, sd)
+```
+
+```
+## [1] 1
+```
+
+
+---
+
+## Anonymous functions
+
+These are short functions that are created without ever assigning a name,
+
+
+```r
+function(x) {x+1}
+```
+
+```
+## function(x) {x+1}
+```
+
+```r
+(function(y) {y-1})(10)
+```
+
+```
+## [1] 9
+```
+
+--
+
+this can be particularly helpful for implementing certain types of tasks,
+
+
+```r
+integrate(function(x) x, 0, 1)
+```
+
+```
+## 0.5 with absolute error &lt; 5.6e-15
+```
+
+```r
+integrate(function(x) x^2-2*x+1, 0, 1)
+```
+
+```
+## 0.3333333 with absolute error &lt; 3.7e-15
+```
+
+---
+
+## Base R anonymous function (lambda) shorthand
+
+Along with the base pipe (`|&gt;`), R v4.1.0 introduced a shortcut for anonymous functions using `\()`, we won't be using this for the same reason but it is useful to know that it exists.
+
+
+```r
+f = \(x) {1+x}
+f(1:5)
+```
+
+```
+## [1] 2 3 4 5 6
+```
+
+
+```r
+(\(x) x^2)(10)
+```
+
+```
+## [1] 100
+```
+
+
+```r
+integrate(\(x) sin(x)^2, 0, 1)
+```
+
+```
+## 0.2726756 with absolute error &lt; 3e-15
+```
+
+Use of this with the base pipe is meant avoid the need for `.`, e.g.
+
+
+```r
+data.frame(x = runif(10), y = runif(10)) |&gt;
+  {\(d) lm(y~x, data = d)}()
+```
+
+```
+## 
+## Call:
+## lm(formula = y ~ x, data = d)
+## 
+## Coefficients:
+## (Intercept)            x  
+##     0.55335      0.06729
+```
+
+---
+class: middle
+
+
+# apply (base R)
+
+---
+
+## Apply functions
+
+The apply functions are a collection of tools for functional programming in base R, they are variations of the `map` function found in many other languages and apply a function over the elements of the input.
+
+
+```r
+??base::apply
+---
+
+## 
+## Help files with alias or concept or title matching ‘apply’ using fuzzy
+## matching:
+## 
+## base::apply             Apply Functions Over Array Margins
+## base::.subset           Internal Objects in Package 'base'
+## base::by                Apply a Function to a Data Frame Split by Factors
+## base::eapply            Apply a Function Over Values in an Environment
+## base::lapply            Apply a Function over a List or Vector
+## base::mapply            Apply a Function to Multiple List or Vector Arguments
+## base::rapply            Recursively Apply a Function to a List
+## base::tapply            Apply a Function Over a Ragged Array
+```
+
+---
+
+## lapply
+
+Usage: `lapply(X, FUN, ...)`
+
+`lapply` returns a list of the same length as `X`, each element of which is the result of applying `FUN` to the corresponding element of `X`.
+
+&lt;br/&gt;
+
+.pull-left[
+
+```r
+lapply(1:8, sqrt) %&gt;% str()
+```
+
+```
+## List of 8
+##  $ : num 1
+##  $ : num 1.41
+##  $ : num 1.73
+##  $ : num 2
+##  $ : num 2.24
+##  $ : num 2.45
+##  $ : num 2.65
+##  $ : num 2.83
+```
+]
+
+.pull-right[
+
+```r
+lapply(1:8, function(x) (x+1)^2) %&gt;% str()
+```
+
+```
+## List of 8
+##  $ : num 4
+##  $ : num 9
+##  $ : num 16
+##  $ : num 25
+##  $ : num 36
+##  $ : num 49
+##  $ : num 64
+##  $ : num 81
+```
+]
+
+---
+
+
+```r
+lapply(1:8, function(x, pow) x^pow, pow=3) %&gt;% str()
+```
+
+```
+## List of 8
+##  $ : num 1
+##  $ : num 8
+##  $ : num 27
+##  $ : num 64
+##  $ : num 125
+##  $ : num 216
+##  $ : num 343
+##  $ : num 512
+```
+
+--
+
+
+```r
+lapply(1:8, function(x, pow) x^pow, x=2) %&gt;% str()
+```
+
+```
+## List of 8
+##  $ : num 2
+##  $ : num 4
+##  $ : num 8
+##  $ : num 16
+##  $ : num 32
+##  $ : num 64
+##  $ : num 128
+##  $ : num 256
+```
+
+---
+
+## sapply
+
+Usage: `sapply(X, FUN, ..., simplify = TRUE, USE.NAMES = TRUE)`
+
+`sapply` is a *user-friendly* version and wrapper of `lapply`, it is a *simplifying* version of lapply. Whenever possible it will return a vector, matrix, or an array.
+
+&lt;br/&gt;
+
+
+```r
+sapply(1:8, sqrt)
+```
+
+```
+## [1] 1.000000 1.414214 1.732051 2.000000 2.236068 2.449490 2.645751 2.828427
+```
+
+```r
+sapply(1:8, function(x) (x+1)^2)
+```
+
+```
+## [1]  4  9 16 25 36 49 64 81
+```
+
+```r
+sapply(1:8, function(x) c(x, x^2, x^3))
+```
+
+```
+##      [,1] [,2] [,3] [,4] [,5] [,6] [,7] [,8]
+## [1,]    1    2    3    4    5    6    7    8
+## [2,]    1    4    9   16   25   36   49   64
+## [3,]    1    8   27   64  125  216  343  512
+```
+
+---
+
+What happens if the returned lengths don't match?
+
+.pull-left[
+
+```r
+sapply(1:6, seq)
+```
+
+```
+## [[1]]
+## [1] 1
+## 
+## [[2]]
+## [1] 1 2
+## 
+## [[3]]
+## [1] 1 2 3
+## 
+## [[4]]
+## [1] 1 2 3 4
+## 
+## [[5]]
+## [1] 1 2 3 4 5
+## 
+## [[6]]
+## [1] 1 2 3 4 5 6
+```
+]
+
+--
+
+.pull-right[
+
+```r
+lapply(1:6, seq)
+```
+
+```
+## [[1]]
+## [1] 1
+## 
+## [[2]]
+## [1] 1 2
+## 
+## [[3]]
+## [1] 1 2 3
+## 
+## [[4]]
+## [1] 1 2 3 4
+## 
+## [[5]]
+## [1] 1 2 3 4 5
+## 
+## [[6]]
+## [1] 1 2 3 4 5 6
+```
+]
+
+---
+
+What happens if the types don't match?
+
+
+```r
+l = list(a = 1:3, b = 4:6, c = 7:9, d = list(10, 11, "A"))
+```
+
+
+```r
+sapply(l, function(x) x[1])
+```
+
+```
+## $a
+## [1] 1
+## 
+## $b
+## [1] 4
+## 
+## $c
+## [1] 7
+## 
+## $d
+## [1] 10
+```
+
+--
+
+
+```r
+sapply(l, function(x) x[[1]])
+```
+
+```
+##  a  b  c  d 
+##  1  4  7 10
+```
+
+--
+
+
+```r
+sapply(l, function(x) x[[3]])
+```
+
+```
+##   a   b   c   d 
+## "3" "6" "9" "A"
+```
+
+---
+
+## `*`apply and data frames
+
+We can use these functions with data frames, the key is to remember that a data frame is just a fancy list.
+
+
+```r
+df = data.frame(
+  a = 1:6, 
+  b = letters[1:6], 
+  c = c(TRUE,FALSE)
+)
+```
+
+
+```r
+lapply(df, class) %&gt;% str()
+```
+
+```
+## List of 3
+##  $ a: chr "integer"
+##  $ b: chr "character"
+##  $ c: chr "logical"
+```
+
+```r
+sapply(df, class)
+```
+
+```
+##           a           b           c 
+##   "integer" "character"   "logical"
+```
+
+---
+
+## A more useful example
+
+Recall Exercise 2 from Lecture 5 where we converted `-999` to `NA`s.
+
+
+```r
+d = data.frame(
+  patient_id = c(1, 2, 3, 4, 5),
+  age = c(32, 27, 56, 19, 65),
+  bp = c(110, 100, 125, -999, -999),
+  o2 = c(97, 95, -999, -999, 99)
+)
+```
+
+--
+
+.pull-left[
+
+```r
+fix_missing = function(x) {
+  x[x == -999] = NA
+  x
+}
+lapply(d, fix_missing)
+```
+
+```
+## $patient_id
+## [1] 1 2 3 4 5
+## 
+## $age
+## [1] 32 27 56 19 65
+## 
+## $bp
+## [1] 110 100 125  NA  NA
+## 
+## $o2
+## [1] 97 95 NA NA 99
+```
+]
+
+--
+
+.pull-right[
+
+```r
+lapply(d, fix_missing) %&gt;%
+  as.data.frame()
+```
+
+```
+##   patient_id age  bp o2
+## 1          1  32 110 97
+## 2          2  27 100 95
+## 3          3  56 125 NA
+## 4          4  19  NA NA
+## 5          5  65  NA 99
+```
+]
+
+---
+
+dplyr is also a viable option here, 
+
+.pull-left[
+
+```r
+d %&gt;%
+  mutate(
+    across(bp:o2, fix_missing)
+  )
+```
+
+```
+##   patient_id age  bp o2
+## 1          1  32 110 97
+## 2          2  27 100 95
+## 3          3  56 125 NA
+## 4          4  19  NA NA
+## 5          5  65  NA 99
+```
+]
+
+--
+
+.pull-right[
+
+```r
+d %&gt;%
+  mutate(
+    across(where(is.numeric), fix_missing)
+  )
+```
+
+```
+##   patient_id age  bp o2
+## 1          1  32 110 97
+## 2          2  27 100 95
+## 3          3  56 125 NA
+## 4          4  19  NA NA
+## 5          5  65  NA 99
+```
+]
+
+
+
+---
+
+## other less common apply functions
+
+* `apply()` - applies a function over the rows or columns of a data frame, matrix or array
+
+* `vapply()` - is similar to `sapply`, but has a enforced return type and size
+
+* `mapply()` -  like `sapply` but will iterate over multiple vectors at the same time.
+
+* `rapply()` - a recursive version of `lapply`, behavior depends largely on the `how` argument
+
+* `eapply()` -  apply a function over an environment.
+
+---
+class: middle
+
+.center[
+&lt;img src="imgs/hex-purrr.png" width="45%" /&gt;
+]
+
+---
+
+## Map functions
+
+Basic functions for looping over objects and returning a value (of a specific type) - replacement for `lapply`/`sapply`/`vapply`.
+
+* `map()` - returns a list.
+
+* `map_lgl()` - returns a logical vector.
+
+* `map_int()` - returns a integer vector.
+
+* `map_dbl()` - returns a double vector.
+
+* `map_chr()` - returns a character vector.
+
+* `map_dfr()` - returns a data frame by row binding.
+
+* `map_dfc()` - returns a data frame by column binding.
+
+* `walk()` - returns nothing, function used exclusively for its side effects
+
+
+---
+
+## Type Consistency
+
+R is a weakly / dynamically typed language which means there is no syntactic way to define a function which enforces argument or return types. This flexibility can be useful at times, but often it makes it hard to reason about your code and requires more verbose code to handle edge cases.
+
+
+```r
+x = list(rnorm(1e3), rnorm(1e3), rnorm(1e3))
+```
+
+--
+
+
+```r
+map_dbl(x, mean)
+```
+
+```
+## [1] -0.028153748 -0.008239139  0.035479054
+```
+
+--
+
+
+```r
+map_chr(x, mean)
+```
+
+```
+## [1] "-0.028154" "-0.008239" "0.035479"
+```
+
+--
+
+
+```r
+map_int(x, mean)
+```
+
+```
+## Error: Can't coerce element 1 from a double to a integer
+```
+
+--
+
+.pull-left[
+
+```r
+map(x, mean) %&gt;% str()
+```
+
+```
+## List of 3
+##  $ : num -0.0282
+##  $ : num -0.00824
+##  $ : num 0.0355
+```
+]
+
+--
+
+.pull-right[
+
+```r
+lapply(x, mean) %&gt;% str()
+```
+
+```
+## List of 3
+##  $ : num -0.0282
+##  $ : num -0.00824
+##  $ : num 0.0355
+```
+]
+
+---
+
+## Working with Data Frames
+
+`map_dfr` and `map_dfc` are particularly useful when working with and/or creating data frames. 
+
+Take for example the Lecture 5 Exercise 2 example from above,
+
+.pull-left[
+
+```r
+d = data.frame(
+  patient_id = c(1, 2, 3, 4, 5),
+  age = c(32, 27, 56, 19, 65),
+  bp = c(110, 100, 125, -999, -999),
+  o2 = c(97, 95, -999, -999, 99)
+)
+```
+]
+
+.pull-right[
+
+```r
+fix_missing = function(x) {
+  x[x == -999] = NA
+  x
+}
+```
+]
+
+&lt;br/&gt;
+
+
+```r
+purrr::map_dfc(d, fix_missing)
+```
+
+```
+## # A tibble: 5 × 4
+##   patient_id   age    bp    o2
+##        &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
+## 1          1    32   110    97
+## 2          2    27   100    95
+## 3          3    56   125    NA
+## 4          4    19    NA    NA
+## 5          5    65    NA    99
+```
+
+---
+
+
+```r
+map_dfr(sw_people, function(x) x[1:5])
+```
+
+```
+## # A tibble: 87 × 5
+##    name               height mass  hair_color    skin_color 
+##    &lt;chr&gt;              &lt;chr&gt;  &lt;chr&gt; &lt;chr&gt;         &lt;chr&gt;      
+##  1 Luke Skywalker     172    77    blond         fair       
+##  2 C-3PO              167    75    n/a           gold       
+##  3 R2-D2              96     32    n/a           white, blue
+##  4 Darth Vader        202    136   none          white      
+##  5 Leia Organa        150    49    brown         light      
+##  6 Owen Lars          178    120   brown, grey   light      
+##  7 Beru Whitesun lars 165    75    brown         light      
+##  8 R5-D4              97     32    n/a           white, red 
+##  9 Biggs Darklighter  183    84    black         light      
+## 10 Obi-Wan Kenobi     182    77    auburn, white fair       
+## # … with 77 more rows
+```
+
+--
+
+&lt;br/&gt;
+
+
+```r
+map_dfr(sw_people, function(x) x)
+```
+
+```
+## Error in `stop_vctrs()`:
+## ! Can't recycle `name` (size 5) to match `vehicles` (size 2).
+```
+
+---
+
+## Shortcut - purrr style anonymous functions
+
+purrr lets us write anonymous functions using one sided formulas where the argument is given by `.` or `.x` for `map` and related functions.
+
+
+```r
+map_dbl(1:5, function(x) x/(x+1))
+```
+
+```
+## [1] 0.5000000 0.6666667 0.7500000 0.8000000 0.8333333
+```
+
+--
+
+&lt;br/&gt;
+
+```r
+map_dbl(1:5, ~ ./(.+1))
+```
+
+```
+## [1] 0.5000000 0.6666667 0.7500000 0.8000000 0.8333333
+```
+
+--
+
+&lt;br/&gt;
+
+```r
+map_dbl(1:5, ~ .x/(.x+1))
+```
+
+```
+## [1] 0.5000000 0.6666667 0.7500000 0.8000000 0.8333333
+```
+
+--
+
+&lt;br/&gt;
+
+Generally, the latter option is preferred to avoid confusion with magrittr.
+
+---
+
+## Multiargument anonymous functions - e.g. `map2`
+
+Functions with the `map2` prefix work the same as the `map` functions but they iterate over two objects instead of one. Arguments in an anonymous function are given by `.x` and `.y` (or `..1` and `..2`) respectively.
+
+
+```r
+map2_dbl(1:5, 1:5, function(x,y) x / (y+1))
+```
+
+```
+## [1] 0.5000000 0.6666667 0.7500000 0.8000000 0.8333333
+```
+
+--
+
+
+```r
+map2_dbl(1:5, 1:5, ~ .x/(.y+1))
+```
+
+```
+## [1] 0.5000000 0.6666667 0.7500000 0.8000000 0.8333333
+```
+
+--
+
+
+```r
+map2_dbl(1:5, 1:5, ~ ..1/(..2+1))
+```
+
+```
+## [1] 0.5000000 0.6666667 0.7500000 0.8000000 0.8333333
+```
+
+--
+
+
+```r
+map2_chr(LETTERS[1:5], letters[1:5], paste0)
+```
+
+```
+## [1] "Aa" "Bb" "Cc" "Dd" "Ee"
+```
+
+---
+
+## Shortcut - Lookups
+
+Very often we want to extract only certain (named) values from a list, `purrr` provides a shortcut for this operation - if instead of a function you provide either a character or numeric vector, those values will be used to sequentially subset the elements being iterated.
+
+--
+
+
+```r
+purrr::map_chr(sw_people, "name") %&gt;% head()
+```
+
+```
+## [1] "Luke Skywalker" "C-3PO"          "R2-D2"          "Darth Vader"   
+## [5] "Leia Organa"    "Owen Lars"
+```
+
+--
+
+
+```r
+purrr::map_chr(sw_people, 1) %&gt;% head()
+```
+
+```
+## [1] "Luke Skywalker" "C-3PO"          "R2-D2"          "Darth Vader"   
+## [5] "Leia Organa"    "Owen Lars"
+```
+
+--
+
+
+```r
+purrr::map_chr(sw_people, list("films", 1)) %&gt;% head(n=10)
+```
+
+```
+##  [1] "http://swapi.co/api/films/6/" "http://swapi.co/api/films/5/"
+##  [3] "http://swapi.co/api/films/5/" "http://swapi.co/api/films/6/"
+##  [5] "http://swapi.co/api/films/6/" "http://swapi.co/api/films/5/"
+##  [7] "http://swapi.co/api/films/5/" "http://swapi.co/api/films/1/"
+##  [9] "http://swapi.co/api/films/1/" "http://swapi.co/api/films/5/"
+```
+
+---
+
+## Length coercion?
+
+
+```r
+purrr::map_chr(sw_people, list("starships", 1))
+```
+
+```
+## Error in `stop_bad_type()`:
+## ! Result 2 must be a single string, not NULL of length 0
+```
+--
+
+&lt;br/&gt;
+
+```r
+sw_people[[2]]$name
+```
+
+```
+## [1] "C-3PO"
+```
+
+```r
+sw_people[[2]]$starships
+```
+
+```
+## NULL
+```
+
+--
+
+&lt;br/&gt;
+
+```r
+purrr::map_chr(sw_people, list("starships", 1), .default = NA) %&gt;% head()
+```
+
+```
+## [1] "http://swapi.co/api/starships/12/" NA                                 
+## [3] NA                                  "http://swapi.co/api/starships/13/"
+## [5] NA                                  NA
+```
+
+---
+
+
+```r
+purrr::map(sw_people, list("starships", 1)) %&gt;% head()
+```
+
+```
+## [[1]]
+## [1] "http://swapi.co/api/starships/12/"
+## 
+## [[2]]
+## NULL
+## 
+## [[3]]
+## NULL
+## 
+## [[4]]
+## [1] "http://swapi.co/api/starships/13/"
+## 
+## [[5]]
+## NULL
+## 
+## [[6]]
+## NULL
+```
+
+---
+
+## list columns
+
+.pull-left[
+
+```r
+(chars = tibble(
+  name = purrr::map_chr(sw_people, "name"),
+  starships = purrr::map(sw_people, "starships")
+))
+```
+
+```
+## # A tibble: 87 × 2
+##    name               starships
+##    &lt;chr&gt;              &lt;list&gt;   
+##  1 Luke Skywalker     &lt;chr [2]&gt;
+##  2 C-3PO              &lt;NULL&gt;   
+##  3 R2-D2              &lt;NULL&gt;   
+##  4 Darth Vader        &lt;chr [1]&gt;
+##  5 Leia Organa        &lt;NULL&gt;   
+##  6 Owen Lars          &lt;NULL&gt;   
+##  7 Beru Whitesun lars &lt;NULL&gt;   
+##  8 R5-D4              &lt;NULL&gt;   
+##  9 Biggs Darklighter  &lt;chr [1]&gt;
+## 10 Obi-Wan Kenobi     &lt;chr [5]&gt;
+## # … with 77 more rows
+```
+]
+
+.pull-right[
+
+```r
+chars %&gt;%
+  mutate(
+    n_starships = map_int(starships, length)
+  )
+```
+
+```
+## # A tibble: 87 × 3
+##    name               starships n_starships
+##    &lt;chr&gt;              &lt;list&gt;          &lt;int&gt;
+##  1 Luke Skywalker     &lt;chr [2]&gt;           2
+##  2 C-3PO              &lt;NULL&gt;              0
+##  3 R2-D2              &lt;NULL&gt;              0
+##  4 Darth Vader        &lt;chr [1]&gt;           1
+##  5 Leia Organa        &lt;NULL&gt;              0
+##  6 Owen Lars          &lt;NULL&gt;              0
+##  7 Beru Whitesun lars &lt;NULL&gt;              0
+##  8 R5-D4              &lt;NULL&gt;              0
+##  9 Biggs Darklighter  &lt;chr [1]&gt;           1
+## 10 Obi-Wan Kenobi     &lt;chr [5]&gt;           5
+## # … with 77 more rows
+```
+]
+
+---
+class: middle, center
+
+## Example - list columns and approximating pi
+
+
+---
+class: center, middle
+
+# Selective rectangling
+
+---
+
+## Complex heirarchical data
+
+Often we may encounter complex data structures where our goal is not to rectangle every value (which may not even be possible) but rather to rectangle a small subset of the data.
+
+--
+
+
+```r
+str(repurrrsive::discog, max.level = 3)
+```
+
+```
+## List of 155
+##  $ :List of 5
+##   ..$ instance_id      : int 354823933
+##   ..$ date_added       : chr "2019-02-16T17:48:59-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2015
+##   .. ..$ master_url  : NULL
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 7496378
+##   .. ..$ thumb       : chr "https://img.discogs.com/vEVegHrMNTsP6xG_K6OuFXz4h_U=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "Demo"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/EmbMh7vsElksjRgoXLFSuY1sjRQ=/fit-in/500x499/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/7496378"
+##   .. ..$ master_id   : int 0
+##   ..$ id               : int 7496378
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 354092601
+##   ..$ date_added       : chr "2019-02-13T14:13:11-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2013
+##   .. ..$ master_url  : chr "https://api.discogs.com/masters/553057"
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 4490852
+##   .. ..$ thumb       : chr "https://img.discogs.com/nRZbcvVNygyNFKg5IjUd5YesF_c=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "Observant Com El Mon Es Destrueix"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/eBbQ9jaiHKFeSXLwBEbxq6nl8Wo=/fit-in/600x600/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/4490852"
+##   .. ..$ master_id   : int 553057
+##   ..$ id               : int 4490852
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 354091476
+##   ..$ date_added       : chr "2019-02-13T14:07:23-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2017
+##   .. ..$ master_url  : chr "https://api.discogs.com/masters/1109943"
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 9827276
+##   .. ..$ thumb       : chr "https://img.discogs.com/x6GUri3hXAcfzF2wz5jQloomOoY=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "I"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/7aJPlo2phtFL-T2Kt6MTBc0uftY=/fit-in/600x600/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/9827276"
+##   .. ..$ master_id   : int 1109943
+##   ..$ id               : int 9827276
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 351244906
+##   ..$ date_added       : chr "2019-02-02T11:39:58-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 3
+##   .. ..$ year        : int 2017
+##   .. ..$ master_url  : chr "https://api.discogs.com/masters/1128934"
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 9769203
+##   .. ..$ thumb       : chr "https://img.discogs.com/eHz44JyqS_3lVHwmB7SiYsmaFgw=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "Oído Absoluto"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/gS7kZaQLa4PaOtLizmpdKOClSo8=/fit-in/600x600/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/9769203"
+##   .. ..$ master_id   : int 1128934
+##   ..$ id               : int 9769203
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 351244801
+##   ..$ date_added       : chr "2019-02-02T11:39:37-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2015
+##   .. ..$ master_url  : chr "https://api.discogs.com/masters/857592"
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 7237138
+##   .. ..$ thumb       : chr "https://img.discogs.com/dqDk2TN2jkMZKFya71998oTRGcI=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "A Cat's Cause, No Dogs Problem"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/qXfi2e4YuS90_abWt0Tt-hsCHSQ=/fit-in/600x600/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/7237138"
+##   .. ..$ master_id   : int 857592
+##   ..$ id               : int 7237138
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 351052065
+##   ..$ date_added       : chr "2019-02-01T20:40:53-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2019
+##   .. ..$ master_url  : chr "https://api.discogs.com/masters/1498137"
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 13117042
+##   .. ..$ thumb       : chr "https://img.discogs.com/ahomwZjjZ5-l730LYIsJp3BikX4=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "Tashme"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/LRDyHX3PR-m6gBt67pJ7JbdFB6M=/fit-in/600x600/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/13117042"
+##   .. ..$ master_id   : int 1498137
+##   ..$ id               : int 13117042
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350315345
+##   ..$ date_added       : chr "2019-01-29T15:48:37-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2014
+##   .. ..$ master_url  : chr "https://api.discogs.com/masters/852880"
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 7113575
+##   .. ..$ thumb       : chr "https://img.discogs.com/Uo5drP3W-Fje5fPnS1te9J1hEcY=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "Demo"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/xTk-opTWRxEvsZB4eWppEBAatPM=/fit-in/600x906/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/7113575"
+##   .. ..$ master_id   : int 852880
+##   ..$ id               : int 7113575
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350315103
+##   ..$ date_added       : chr "2019-01-29T15:47:22-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2015
+##   .. ..$ master_url  : chr "https://api.discogs.com/masters/869410"
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 10540713
+##   .. ..$ thumb       : chr "https://img.discogs.com/4sniB6eUWvwb6DdUMiHhbGRs6P8=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "Let The Miracles Begin"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/UareU8W932i1M9SWi78mU5nxHp8=/fit-in/422x676/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/10540713"
+##   .. ..$ master_id   : int 869410
+##   ..$ id               : int 10540713
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350314507
+##   ..$ date_added       : chr "2019-01-29T15:44:08-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2017
+##   .. ..$ master_url  : chr "https://api.discogs.com/masters/1281224"
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 11260950
+##   .. ..$ thumb       : chr ""
+##   .. ..$ title       : chr "Sub Space"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/720182381cfb1a9425d9b33c5e2bd091040f9ebd/images/spacer.gif"
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/11260950"
+##   .. ..$ master_id   : int 1281224
+##   ..$ id               : int 11260950
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350314047
+##   ..$ date_added       : chr "2019-01-29T15:41:35-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2017
+##   .. ..$ master_url  : NULL
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 11726853
+##   .. ..$ thumb       : chr "https://img.discogs.com/Ab5W0qBKR9o85x4X00_bTCyQ_zU=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "Demo"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/jYo5eqe_CE-oCzw2kk9YxAE3vIY=/fit-in/600x593/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/11726853"
+##   .. ..$ master_id   : int 0
+##   ..$ id               : int 11726853
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350313874
+##   ..$ date_added       : chr "2019-01-29T15:40:31-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2015
+##   .. ..$ master_url  : NULL
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 12025267
+##   .. ..$ thumb       : chr "https://img.discogs.com/HeAHFNXClJGzTy9cGAYWj3cuvLw=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "Pines"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/Eur8siPTHzxxPRFENhqsxNMajII=/fit-in/600x561/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/12025267"
+##   .. ..$ master_id   : int 0
+##   ..$ id               : int 12025267
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350313508
+##   ..$ date_added       : chr "2019-01-29T15:38:14-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2016
+##   .. ..$ master_url  : chr "https://api.discogs.com/masters/972644"
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 8252472
+##   .. ..$ thumb       : chr "https://img.discogs.com/2B-rz9aBXELHJlu0su874sYMnHs=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "Domo"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/RcScS9-uMiV-SLdtwg__0f6QIM4=/fit-in/561x561/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/8252472"
+##   .. ..$ master_id   : int 972644
+##   ..$ id               : int 8252472
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350313380
+##   ..$ date_added       : chr "2019-01-29T15:37:40-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2017
+##   .. ..$ master_url  : NULL
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 9667355
+##   .. ..$ thumb       : chr "https://img.discogs.com/sXDSrClHFro2u2A9TFYh7dPdS5U=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "Eat Snot &amp; Rot!"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/pAwNmFILIbXb5t0r7NpSBzhbp4s=/fit-in/600x946/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/9667355"
+##   .. ..$ master_id   : int 0
+##   ..$ id               : int 9667355
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350313358
+##   ..$ date_added       : chr "2019-01-29T15:37:31-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2015
+##   .. ..$ master_url  : chr "https://api.discogs.com/masters/927900"
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 7847097
+##   .. ..$ thumb       : chr "https://img.discogs.com/ZmYxOj_4c6atRVxfDZZJBL4_pok=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "American Hate's Greatest Hits"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/Izl88DFAtfkQrVkcIZya36M937A=/fit-in/600x785/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/7847097"
+##   .. ..$ master_id   : int 927900
+##   ..$ id               : int 7847097
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350313270
+##   ..$ date_added       : chr "2019-01-29T15:36:59-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2017
+##   .. ..$ master_url  : chr "https://api.discogs.com/masters/1185520"
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 10347810
+##   .. ..$ thumb       : chr "https://img.discogs.com/qpOOs5kwsYaR7AS9D24y_ur6z98=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "Relaxed Mike"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/EQkBb0dZMkU6EBbSoc7lq6l2uZc=/fit-in/600x575/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/10347810"
+##   .. ..$ master_id   : int 1185520
+##   ..$ id               : int 10347810
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350313246
+##   ..$ date_added       : chr "2019-01-29T15:36:50-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2015
+##   .. ..$ master_url  : chr "https://api.discogs.com/masters/975745"
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 7949818
+##   .. ..$ thumb       : chr "https://img.discogs.com/PgWN047_t1ZKmFSIO9E1LKYJXL4=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "Demo"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/tcLFSKTHu76N2kbj8ev9OuMSbyg=/fit-in/600x940/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/7949818"
+##   .. ..$ master_id   : int 975745
+##   ..$ id               : int 7949818
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350313107
+##   ..$ date_added       : chr "2019-01-29T15:36:07-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2018
+##   .. ..$ master_url  : NULL
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 12075374
+##   .. ..$ thumb       : chr "https://img.discogs.com/ctCFeQCg9iGSjzMyNAwEEMWyz0c=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "Demo Hits"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/bg41i6neeMAQKPeJL3HRL2FLkMI=/fit-in/600x600/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/12075374"
+##   .. ..$ master_id   : int 0
+##   ..$ id               : int 12075374
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350312972
+##   ..$ date_added       : chr "2019-01-29T15:35:18-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2016
+##   .. ..$ master_url  : NULL
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 8137815
+##   .. ..$ thumb       : chr "https://img.discogs.com/rPFC0Cu08ePV7WB_J7YST-0Iu7A=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "Demo 2015"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/XCPe9-M1rfr3McopwcPgo1uCzg0=/fit-in/600x658/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/8137815"
+##   .. ..$ master_id   : int 0
+##   ..$ id               : int 8137815
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350312935
+##   ..$ date_added       : chr "2019-01-29T15:35:01-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2016
+##   .. ..$ master_url  : chr "https://api.discogs.com/masters/988589"
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 8926338
+##   .. ..$ thumb       : chr "https://img.discogs.com/SlPflmPxaiaoGkmJ2j81wcski-A=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "Demo"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/Ed3iaeyaFkNlqgn64oKjBHJD9zI=/fit-in/600x899/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/8926338"
+##   .. ..$ master_id   : int 988589
+##   ..$ id               : int 8926338
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350312850
+##   ..$ date_added       : chr "2019-01-29T15:34:32-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2017
+##   .. ..$ master_url  : chr "https://api.discogs.com/masters/1185733"
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 10350103
+##   .. ..$ thumb       : chr "https://img.discogs.com/CsYPOAFhQh7m3Me55UdBuBKHDRI=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "War Hymns"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/oBer3XMs4uiy7AlQIL5QNkK40qE=/fit-in/600x900/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/10350103"
+##   .. ..$ master_id   : int 1185733
+##   ..$ id               : int 10350103
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350312790
+##   ..$ date_added       : chr "2019-01-29T15:34:15-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2015
+##   .. ..$ master_url  : chr "https://api.discogs.com/masters/870005"
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 6829789
+##   .. ..$ thumb       : chr "https://img.discogs.com/BI1nKj_LntK9a44TYX9OEUNCzTQ=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "Girls Living Outside Society's Shit"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/EI7BNCs1JjMZtvl4glXjNKSaaxI=/fit-in/400x602/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/6829789"
+##   .. ..$ master_id   : int 870005
+##   ..$ id               : int 6829789
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350312727
+##   ..$ date_added       : chr "2019-01-29T15:33:45-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2015
+##   .. ..$ master_url  : NULL
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 7454861
+##   .. ..$ thumb       : chr "https://img.discogs.com/cCBP6gRETNHd3hS8XTGH0uGVPmQ=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "It Gets Weirder - A Compilation Of Olympia Punk In 2015"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/D74xa0DCRzZCeFX9lKl5sWyVeh4=/fit-in/600x600/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/7454861"
+##   .. ..$ master_id   : int 0
+##   ..$ id               : int 7454861
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350312693
+##   ..$ date_added       : chr "2019-01-29T15:33:32-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2015
+##   .. ..$ master_url  : NULL
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 7441672
+##   .. ..$ thumb       : chr "https://img.discogs.com/y_FDPVg_XNnlFCF56XtIK2Z8Sck=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "Fight b/w We Live"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/pnLoN2wbDMIe0y2TuAgVWVwENwA=/fit-in/512x781/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/7441672"
+##   .. ..$ master_id   : int 0
+##   ..$ id               : int 7441672
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350312544
+##   ..$ date_added       : chr "2019-01-29T15:32:31-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2015
+##   .. ..$ master_url  : NULL
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 7339234
+##   .. ..$ thumb       : chr "https://img.discogs.com/FmHUgR29I7demE8NnqchB8vpqQw=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "Petite Dog "
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/TlTRV6w_WZn8R_z9qa5hwTKlMVE=/fit-in/600x930/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/7339234"
+##   .. ..$ master_id   : int 0
+##   ..$ id               : int 7339234
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350312482
+##   ..$ date_added       : chr "2019-01-29T15:32:07-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2016
+##   .. ..$ master_url  : chr "https://api.discogs.com/masters/973090"
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 8242408
+##   .. ..$ thumb       : chr "https://img.discogs.com/zUWlGKwAISM15E67MYXrSGtTlZ8=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "Hard Grip"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/mFjo0m2SdfWAXPNEPF3bS_mniks=/fit-in/600x600/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/8242408"
+##   .. ..$ master_id   : int 973090
+##   ..$ id               : int 8242408
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350312433
+##   ..$ date_added       : chr "2019-01-29T15:31:50-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2015
+##   .. ..$ master_url  : NULL
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 9477305
+##   .. ..$ thumb       : chr "https://img.discogs.com/pplNVLAi4BdnTyH_KyqioaU5BU0=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "Fleshed Out"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/gYa9LfE98zr4RD8aYb8JUByE8Sg=/fit-in/600x951/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/9477305"
+##   .. ..$ master_id   : int 0
+##   ..$ id               : int 9477305
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350312397
+##   ..$ date_added       : chr "2019-01-29T15:31:40-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2014
+##   .. ..$ master_url  : chr "https://api.discogs.com/masters/709327"
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 5888591
+##   .. ..$ thumb       : chr "https://img.discogs.com/MOkawTfX_Muu9iXvvj6ww-rBVZA=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "Vexx"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/XwqtdBO478L8LPw2494DQv5STeg=/fit-in/600x940/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/5888591"
+##   .. ..$ master_id   : int 709327
+##   ..$ id               : int 5888591
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350312359
+##   ..$ date_added       : chr "2019-01-29T15:31:26-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2012
+##   .. ..$ master_url  : chr "https://api.discogs.com/masters/597843"
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 4812535
+##   .. ..$ thumb       : chr "https://img.discogs.com/VYKuwrQujJhLN1ao91xN2cPTkGs=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "All's Lost"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/35O-z0OZpqeuaY0i_v1flmH_4B0=/fit-in/600x984/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/4812535"
+##   .. ..$ master_id   : int 597843
+##   ..$ id               : int 4812535
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350312327
+##   ..$ date_added       : chr "2019-01-29T15:31:15-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2015
+##   .. ..$ master_url  : chr "https://api.discogs.com/masters/888704"
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 7506665
+##   .. ..$ thumb       : chr "https://img.discogs.com/IeegHvvzLhTXjN5VkYIgoY8EypY=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "Wash Away"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/rPNwCNqamcXoPtPtACC6Ijsbd58=/fit-in/600x600/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/7506665"
+##   .. ..$ master_id   : int 888704
+##   ..$ id               : int 7506665
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350312246
+##   ..$ date_added       : chr "2019-01-29T15:30:46-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2013
+##   .. ..$ master_url  : chr "https://api.discogs.com/masters/549235"
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 4234761
+##   .. ..$ thumb       : chr "https://img.discogs.com/T6Xh50YzlWgQJvo48Y2v7kYuR6E=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "Unbecoming"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/9s-QukKNdsLI7CipkqK9qg8kWx0=/fit-in/600x450/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/4234761"
+##   .. ..$ master_id   : int 549235
+##   ..$ id               : int 4234761
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350312211
+##   ..$ date_added       : chr "2019-01-29T15:30:30-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2014
+##   .. ..$ master_url  : NULL
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 5922737
+##   .. ..$ thumb       : chr "https://img.discogs.com/tsv4wfrhjllmZeGkXIaLzYHEyj4=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "My New Flesh"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/BLqjvqOhsbKzyvumdcWYiZdBOu8=/fit-in/600x1021/filters:strip_icc():format(jpeg):mode_rgb("| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/5922737"
+##   .. ..$ master_id   : int 0
+##   ..$ id               : int 5922737
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350312055
+##   ..$ date_added       : chr "2019-01-29T15:29:35-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2016
+##   .. ..$ master_url  : chr "https://api.discogs.com/masters/987107"
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 8767499
+##   .. ..$ thumb       : chr "https://img.discogs.com/eDCu4vwrRD7ZeMjpcwTLpLYl5bc=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "Demo 2016"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/AHQNzXH8al81WEvrK1yVPcQzBU4=/fit-in/600x600/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/8767499"
+##   .. ..$ master_id   : int 987107
+##   ..$ id               : int 8767499
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350311880
+##   ..$ date_added       : chr "2019-01-29T15:28:28-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2017
+##   .. ..$ master_url  : NULL
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 11011789
+##   .. ..$ thumb       : chr "https://img.discogs.com/XPWPgUPsT-h1mxxn_EQk0EH1_Pc=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "Promotional Heat"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/JAN-Iuk7HtTo4sMwiYekx7vVNs8=/fit-in/487x472/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/11011789"
+##   .. ..$ master_id   : int 0
+##   ..$ id               : int 11011789
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350311734
+##   ..$ date_added       : chr "2019-01-29T15:27:35-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2016
+##   .. ..$ master_url  : chr "https://api.discogs.com/masters/1095386"
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 9408223
+##   .. ..$ thumb       : chr "https://img.discogs.com/GykF5j5iDBhRmHM3aOX6MK453cg=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "Ingrate"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/EcDCseXUXd0Pe1F4XP8yV4b-Pj8=/fit-in/600x590/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/9408223"
+##   .. ..$ master_id   : int 1095386
+##   ..$ id               : int 9408223
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350311710
+##   ..$ date_added       : chr "2019-01-29T15:27:23-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2017
+##   .. ..$ master_url  : NULL
+##   .. ..$ artists     :List of 7
+##   .. ..$ id          : int 11799478
+##   .. ..$ thumb       : chr "https://img.discogs.com/VqSUXagFJKYzvHpFpj9JLMbCh6w=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "Dog City USA"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/4bSWGE76bce7PKupqmHrN64aqkg=/fit-in/600x600/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/11799478"
+##   .. ..$ master_id   : int 0
+##   ..$ id               : int 11799478
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350311667
+##   ..$ date_added       : chr "2019-01-29T15:27:07-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2017
+##   .. ..$ master_url  : NULL
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 11967088
+##   .. ..$ thumb       : chr "https://img.discogs.com/cq50cG9gqXkiUicDig_fBlrS8Hc=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "Tethered In Deviancy"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/khQ34r3xwLRCb09ltNC8dd6K4V8=/fit-in/600x658/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/11967088"
+##   .. ..$ master_id   : int 0
+##   ..$ id               : int 11967088
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350311623
+##   ..$ date_added       : chr "2019-01-29T15:26:51-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2016
+##   .. ..$ master_url  : chr "https://api.discogs.com/masters/998214"
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 8439750
+##   .. ..$ thumb       : chr "https://img.discogs.com/1U73zfzKfxAj2IOTruNCJRkEOhE=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "Cassette"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/c5-b1pXJLBH4c_pOwZcttmUj55c=/fit-in/600x587/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/8439750"
+##   .. ..$ master_id   : int 998214
+##   ..$ id               : int 8439750
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350311495
+##   ..$ date_added       : chr "2019-01-29T15:26:15-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2014
+##   .. ..$ master_url  : NULL
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 6809387
+##   .. ..$ thumb       : chr "https://img.discogs.com/-P6T70U2h74KDIjsFghnAFmOymk=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "Demo 2014"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/p2qBgs8aHGRldHnz3z3L1XTkkBs=/fit-in/600x587/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/6809387"
+##   .. ..$ master_id   : int 0
+##   ..$ id               : int 6809387
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350311439
+##   ..$ date_added       : chr "2019-01-29T15:25:55-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2016
+##   .. ..$ master_url  : chr "https://api.discogs.com/masters/1148670"
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 8923752
+##   .. ..$ thumb       : chr "https://img.discogs.com/oQy7VjfHjstx3GsAC0AHl2w6a4s=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "Demo 2016"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/kPm8plQaO6KMEcjq9SDmCQ-7PkU=/fit-in/600x600/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/8923752"
+##   .. ..$ master_id   : int 1148670
+##   ..$ id               : int 8923752
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350311342
+##   ..$ date_added       : chr "2019-01-29T15:25:19-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2017
+##   .. ..$ master_url  : NULL
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 10347774
+##   .. ..$ thumb       : chr "https://img.discogs.com/memVYk8MLwRLV54-AuHGbEymR7o=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "Compilation"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/2_gCqSCsSfs1aRf7WnBYQG2pQvQ=/fit-in/600x593/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/10347774"
+##   .. ..$ master_id   : int 0
+##   ..$ id               : int 10347774
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350311266
+##   ..$ date_added       : chr "2019-01-29T15:24:49-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2017
+##   .. ..$ master_url  : NULL
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 10631734
+##   .. ..$ thumb       : chr "https://img.discogs.com/7csTCzdEPxmz3sAcc90_sPdN7gM=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "Intimate Justice"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/Fpc9BGgCp7vRFr9yFwdM0WQbkXM=/fit-in/500x446/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/10631734"
+##   .. ..$ master_id   : int 0
+##   ..$ id               : int 10631734
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350311151
+##   ..$ date_added       : chr "2019-01-29T15:24:14-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2016
+##   .. ..$ master_url  : chr "https://api.discogs.com/masters/1498273"
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 9441156
+##   .. ..$ thumb       : chr "https://img.discogs.com/FlVdODn3b52lqCDk0oGKkuPZiqs=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "Demo II"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/XytzS7COrJiCBsZJAzTqaB0_z0M=/fit-in/477x475/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/9441156"
+##   .. ..$ master_id   : int 1498273
+##   ..$ id               : int 9441156
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350311121
+##   ..$ date_added       : chr "2019-01-29T15:24:06-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2017
+##   .. ..$ master_url  : NULL
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 11011923
+##   .. ..$ thumb       : chr "https://img.discogs.com/Gl_QTRUjdvYOYvPOAZDfD8GTqKI=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "Promo"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/Wk-NXjGo74Vss_7EhXym9KqkYHI=/fit-in/600x600/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/11011923"
+##   .. ..$ master_id   : int 0
+##   ..$ id               : int 11011923
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350311072
+##   ..$ date_added       : chr "2019-01-29T15:23:52-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2017
+##   .. ..$ master_url  : NULL
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 10635731
+##   .. ..$ thumb       : chr "https://img.discogs.com/IDHqgHpecYp8hRmgPFqgtrPM680=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "Sink With You"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/CmDAW0JmLgXhSahYVkF-ZBCWHDM=/fit-in/600x600/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/10635731"
+##   .. ..$ master_id   : int 0
+##   ..$ id               : int 10635731
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350311038
+##   ..$ date_added       : chr "2019-01-29T15:23:41-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2013
+##   .. ..$ master_url  : NULL
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 5383038
+##   .. ..$ thumb       : chr "https://img.discogs.com/F8ZhL5AjuSchjF7s9mLUFDrHBek=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "For Men"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/4SOX4n0BwxUFt0f-D2Pf-6WJySk=/fit-in/500x477/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/5383038"
+##   .. ..$ master_id   : int 0
+##   ..$ id               : int 5383038
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350310921
+##   ..$ date_added       : chr "2019-01-29T15:23:04-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2017
+##   .. ..$ master_url  : NULL
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 11321550
+##   .. ..$ thumb       : chr "https://img.discogs.com/rum9wvxbEu9q4bMJzMHSRLxBgao=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "Una Tarde De Hueveo"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/qoc0ULIMQvMSahMHjv8xbqQPvlA=/fit-in/600x584/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/11321550"
+##   .. ..$ master_id   : int 0
+##   ..$ id               : int 11321550
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350310864
+##   ..$ date_added       : chr "2019-01-29T15:22:43-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 0
+##   .. ..$ master_url  : NULL
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 11086084
+##   .. ..$ thumb       : chr ""
+##   .. ..$ title       : chr "Dolori"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/720182381cfb1a9425d9b33c5e2bd091040f9ebd/images/spacer.gif"
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/11086084"
+##   .. ..$ master_id   : int 0
+##   ..$ id               : int 11086084
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350310812
+##   ..$ date_added       : chr "2019-01-29T15:22:32-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2014
+##   .. ..$ master_url  : NULL
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 6896138
+##   .. ..$ thumb       : chr "https://img.discogs.com/SaEQKxz3Lga09ieqRG_r3c3_k0s=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "Demo 2014"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/WmJQ8pfGfToGyNGtfk0pxEzpSGc=/fit-in/600x374/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/6896138"
+##   .. ..$ master_id   : int 0
+##   ..$ id               : int 6896138
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350310410
+##   ..$ date_added       : chr "2019-01-29T15:20:15-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2015
+##   .. ..$ master_url  : NULL
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 8630472
+##   .. ..$ thumb       : chr "https://img.discogs.com/jO8Q-12GMtTwfBJEAS1i-XMT6ks=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "Concept Model(s) I-V"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/LCKXaC65kUDnOSbT9YH9zH3bWEU=/fit-in/600x915/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/8630472"
+##   .. ..$ master_id   : int 0
+##   ..$ id               : int 8630472
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350310247
+##   ..$ date_added       : chr "2019-01-29T15:19:21-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2015
+##   .. ..$ master_url  : NULL
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 7587650
+##   .. ..$ thumb       : chr "https://img.discogs.com/XMp5csrlMPZRrKj5Vn0YO48uN9E=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "Demo"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/-erNWdx1_BakrZcLAasbY61CtZw=/fit-in/600x600/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/7587650"
+##   .. ..$ master_id   : int 0
+##   ..$ id               : int 7587650
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350309979
+##   ..$ date_added       : chr "2019-01-29T15:17:31-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2016
+##   .. ..$ master_url  : NULL
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 8414924
+##   .. ..$ thumb       : chr "https://img.discogs.com/spfdRZ6QPAa4lXLHErIjf5U3Paw=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "Prisoner of the World"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/TmanCUNaML6SZayL5FhSd7ogFNI=/fit-in/600x800/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/8414924"
+##   .. ..$ master_id   : int 0
+##   ..$ id               : int 8414924
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350309892
+##   ..$ date_added       : chr "2019-01-29T15:16:58-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2016
+##   .. ..$ master_url  : NULL
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 11992539
+##   .. ..$ thumb       : chr "https://img.discogs.com/En9f2UGPuoRuqSUUYWLlAXi78PA=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "DOXX"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/8xextJieIBTF2CsYSPAIKO4Fzdc=/fit-in/600x800/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/11992539"
+##   .. ..$ master_id   : int 0
+##   ..$ id               : int 11992539
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350309855
+##   ..$ date_added       : chr "2019-01-29T15:16:41-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2016
+##   .. ..$ master_url  : chr "https://api.discogs.com/masters/1013570"
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 8563279
+##   .. ..$ thumb       : chr "https://img.discogs.com/TA-T-H4pOpqtvGUnDzUgHjFUGzk=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "Room 44 Sessions"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/BzFHHKoxwWishupi2EPrrDR-Bqg=/fit-in/600x558/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/8563279"
+##   .. ..$ master_id   : int 1013570
+##   ..$ id               : int 8563279
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350309777
+##   ..$ date_added       : chr "2019-01-29T15:16:12-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2015
+##   .. ..$ master_url  : chr "https://api.discogs.com/masters/882570"
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 7449616
+##   .. ..$ thumb       : chr "https://img.discogs.com/-RxAeHMXOOcKDWi7KMBr-ra2icM=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "What's Buggin' You?"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/2nzB1UdPG-84-1uU0g2fYbAgJ_A=/fit-in/600x900/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/7449616"
+##   .. ..$ master_id   : int 882570
+##   ..$ id               : int 7449616
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350309616
+##   ..$ date_added       : chr "2019-01-29T15:15:15-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2017
+##   .. ..$ master_url  : chr "https://api.discogs.com/masters/1183639"
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 10329430
+##   .. ..$ thumb       : chr "https://img.discogs.com/DBGrwpTuFXjDaIavqAlUGk17q10=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "Cowboy Slumber Party"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/sotU4dK8zhwyjRI99PCwcj9aR6c=/fit-in/600x600/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/10329430"
+##   .. ..$ master_id   : int 1183639
+##   ..$ id               : int 10329430
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350309557
+##   ..$ date_added       : chr "2019-01-29T15:14:56-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2015
+##   .. ..$ master_url  : NULL
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 8948154
+##   .. ..$ thumb       : chr "https://img.discogs.com/cdCf_jO1yziTjGSoQR54R4pVclY=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "UCLA Yankee Cola"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/nT_jt0tBpIqV4dKyN-GtqsG9Gf0=/fit-in/600x591/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/8948154"
+##   .. ..$ master_id   : int 0
+##   ..$ id               : int 8948154
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350309514
+##   ..$ date_added       : chr "2019-01-29T15:14:43-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2015
+##   .. ..$ master_url  : chr "https://api.discogs.com/masters/972643"
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 8252512
+##   .. ..$ thumb       : chr "https://img.discogs.com/mpUWG0ab9Bx_mEokx2ptk4r7ke8=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "Modern Life"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/8PNGYEi3sYrzj2SEbRz3yuatfyw=/fit-in/600x450/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/8252512"
+##   .. ..$ master_id   : int 972643
+##   ..$ id               : int 8252512
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350309481
+##   ..$ date_added       : chr "2019-01-29T15:14:27-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2015
+##   .. ..$ master_url  : NULL
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 7053100
+##   .. ..$ thumb       : chr "https://img.discogs.com/PtpeL_xKiB4E_87KTor9lsCp-iE=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "Neurosis Party"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/Zxw5z6-TufA6rSHfx4Z3wTUJ_98=/fit-in/500x778/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/7053100"
+##   .. ..$ master_id   : int 0
+##   ..$ id               : int 7053100
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350309452
+##   ..$ date_added       : chr "2019-01-29T15:14:17-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2015
+##   .. ..$ master_url  : NULL
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 11514667
+##   .. ..$ thumb       : chr "https://img.discogs.com/GC1WjMUDvQtf1OZNS11kY2SS2zQ=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "Anarchy And Chaos Tour 2015 Tape"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/MxVwUl9mwZINuzVfi5BECmIHlxI=/fit-in/163x262/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/11514667"
+##   .. ..$ master_id   : int 0
+##   ..$ id               : int 11514667
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350309380
+##   ..$ date_added       : chr "2019-01-29T15:13:50-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2014
+##   .. ..$ master_url  : NULL
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 6022854
+##   .. ..$ thumb       : chr "https://img.discogs.com/E63R0NORpFzwjGXAiweuXLZRCk8=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "Time Slips Away"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/GIj8zr281SEHqZh7fbLOCIJKtXE=/fit-in/600x600/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/6022854"
+##   .. ..$ master_id   : int 0
+##   ..$ id               : int 6022854
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350309284
+##   ..$ date_added       : chr "2019-01-29T15:13:15-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2015
+##   .. ..$ master_url  : NULL
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 7018322
+##   .. ..$ thumb       : chr "https://img.discogs.com/Tsycm-ui_1_40yGQjKDJ3JuvF8o=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "Domestication"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/nhrAiiqmnALsi9yIXBfdPPM7XSQ=/fit-in/600x600/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/7018322"
+##   .. ..$ master_id   : int 0
+##   ..$ id               : int 7018322
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350309242
+##   ..$ date_added       : chr "2019-01-29T15:12:58-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 2
+##   .. ..$ year        : int 0
+##   .. ..$ master_url  : chr "https://api.discogs.com/masters/43057"
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 8988805
+##   .. ..$ thumb       : chr "https://img.discogs.com/jMO0EgBkyZAacUAPR0qpM2DMpWA=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "In Your Face"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/7JL-vFUnGG5PRSD1H-BioyN0se8=/fit-in/600x958/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/8988805"
+##   .. ..$ master_id   : int 43057
+##   ..$ id               : int 8988805
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350309162
+##   ..$ date_added       : chr "2019-01-29T15:12:32-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2016
+##   .. ..$ master_url  : chr "https://api.discogs.com/masters/1003205"
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 8527216
+##   .. ..$ thumb       : chr "https://img.discogs.com/O7CCuQgPduDKTAs7qMVJnUMc6nU=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "II"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/IkWd_PgKPkCBmLvCDwVIf_xxYO0=/fit-in/267x423/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/8527216"
+##   .. ..$ master_id   : int 1003205
+##   ..$ id               : int 8527216
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350309100
+##   ..$ date_added       : chr "2019-01-29T15:12:13-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2017
+##   .. ..$ master_url  : NULL
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 10529440
+##   .. ..$ thumb       : chr "https://img.discogs.com/1HZA-6yxAqaCpByDhe8BqRcnDs8=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "Demo 2017"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/TP1p9TyWSZOhOGNNlr5roS9ykuM=/fit-in/454x444/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/10529440"
+##   .. ..$ master_id   : int 0
+##   ..$ id               : int 10529440
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350308724
+##   ..$ date_added       : chr "2019-01-29T15:10:02-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2016
+##   .. ..$ master_url  : chr "https://api.discogs.com/masters/1096880"
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 8886453
+##   .. ..$ thumb       : chr "https://img.discogs.com/HugnDTglQEMCNQlGK9Jx_7YeVno=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "Promo Tape 2016"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/3zX4LlfJhviC34SDEP4ew0XRLiE=/fit-in/600x932/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/8886453"
+##   .. ..$ master_id   : int 1096880
+##   ..$ id               : int 8886453
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350308425
+##   ..$ date_added       : chr "2019-01-29T15:08:31-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 2
+##   .. ..$ year        : int 2009
+##   .. ..$ master_url  : chr "https://api.discogs.com/masters/39365"
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 1875606
+##   .. ..$ thumb       : chr "https://img.discogs.com/wr2htlm8Dw09nwql4ryjrs5ikdo=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "Talking Heads: 77"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/7kgX0m56a1lPYPR302Dw3kyL7_A=/fit-in/500x484/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/1875606"
+##   .. ..$ master_id   : int 39365
+##   ..$ id               : int 1875606
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350298652
+##   ..$ date_added       : chr "2019-01-29T14:21:25-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 0
+##   .. ..$ master_url  : chr "https://api.discogs.com/masters/5948"
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 243919
+##   .. ..$ thumb       : chr "https://img.discogs.com/lfzH4i1BAEGaG0PnCvkLD1Xbcb0=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "Loveless"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/DCbGU9BAoU3ZJ5zDRqLW09dKeYE=/fit-in/600x600/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/243919"
+##   .. ..$ master_id   : int 5948
+##   ..$ id               : int 243919
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350297946
+##   ..$ date_added       : chr "2019-01-29T14:17:58-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 1986
+##   .. ..$ master_url  : chr "https://api.discogs.com/masters/115334"
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 1615418
+##   .. ..$ thumb       : chr "https://img.discogs.com/fbNng6Hy_SAxhQskrusDXkGmiEs=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "Hip To Be Square"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/Il_qisuI2ivkGVzXYAaPBYkJ5zM=/fit-in/296x300/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/1615418"
+##   .. ..$ master_id   : int 115334
+##   ..$ id               : int 1615418
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350297816
+##   ..$ date_added       : chr "2019-01-29T14:17:17-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 2
+##   .. ..$ year        : int 2013
+##   .. ..$ master_url  : chr "https://api.discogs.com/masters/5939"
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 5174921
+##   .. ..$ thumb       : chr "https://img.discogs.com/jcDPS91LqPKYXNaCPkPg-JnLvNI=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "Isn't Anything"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/A-1D7fq4_dPkk8aS2zDjK6QSpas=/fit-in/600x600/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/5174921"
+##   .. ..$ master_id   : int 5939
+##   ..$ id               : int 5174921
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350297664
+##   ..$ date_added       : chr "2019-01-29T14:16:36-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2012
+##   .. ..$ master_url  : chr "https://api.discogs.com/masters/510739"
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 3868107
+##   .. ..$ thumb       : chr "https://img.discogs.com/HuSVWUCWaHWPjo3SNkMjls0ADk8=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "The Feeling"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/xrGdosgzR2tUDNlAd4Bkf5tqQBQ=/fit-in/600x600/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/3868107"
+##   .. ..$ master_id   : int 510739
+##   ..$ id               : int 3868107
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350297343
+##   ..$ date_added       : chr "2019-01-29T14:15:09-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 2
+##   .. ..$ year        : int 0
+##   .. ..$ master_url  : chr "https://api.discogs.com/masters/4264"
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 10081218
+##   .. ..$ thumb       : chr "https://img.discogs.com/0n27YuwUmazCS3A73nUqje5WqF0=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "The Smiths"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/RFqpUeeLtCDc5ZhymlBgg5srDHg=/fit-in/600x597/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/10081218"
+##   .. ..$ master_id   : int 4264
+##   ..$ id               : int 10081218
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350296604
+##   ..$ date_added       : chr "2019-01-29T14:11:51-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 4
+##   .. ..$ year        : int 1987
+##   .. ..$ master_url  : chr "https://api.discogs.com/masters/20975"
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 11988356
+##   .. ..$ thumb       : chr "https://img.discogs.com/TxhBfL0gtdFTGTmeioF4auSibQ4=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "Louder Than Bombs"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/b-qEth2aIJpJBtH0uYJ9hU1pHd4=/fit-in/600x596/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/11988356"
+##   .. ..$ master_id   : int 20975
+##   ..$ id               : int 11988356
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350296006
+##   ..$ date_added       : chr "2019-01-29T14:09:01-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 1979
+##   .. ..$ master_url  : chr "https://api.discogs.com/masters/53856"
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 391325
+##   .. ..$ thumb       : chr "https://img.discogs.com/eNftV7Nl0p_jApJz7kAFo1AQlnI=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "The B-52's"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/JHqHpGgiyV4p3jAlvxkyGi_Elxc=/fit-in/600x600/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/391325"
+##   .. ..$ master_id   : int 53856
+##   ..$ id               : int 391325
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350295890
+##   ..$ date_added       : chr "2019-01-29T14:08:30-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 0
+##   .. ..$ master_url  : chr "https://api.discogs.com/masters/53856"
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 9035150
+##   .. ..$ thumb       : chr "https://img.discogs.com/Ott6F9ptmmhRWnjMVQhEOO5EAfU=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "The B-52's"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/UHkXoyyRaX_571HfascazuHeKf0=/fit-in/600x915/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/9035150"
+##   .. ..$ master_id   : int 53856
+##   ..$ id               : int 9035150
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350295258
+##   ..$ date_added       : chr "2019-01-29T14:05:54-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 2
+##   .. ..$ year        : int 2007
+##   .. ..$ master_url  : chr "https://api.discogs.com/masters/333197"
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 3496285
+##   .. ..$ thumb       : chr "https://img.discogs.com/Xs8DNGV6xIjqUjMmp1cFjH5cruw=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "Alienated"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/pX_pnaAxT2Wj8lMQNXvwiXMHC1g=/fit-in/280x280/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/3496285"
+##   .. ..$ master_id   : int 333197
+##   ..$ id               : int 3496285
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350263643
+##   ..$ date_added       : chr "2019-01-29T12:02:10-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2014
+##   .. ..$ master_url  : chr "https://api.discogs.com/masters/719793"
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 9721148
+##   .. ..$ thumb       : chr "https://img.discogs.com/qrb0OoYWeZbrmIBZgRHSfuhgwUE=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "Ivy"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/mR2xGVS0StndHYj_KIVXtInOU7E=/fit-in/600x566/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/9721148"
+##   .. ..$ master_id   : int 719793
+##   ..$ id               : int 9721148
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350263415
+##   ..$ date_added       : chr "2019-01-29T12:01:16-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2018
+##   .. ..$ master_url  : chr "https://api.discogs.com/masters/1313083"
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 11548953
+##   .. ..$ thumb       : chr "https://img.discogs.com/GlfdhuCDI4o1ejuzR297OZDFZBo=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "Demo 2018"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/UQ3potpyyoniSNByuIV2IIWCQvY=/fit-in/600x577/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/11548953"
+##   .. ..$ master_id   : int 1313083
+##   ..$ id               : int 11548953
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350253515
+##   ..$ date_added       : chr "2019-01-29T11:24:24-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2017
+##   .. ..$ master_url  : chr "https://api.discogs.com/masters/1392598"
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 11390065
+##   .. ..$ thumb       : chr "https://img.discogs.com/2_dyj3HE_OFjp5EJDkiEQ_yvxaQ=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "Demo 2017"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/WTD4kicWDNdbld2nNFmSyXX2eL0=/fit-in/600x591/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/11390065"
+##   .. ..$ master_id   : int 1392598
+##   ..$ id               : int 11390065
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350253327
+##   ..$ date_added       : chr "2019-01-29T11:23:42-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2014
+##   .. ..$ master_url  : NULL
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 11514226
+##   .. ..$ thumb       : chr "https://img.discogs.com/JwZjzicVnkuIBtGyAfsaGr_ArRI=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "Demo"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/KZEpjhw_WKVTBqMWIlpAEMG1R6Y=/fit-in/337x541/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/11514226"
+##   .. ..$ master_id   : int 0
+##   ..$ id               : int 11514226
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350251964
+##   ..$ date_added       : chr "2019-01-29T11:18:03-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2017
+##   .. ..$ master_url  : NULL
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 9956517
+##   .. ..$ thumb       : chr "https://img.discogs.com/S9nw0LLyrwnnEqVkpDN7dXuAolI=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "Demo"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/E26mm8vDCv9Q4PGWOmvlQ8aIzGo=/fit-in/600x600/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/9956517"
+##   .. ..$ master_id   : int 0
+##   ..$ id               : int 9956517
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350251887
+##   ..$ date_added       : chr "2019-01-29T11:17:49-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2015
+##   .. ..$ master_url  : NULL
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 7983566
+##   .. ..$ thumb       : chr "https://img.discogs.com/34btrWzLO70uWuDmKlstFzDjJJU=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "Under The Bleacherz"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/sUm0nbVri9G5FZjVMgS9R3HSico=/fit-in/600x584/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/7983566"
+##   .. ..$ master_id   : int 0
+##   ..$ id               : int 7983566
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350251833
+##   ..$ date_added       : chr "2019-01-29T11:17:34-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2015
+##   .. ..$ master_url  : chr "https://api.discogs.com/masters/991904"
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 8435767
+##   .. ..$ thumb       : chr "https://img.discogs.com/4Vv2KcItzSylnnGox48ec4EYZCk=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "Dumspell "
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/hUmcLPf0D_TQhv9ihVnclUDxiYo=/fit-in/600x1001/filters:strip_icc():format(jpeg):mode_rgb("| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/8435767"
+##   .. ..$ master_id   : int 991904
+##   ..$ id               : int 8435767
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350251739
+##   ..$ date_added       : chr "2019-01-29T11:17:10-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2015
+##   .. ..$ master_url  : chr "https://api.discogs.com/masters/993840"
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 7506935
+##   .. ..$ thumb       : chr "https://img.discogs.com/5aanbiIXyCTfDgEFM2SUDNpMfLE=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "Charm School"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/htmZn9F9uZzusrwLl80ZqW1MxIo=/fit-in/600x935/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/7506935"
+##   .. ..$ master_id   : int 993840
+##   ..$ id               : int 7506935
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350251527
+##   ..$ date_added       : chr "2019-01-29T11:16:24-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2015
+##   .. ..$ master_url  : NULL
+##   .. ..$ artists     :List of 2
+##   .. ..$ id          : int 7977493
+##   .. ..$ thumb       : chr "https://img.discogs.com/PeW6OQdjJoG9civGswBhHxCJ4jM=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "Big Bag Split "
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/KbvEWd5nx2rTrETU1PArqCbjm_g=/fit-in/600x403/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/7977493"
+##   .. ..$ master_id   : int 0
+##   ..$ id               : int 7977493
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350251180
+##   ..$ date_added       : chr "2019-01-29T11:14:52-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 2
+##   .. ..$ year        : int 1987
+##   .. ..$ master_url  : chr "https://api.discogs.com/masters/20975"
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 4337582
+##   .. ..$ thumb       : chr "https://img.discogs.com/pRa86bzRQngjCpbHxQQyiRm6snw=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "Louder Than Bombs"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/MSge6CjQjXHbQw9pSa9OTxfqhhM=/fit-in/486x470/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/4337582"
+##   .. ..$ master_id   : int 20975
+##   ..$ id               : int 4337582
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350250943
+##   ..$ date_added       : chr "2019-01-29T11:13:51-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2014
+##   .. ..$ master_url  : chr "https://api.discogs.com/masters/816045"
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 6840169
+##   .. ..$ thumb       : chr ""
+##   .. ..$ title       : chr "Sheer Mag"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/720182381cfb1a9425d9b33c5e2bd091040f9ebd/images/spacer.gif"
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/6840169"
+##   .. ..$ master_id   : int 816045
+##   ..$ id               : int 6840169
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350250880
+##   ..$ date_added       : chr "2019-01-29T11:13:38-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2017
+##   .. ..$ master_url  : NULL
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 11967072
+##   .. ..$ thumb       : chr "https://img.discogs.com/_UHrk4FFLVFShzDfLp33NMFbXBo=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "Pleather"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/5vJhGU_WqFFKQ1InP8R-tFszqEE=/fit-in/600x605/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/11967072"
+##   .. ..$ master_id   : int 0
+##   ..$ id               : int 11967072
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350250829
+##   ..$ date_added       : chr "2019-01-29T11:13:26-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2017
+##   .. ..$ master_url  : NULL
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 11406918
+##   .. ..$ thumb       : chr "https://img.discogs.com/YqQ2XnbWwLeGNKJyWfmH-wn-C-A=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "Demo 2017: The Savage Season Continues"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/sDWOcz8xKn0SrJolDDZlJJMOd1E=/fit-in/600x337/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/11406918"
+##   .. ..$ master_id   : int 0
+##   ..$ id               : int 11406918
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350250392
+##   ..$ date_added       : chr "2019-01-29T11:11:37-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2016
+##   .. ..$ master_url  : chr "https://api.discogs.com/masters/1022491"
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 8716048
+##   .. ..$ thumb       : chr "https://img.discogs.com/7B0RImA1dFyqaoQq31FxOJZ1CCc=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "Demo II: Demolition"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/8_jZuKGtAkSb01P1CTkkwHuOdhU=/fit-in/600x450/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/8716048"
+##   .. ..$ master_id   : int 1022491
+##   ..$ id               : int 8716048
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350250308
+##   ..$ date_added       : chr "2019-01-29T11:11:15-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2015
+##   .. ..$ master_url  : chr "https://api.discogs.com/masters/931450"
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 7872463
+##   .. ..$ thumb       : chr "https://img.discogs.com/1nIRrHMaFejjkXQUGVOJiP4or90=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "Firewalker"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/jkWVBAINbUg31Vq1ZFaHeTpXt4k=/fit-in/600x945/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/7872463"
+##   .. ..$ master_id   : int 931450
+##   ..$ id               : int 7872463
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350249933
+##   ..$ date_added       : chr "2019-01-29T11:09:44-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2016
+##   .. ..$ master_url  : chr "https://api.discogs.com/masters/3010"
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 9367350
+##   .. ..$ thumb       : chr "https://img.discogs.com/rcKrWoZ_WiXsQHbFgRIQx75PfF8=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "I'm Wide Awake, It's Morning"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/OgF-vBU5Xg5J50eAM-l1afdKon4=/fit-in/600x589/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/9367350"
+##   .. ..$ master_id   : int 3010
+##   ..$ id               : int 9367350
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350229177
+##   ..$ date_added       : chr "2019-01-29T09:49:48-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2007
+##   .. ..$ master_url  : chr "https://api.discogs.com/masters/114440"
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 5411566
+##   .. ..$ thumb       : chr "https://img.discogs.com/ZOkkzpmc1M4vKRrrcjKV8Hg6bnE=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "The Execution Of All Things"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/trBUxbAR6Apxb75cGlDx--gvNlA=/fit-in/600x607/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/5411566"
+##   .. ..$ master_id   : int 114440
+##   ..$ id               : int 5411566
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350228963
+##   ..$ date_added       : chr "2019-01-29T09:49:00-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2013
+##   .. ..$ master_url  : NULL
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 4465008
+##   .. ..$ thumb       : chr "https://img.discogs.com/WldYrGwYKGK1XidLyTlSWp4AB2c=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "Hard Coming Down"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/MLyvpmQzMWo3J5az5FKbdutkjtE=/fit-in/600x600/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/4465008"
+##   .. ..$ master_id   : int 0
+##   ..$ id               : int 4465008
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350228728
+##   ..$ date_added       : chr "2019-01-29T09:48:10-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 2
+##   .. ..$ year        : int 2005
+##   .. ..$ master_url  : chr "https://api.discogs.com/masters/568505"
+##   .. ..$ artists     :List of 2
+##   .. ..$ id          : int 2708889
+##   .. ..$ thumb       : chr "https://img.discogs.com/OS43S9SS3NBJrPuQD7cXnvv7Tx0=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "Discography"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/W-hruyqqLeRszKN2y64DqQeX-bw=/fit-in/600x613/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/2708889"
+##   .. ..$ master_id   : int 568505
+##   ..$ id               : int 2708889
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350228630
+##   ..$ date_added       : chr "2019-01-29T09:47:45-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 2
+##   .. ..$ year        : int 2018
+##   .. ..$ master_url  : chr "https://api.discogs.com/masters/245859"
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 13020644
+##   .. ..$ thumb       : chr "https://img.discogs.com/YarwZe8Yytw4RpOFREAYuzoyd2s=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "Set It Off"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/DFsJffb5b33g5U2oFIAGuScggFM=/fit-in/600x598/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/13020644"
+##   .. ..$ master_id   : int 245859
+##   ..$ id               : int 13020644
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350228478
+##   ..$ date_added       : chr "2019-01-29T09:47:04-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2010
+##   .. ..$ master_url  : chr "https://api.discogs.com/masters/228208"
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 2138452
+##   .. ..$ thumb       : chr "https://img.discogs.com/qt5wNIzxPd8Qkx0a95QE24F7YUo=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "Dear God, I Hate Myself"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/_c2HqyQjEZw6K78Umhfw7SChvoc=/fit-in/320x320/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/2138452"
+##   .. ..$ master_id   : int 228208
+##   ..$ id               : int 2138452
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350228069
+##   ..$ date_added       : chr "2019-01-29T09:45:26-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2015
+##   .. ..$ master_url  : chr "https://api.discogs.com/masters/1323130"
+##   .. ..$ artists     :List of 2
+##   .. ..$ id          : int 6850381
+##   .. ..$ thumb       : chr "https://img.discogs.com/juammt5dYgJCyX92EFneTYnRicY=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "Merzxiu"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/dCuLZ3tcYuOsSQTDv1luUyg-QSA=/fit-in/600x600/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/6850381"
+##   .. ..$ master_id   : int 1323130
+##   ..$ id               : int 6850381
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350228020
+##   ..$ date_added       : chr "2019-01-29T09:45:13-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 2
+##   .. ..$ year        : int 2014
+##   .. ..$ master_url  : chr "https://api.discogs.com/masters/709327"
+##   .. ..$ artists     :List of 1
+##   .. ..$ id          : int 6487988
+##   .. ..$ thumb       : chr "https://img.discogs.com/eR4rkFC_MG_ZnEpE4SqRmF6m-8U=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "Vexx"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/2HNTCn8IC1xhUNcCLqjLoNHTsxg=/fit-in/600x600/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/6487988"
+##   .. ..$ master_id   : int 709327
+##   ..$ id               : int 6487988
+##   ..$ rating           : int 0
+##  $ :List of 5
+##   ..$ instance_id      : int 350227901
+##   ..$ date_added       : chr "2019-01-29T09:44:47-08:00"
+##   ..$ basic_information:List of 11
+##   .. ..$ labels      :List of 1
+##   .. ..$ year        : int 2014
+##   .. ..$ master_url  : chr "https://api.discogs.com/masters/687939"
+##   .. ..$ artists     :List of 3
+##   .. ..$ id          : int 5695822
+##   .. ..$ thumb       : chr "https://img.discogs.com/oIksRThmmBZt9Bf1AtGI25RqDj8=/fit-in/150x150/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ title       : chr "USA '13"
+##   .. ..$ formats     :List of 1
+##   .. ..$ cover_image : chr "https://img.discogs.com/u3NWWoeMwkLalbCoMVZt14JuBf4=/fit-in/600x600/filters:strip_icc():format(jpeg):mode_rgb()"| __truncated__
+##   .. ..$ resource_url: chr "https://api.discogs.com/releases/5695822"
+##   .. ..$ master_id   : int 687939
+##   ..$ id               : int 5695822
+##   ..$ rating           : int 0
+##   [list output truncated]
+```
+
+---
+class: middle, center
+
+## Example - discog + purrr / tidyr
+
+
+---
+
+## tidyr's hoist
+
+
+```r
+tibble(disc = repurrrsive::discog) %&gt;% 
+  hoist(
+    disc, 
+    info = "basic_information"
+  )
+```
+
+```
+## # A tibble: 155 × 2
+##    info              disc            
+##    &lt;list&gt;            &lt;list&gt;          
+##  1 &lt;named list [11]&gt; &lt;named list [4]&gt;
+##  2 &lt;named list [11]&gt; &lt;named list [4]&gt;
+##  3 &lt;named list [11]&gt; &lt;named list [4]&gt;
+##  4 &lt;named list [11]&gt; &lt;named list [4]&gt;
+##  5 &lt;named list [11]&gt; &lt;named list [4]&gt;
+##  6 &lt;named list [11]&gt; &lt;named list [4]&gt;
+##  7 &lt;named list [11]&gt; &lt;named list [4]&gt;
+##  8 &lt;named list [11]&gt; &lt;named list [4]&gt;
+##  9 &lt;named list [11]&gt; &lt;named list [4]&gt;
+## 10 &lt;named list [11]&gt; &lt;named list [4]&gt;
+## # … with 145 more rows
+```
+
+---
+
+
+```r
+tibble(disc = repurrrsive::discog) %&gt;% 
+  hoist(
+    disc, 
+    id = "id",
+    year = c("basic_information", "year"), 
+    title = c("basic_information", "title"),
+    artist = list("basic_information", "artists", 1, "name"),
+    label = list("basic_information", "labels", 1, "name")
+  )
+```
+
+```
+## # A tibble: 155 × 6
+##          id  year title                             artist    label disc        
+##       &lt;int&gt; &lt;int&gt; &lt;chr&gt;                             &lt;chr&gt;     &lt;chr&gt; &lt;list&gt;      
+##  1  7496378  2015 Demo                              Mollot    Tobi… &lt;named list&gt;
+##  2  4490852  2013 Observant Com El Mon Es Destrueix Una Bèst… La V… &lt;named list&gt;
+##  3  9827276  2017 I                                 S.H.I.T.… La V… &lt;named list&gt;
+##  4  9769203  2017 Oído Absoluto                     Rata Neg… La V… &lt;named list&gt;
+##  5  7237138  2015 A Cat's Cause, No Dogs Problem    Ivy (18)  Kato… &lt;named list&gt;
+##  6 13117042  2019 Tashme                            Tashme    High… &lt;named list&gt;
+##  7  7113575  2014 Demo                              Desgraci… Mind… &lt;named list&gt;
+##  8 10540713  2015 Let The Miracles Begin            Phantom … Not … &lt;named list&gt;
+##  9 11260950  2017 Sub Space                         Sub Spac… Not … &lt;named list&gt;
+## 10 11726853  2017 Demo                              Small Ma… Pres… &lt;named list&gt;
+## # … with 145 more rows
+```
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "solarized-light",
+"highlightLines": true,
+"countIncrementalSlides": false,
+"ratio": "16:9"
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
