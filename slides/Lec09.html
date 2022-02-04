@@ -32,7 +32,7 @@ class: middle
 
 ## Functions as objects
 
-We have mentioned in passing that functions in R are treated as 1st class objects (like vectors) 
+We have mentioned in passing that functions in R are treated as 1st class objects (like vectors), meaning they can be assigned names, stored in lists, etc.
 
 .pull-left[
 
@@ -227,7 +227,7 @@ data.frame(x = runif(10), y = runif(10)) |&gt;
 ## 
 ## Coefficients:
 ## (Intercept)            x  
-##     0.55335      0.06729
+##      0.3519       0.2400
 ```
 
 ---
@@ -240,7 +240,7 @@ class: middle
 
 ## Apply functions
 
-The apply functions are a collection of tools for functional programming in base R, they are variations of the `map` function found in many other languages and apply a function over the elements of the input.
+The apply functions are a collection of tools for functional programming in base R, they are variations of the `map` function found in many other languages and apply a function over the elements of the input (vector).
 
 
 ```r
@@ -537,7 +537,7 @@ sapply(df, class)
 
 ## A more useful example
 
-Recall Exercise 2 from Lecture 5 where we converted `-999` to `NA`s.
+Some sources of data (e.g. the US government) will encode missing values with `-999`, if want to replace these with `NA`s lapply is not a bad choice.
 
 
 ```r
@@ -597,7 +597,9 @@ lapply(d, fix_missing) %&gt;%
 
 ---
 
-dplyr is also a viable option here, 
+## dplyr alternative
+
+dplyr is also a viable option here using the `across()` helper, 
 
 .pull-left[
 
@@ -668,7 +670,7 @@ class: middle
 
 Basic functions for looping over objects and returning a value (of a specific type) - replacement for `lapply`/`sapply`/`vapply`.
 
-* `map()` - returns a list.
+* `map()` - returns a list, equivalent to `lapply()`
 
 * `map_lgl()` - returns a logical vector.
 
@@ -682,7 +684,7 @@ Basic functions for looping over objects and returning a value (of a specific ty
 
 * `map_dfc()` - returns a data frame by column binding.
 
-* `walk()` - returns nothing, function used exclusively for its side effects
+* `walk()` - returns nothing,  used exclusively for function side effects
 
 
 ---
@@ -704,7 +706,7 @@ map_dbl(x, mean)
 ```
 
 ```
-## [1] -0.028153748 -0.008239139  0.035479054
+## [1] -0.044745835  0.009868732 -0.011927102
 ```
 
 --
@@ -715,7 +717,7 @@ map_chr(x, mean)
 ```
 
 ```
-## [1] "-0.028154" "-0.008239" "0.035479"
+## [1] "-0.044746" "0.009869"  "-0.011927"
 ```
 
 --
@@ -739,9 +741,9 @@ map(x, mean) %&gt;% str()
 
 ```
 ## List of 3
-##  $ : num -0.0282
-##  $ : num -0.00824
-##  $ : num 0.0355
+##  $ : num -0.0447
+##  $ : num 0.00987
+##  $ : num -0.0119
 ```
 ]
 
@@ -755,9 +757,9 @@ lapply(x, mean) %&gt;% str()
 
 ```
 ## List of 3
-##  $ : num -0.0282
-##  $ : num -0.00824
-##  $ : num 0.0355
+##  $ : num -0.0447
+##  $ : num 0.00987
+##  $ : num -0.0119
 ```
 ]
 
@@ -849,7 +851,7 @@ map_dfr(sw_people, function(x) x)
 
 ---
 
-## Shortcut - purrr style anonymous functions
+## purrr style anonymous functions
 
 purrr lets us write anonymous functions using one sided formulas where the argument is given by `.` or `.x` for `map` and related functions.
 
@@ -894,7 +896,7 @@ Generally, the latter option is preferred to avoid confusion with magrittr.
 
 ---
 
-## Multiargument anonymous functions - e.g. `map2`
+## Multiargument anonymous functions
 
 Functions with the `map2` prefix work the same as the `map` functions but they iterate over two objects instead of one. Arguments in an anonymous function are given by `.x` and `.y` (or `..1` and `..2`) respectively.
 
@@ -942,7 +944,7 @@ map2_chr(LETTERS[1:5], letters[1:5], paste0)
 
 ---
 
-## Shortcut - Lookups
+## Lookups
 
 Very often we want to extract only certain (named) values from a list, `purrr` provides a shortcut for this operation - if instead of a function you provide either a character or numeric vector, those values will be used to sequentially subset the elements being iterated.
 
@@ -2832,70 +2834,8 @@ str(repurrrsive::discog, max.level = 3)
 ---
 class: middle, center
 
-## Example - discog + purrr / tidyr
+## Example - discog - purrr vs tidyr
 
-
----
-
-## tidyr's hoist
-
-
-```r
-tibble(disc = repurrrsive::discog) %&gt;% 
-  hoist(
-    disc, 
-    info = "basic_information"
-  )
-```
-
-```
-## # A tibble: 155 × 2
-##    info              disc            
-##    &lt;list&gt;            &lt;list&gt;          
-##  1 &lt;named list [11]&gt; &lt;named list [4]&gt;
-##  2 &lt;named list [11]&gt; &lt;named list [4]&gt;
-##  3 &lt;named list [11]&gt; &lt;named list [4]&gt;
-##  4 &lt;named list [11]&gt; &lt;named list [4]&gt;
-##  5 &lt;named list [11]&gt; &lt;named list [4]&gt;
-##  6 &lt;named list [11]&gt; &lt;named list [4]&gt;
-##  7 &lt;named list [11]&gt; &lt;named list [4]&gt;
-##  8 &lt;named list [11]&gt; &lt;named list [4]&gt;
-##  9 &lt;named list [11]&gt; &lt;named list [4]&gt;
-## 10 &lt;named list [11]&gt; &lt;named list [4]&gt;
-## # … with 145 more rows
-```
-
----
-
-
-```r
-tibble(disc = repurrrsive::discog) %&gt;% 
-  hoist(
-    disc, 
-    id = "id",
-    year = c("basic_information", "year"), 
-    title = c("basic_information", "title"),
-    artist = list("basic_information", "artists", 1, "name"),
-    label = list("basic_information", "labels", 1, "name")
-  )
-```
-
-```
-## # A tibble: 155 × 6
-##          id  year title                             artist    label disc        
-##       &lt;int&gt; &lt;int&gt; &lt;chr&gt;                             &lt;chr&gt;     &lt;chr&gt; &lt;list&gt;      
-##  1  7496378  2015 Demo                              Mollot    Tobi… &lt;named list&gt;
-##  2  4490852  2013 Observant Com El Mon Es Destrueix Una Bèst… La V… &lt;named list&gt;
-##  3  9827276  2017 I                                 S.H.I.T.… La V… &lt;named list&gt;
-##  4  9769203  2017 Oído Absoluto                     Rata Neg… La V… &lt;named list&gt;
-##  5  7237138  2015 A Cat's Cause, No Dogs Problem    Ivy (18)  Kato… &lt;named list&gt;
-##  6 13117042  2019 Tashme                            Tashme    High… &lt;named list&gt;
-##  7  7113575  2014 Demo                              Desgraci… Mind… &lt;named list&gt;
-##  8 10540713  2015 Let The Miracles Begin            Phantom … Not … &lt;named list&gt;
-##  9 11260950  2017 Sub Space                         Sub Spac… Not … &lt;named list&gt;
-## 10 11726853  2017 Demo                              Small Ma… Pres… &lt;named list&gt;
-## # … with 145 more rows
-```
     </textarea>
 <style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
 <script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
