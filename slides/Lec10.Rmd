@@ -40,12 +40,14 @@ knitr::include_graphics("imgs/hex-ggplot2.png")
 
 ## The Grammar of Graphics
 
-- Visualisation concept created by Leland Wilkinson (1999)
-- to define the basic elements of a statistical graphic 
+- Visualization concept created by Leland Wilkinson (The Grammar of Graphics, 1999)
+- attempt to taxonimize the basic elements of statistical graphics
+
 
 - Adapted for R by Hadley Wickham (2009)
 - consistent and compact syntax to describe statistical graphics
 - highly modular as it breaks up graphs into semantic components 
+
 
 - ggplot2 is not meant as a guide to which graph to use and how to best convey your data (more on that later), but it does have some strong opinions.
 
@@ -556,8 +558,9 @@ class: middle
 
 ## Aesthetics options
 
-Commonly used characteristics of plotting geometries that can be **mapped to a specific variable** in the data are
+Commonly used characteristics of plotting geometries that can be **mapped to a specific variable** in the data, examples include:
 
+- position (`x`, `y`)
 - `color`
 - `shape`
 - `size`
@@ -566,9 +569,9 @@ Commonly used characteristics of plotting geometries that can be **mapped to a s
 Different geometries have different aesthetics that can be used - see the [ggplot2 geoms](https://ggplot2.tidyverse.org/reference/index.html#Geoms) help files for listings.
 
 
-* Aesthetics given in `ggplot` apply to all `geom`s.
+* Aesthetics given in `ggplot()` apply to all `geom`s.
 
-* Aesthetics for a specific `geom` can be overridden with the `geom_*`'s aesthetics.
+* Aesthetics for a specific `geom_*()` can be overridden via the `mapping` argument.
 
 ---
 
@@ -740,10 +743,14 @@ ggplot(
 ## Mapping vs settings
 
 - **Mapping:** Determine an aesthetic (the size, alpha, etc.) of a geom based on the values of a variable in the data
-- goes into `aes()` as an argument which is then an argument of `ggplot2` or `geom_*()`.
+  - wrapped by `aes()` and pass as `mapping` argument to `ggplot()` or `geom_*()`.
 
-- **Setting:** Determine an aesthetic (the size, alpha, etc.) of a geom **not** based on the values of a variable in the data
-- goes directly into `geom_*()` as an argument.
+- **Setting:** Determine an aesthetic (the size, alpha, etc.) of a geom **not** based on the values of a variable in the data, usually a constant value.
+  - passed directly into `geom_*()` as an argument.
+
+--
+
+From the previous slide `color`, `shape`, and `alpha` are all **aesthetics** while `size` is a **setting**.
 
 ---
 
@@ -759,7 +766,7 @@ class: middle
 
 - Useful for exploring conditional relationships and large data
 
-- Sometimes refered to as "small multiples"
+- Also referred to as "small multiples"
 
 ---
 
@@ -934,7 +941,7 @@ ggplot(
 ## Hiding redundancy
 
 .pull-left[
-```{r facet-color-no-legend, fig.show = "hide", warning = FALSE}
+```{r facet-color-no-legend, fig.show = "hide", warning = TRUE}
 ggplot(
   penguins, 
   aes(
@@ -950,14 +957,14 @@ ggplot(
 ]
 
 .pull-right[
-```{r ref.label = "facet-color-no-legend", echo = FALSE, warning = FALSE, out.width = "95%"}
+```{r ref.label = "facet-color-no-legend", echo = FALSE, warning = TRUE, out.width = "95%"}
 ```
 ]
 
 ---
 class: middle
 
-# A brief plot Tour of ggplot2
+# A brief plot Tour of ggplot2 plots
 
 ---
 
