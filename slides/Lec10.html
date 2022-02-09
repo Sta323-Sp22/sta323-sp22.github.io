@@ -963,12 +963,7 @@ ggplot(
 ) +
   geom_point() +
   facet_grid(species ~ sex) +
-* guides(color = FALSE)
-```
-
-```
-## Warning: `guides(&lt;scale&gt; = FALSE)` is deprecated. Please use `guides(&lt;scale&gt; =
-## "none")` instead.
+* guides(color = "none")
 ```
 
 ```
@@ -977,11 +972,6 @@ ggplot(
 ]
 
 .pull-right[
-
-```
-## Warning: `guides(&lt;scale&gt; = FALSE)` is deprecated. Please use `guides(&lt;scale&gt; =
-## "none")` instead.
-```
 
 ```
 ## Warning: Removed 2 rows containing missing values (geom_point).
@@ -1152,7 +1142,7 @@ ggplot(
 ) +
   geom_histogram(bins = 20) +
   facet_grid(species ~ .) + 
-  guides(fill = FALSE)
+  guides(fill = "none")
 ```
 ]
 

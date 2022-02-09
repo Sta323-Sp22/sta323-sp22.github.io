@@ -952,7 +952,7 @@ ggplot(
 ) +
   geom_point() +
   facet_grid(species ~ sex) +
-  guides(color = FALSE) #<<
+  guides(color = "none") #<<
 ```
 ]
 
@@ -1117,7 +1117,7 @@ ggplot(
 ) +
   geom_histogram(bins = 20) +
   facet_grid(species ~ .) + 
-  guides(fill = FALSE)
+  guides(fill = "none")
 ```
 ]
 
