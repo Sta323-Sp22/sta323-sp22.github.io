@@ -1,0 +1,1726 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Lec 10 - Visualization with ggplot2</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Sta 323 | Spring 2022" />
+    <script src="libs/header-attrs/header-attrs.js"></script>
+    <link rel="stylesheet" href="slides.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Lec 10 - Visualization with ggplot2
+## <br/> Statistical Programming
+### Sta 323 | Spring 2022
+### <br/> Dr. Colin Rundel
+
+---
+
+exclude: true
+
+
+
+---
+class: middle, center
+
+&lt;img src="imgs/hex-ggplot2.png" width="45%" style="display: block; margin: auto;" /&gt;
+
+---
+
+## The Grammar of Graphics
+
+- Visualisation concept created by Leland Wilkinson (1999)
+- to define the basic elements of a statistical graphic 
+
+- Adapted for R by Hadley Wickham (2009)
+- consistent and compact syntax to describe statistical graphics
+- highly modular as it breaks up graphs into semantic components 
+
+- ggplot2 is not meant as a guide to which graph to use and how to best convey your data (more on that later), but it does have some strong opinions.
+
+---
+
+## Terminology
+
+A statistical graphic is a...
+
+- mapping of **data**
+- which may be **statistically transformed** (summarized, log-transformed, etc.)
+- to **aesthetic attributes** (color, size, xy-position, etc.)
+- using **geometric objects** (points, lines, bars, etc.)
+- and mapped onto a specific **facet** and **coordinate system**
+
+---
+
+## Anatomy of a ggplot call
+
+```r
+ggplot(
+  data = [dataframe], 
+  mapping = aes(
+    x = [var x], y = [var y], 
+    color = [var color], 
+    shape = [var shape],
+    ...
+  )
+) +
+  geom_[some geom](
+    mapping = aes(
+      color = [var geom color],
+      ...
+    )
+  ) +
+  ... # other geometries
+  scale_[some axis]_[some scale]() +
+  facet_[some facet]([formula]) +
+  ... # other options
+```
+
+---
+
+## Data - Palmer Penguins
+
+Measurements for penguin species, island in Palmer Archipelago, size (flipper length, body mass, bill dimensions), and sex.
+
+.pull-left-narrow[
+&lt;img src="imgs/penguins.png" width="100%" style="display: block; margin: auto;" /&gt;
+]
+.pull-right-wide[
+
+
+
+```r
+library(palmerpenguins)
+penguins
+```
+
+```
+## # A tibble: 344 × 8
+##    species island    bill_length_mm bill_depth_mm flipper_length_mm
+##    &lt;fct&gt;   &lt;fct&gt;              &lt;dbl&gt;         &lt;dbl&gt;             &lt;int&gt;
+##  1 Adelie  Torgersen           39.1          18.7               181
+##  2 Adelie  Torgersen           39.5          17.4               186
+##  3 Adelie  Torgersen           40.3          18                 195
+##  4 Adelie  Torgersen           NA            NA                  NA
+##  5 Adelie  Torgersen           36.7          19.3               193
+##  6 Adelie  Torgersen           39.3          20.6               190
+##  7 Adelie  Torgersen           38.9          17.8               181
+##  8 Adelie  Torgersen           39.2          19.6               195
+##  9 Adelie  Torgersen           34.1          18.1               193
+## 10 Adelie  Torgersen           42            20.2               190
+## # … with 334 more rows, and 3 more variables: body_mass_g &lt;int&gt;,
+## #   sex &lt;fct&gt;, year &lt;int&gt;
+```
+
+
+]
+
+---
+
+## A basic ggplot
+
+
+.pull-left[
+
+```r
+ggplot(
+  data = penguins, 
+  mapping = aes(
+    x = bill_depth_mm, 
+    y = bill_length_mm
+  )
+) +
+  geom_point() +
+  labs(
+    title = "Bill depth and length",
+    subtitle = paste(
+      "Dimensions for Adelie, Chinstrap,",
+      "and Gentoo Penguins"
+    ),
+    x = "Bill depth (mm)", 
+    y = "Bill length (mm)",
+    color = "Species"
+  )
+```
+
+```
+## Warning: Removed 2 rows containing missing values (geom_point).
+```
+]
+
+.pull-right[
+&lt;img src="Lec10_files/figure-html/unnamed-chunk-6-1.png" width="95%" style="display: block; margin: auto;" /&gt;
+]
+
+---
+
+class: middle
+
+# Text &lt;-&gt; Plot
+
+---
+
+.midi[
+&gt; **Start with the `penguins` data frame**
+]
+
+.pull-left[
+
+```r
+*ggplot(data = penguins)
+```
+]
+.pull-right[
+&lt;img src="Lec10_files/figure-html/unnamed-chunk-7-1.png" width="95%" style="display: block; margin: auto;" /&gt;
+]
+
+---
+
+.midi[
+&gt; Start with the `penguins` data frame,
+&gt; **map bill depth to the x-axis**
+]
+
+.pull-left[
+
+```r
+ggplot(
+  data = penguins,
+* mapping = aes(x = bill_depth_mm)
+) 
+```
+]
+.pull-right[
+&lt;img src="Lec10_files/figure-html/unnamed-chunk-8-1.png" width="95%" style="display: block; margin: auto;" /&gt;
+]
+
+---
+
+.midi[
+&gt; Start with the `penguins` data frame,
+&gt; map bill depth to the x-axis
+&gt; **and map bill length to the y-axis.**
+]
+
+.pull-left[
+
+```r
+ggplot(
+  data = penguins,
+  mapping = aes(
+    x = bill_depth_mm,
+*   y = bill_length_mm
+  )
+)
+```
+]
+.pull-right[
+&lt;img src="Lec10_files/figure-html/unnamed-chunk-9-1.png" width="95%" style="display: block; margin: auto;" /&gt;
+]
+
+---
+
+.midi[
+&gt; Start with the `penguins` data frame,
+&gt; map bill depth to the x-axis
+&gt; and map bill length to the y-axis. 
+&gt; **Represent each observation with a point**
+]
+
+.pull-left[
+
+```r
+ggplot(
+  data = penguins,
+  mapping = aes(
+    x = bill_depth_mm,
+    y = bill_length_mm
+  )
+) + 
+* geom_point()
+```
+]
+.pull-right[
+&lt;img src="Lec10_files/figure-html/unnamed-chunk-10-1.png" width="95%" style="display: block; margin: auto;" /&gt;
+]
+
+---
+
+.midi[
+&gt; Start with the `penguins` data frame,
+&gt; map bill depth to the x-axis
+&gt; and map bill length to the y-axis. 
+&gt; Represent each observation with a point
+&gt; **and map species to the color of each point.**
+]
+
+.pull-left[
+
+```r
+ggplot(
+  data = penguins,
+  mapping = aes(
+    x = bill_depth_mm,
+    y = bill_length_mm
+  )
+) + 
+  geom_point(
+*   mapping = aes(color = species)
+  )
+```
+]
+.pull-right[
+&lt;img src="Lec10_files/figure-html/unnamed-chunk-11-1.png" width="95%" style="display: block; margin: auto;" /&gt;
+]
+
+---
+
+.midi[
+&gt; Start with the `penguins` data frame,
+&gt; map bill depth to the x-axis
+&gt; and map bill length to the y-axis. 
+&gt; Represent each observation with a point
+&gt; and map species to the color of each point.
+&gt; **Title the plot "Bill depth and length"**
+]
+
+.pull-left[
+
+```r
+ggplot(
+  data = penguins,
+  mapping = aes(
+    x = bill_depth_mm,
+    y = bill_length_mm
+  )
+) +
+  geom_point(
+    mapping = aes(color = species)
+  ) +
+* labs(title = "Bill depth and length")
+```
+]
+.pull-right[
+&lt;img src="Lec10_files/figure-html/unnamed-chunk-12-1.png" width="95%" style="display: block; margin: auto;" /&gt;
+]
+
+---
+
+.midi[
+&gt; Start with the `penguins` data frame,
+&gt; map bill depth to the x-axis
+&gt; and map bill length to the y-axis. 
+&gt; Represent each observation with a point
+&gt; and map species to the color of each point.
+&gt; Title the plot "Bill depth and length", 
+&gt; **add the subtitle "Dimensions for Adelie, Chinstrap, and Gentoo Penguins"**
+]
+
+.pull-left[
+
+```r
+ggplot(
+  data = penguins,
+  mapping = aes(
+    x = bill_depth_mm,
+    y = bill_length_mm
+  )
+) +
+  geom_point(
+    mapping = aes(color = species)
+  ) +
+  labs(
+    title = "Bill depth and length",
+*   subtitle = paste("Dimensions for Adelie,",
+*                    "Chinstrap, and Gentoo",
+*                    "Penguins")
+  ) 
+```
+]
+.pull-right[
+&lt;img src="Lec10_files/figure-html/unnamed-chunk-13-1.png" width="95%" style="display: block; margin: auto;" /&gt;
+]
+
+---
+
+.midi[
+&gt; Start with the `penguins` data frame,
+&gt; map bill depth to the x-axis
+&gt; and map bill length to the y-axis. 
+&gt; Represent each observation with a point
+&gt; and map species to the color of each point.
+&gt; Title the plot "Bill depth and length", 
+&gt; add the subtitle "Dimensions for Adelie, Chinstrap, and Gentoo Penguins", 
+&gt; **label the x and y axes as "Bill depth (mm)" and "Bill length (mm)", respectively**
+]
+
+.pull-left[
+
+```r
+ggplot(
+  data = penguins,
+  mapping = aes(
+    x = bill_depth_mm,
+    y = bill_length_mm
+  )
+) +
+  geom_point(
+    mapping = aes(color = species)
+  ) +
+  labs(
+    title = "Bill depth and length",
+    subtitle = paste("Dimensions for Adelie,",
+                     "Chinstrap, and Gentoo",
+                     "Penguins"),
+*   x = "Bill depth (mm)",
+*   y = "Bill length (mm)"
+  )
+```
+]
+.pull-right[
+&lt;img src="Lec10_files/figure-html/unnamed-chunk-14-1.png" width="95%" style="display: block; margin: auto;" /&gt;
+]
+
+---
+
+.midi[
+&gt; Start with the `penguins` data frame,
+&gt; map bill depth to the x-axis
+&gt; and map bill length to the y-axis. 
+&gt; Represent each observation with a point
+&gt; and map species to the color of each point.
+&gt; Title the plot "Bill depth and length", 
+&gt; add the subtitle "Dimensions for Adelie, Chinstrap, and Gentoo Penguins", 
+&gt; label the x and y axes as "Bill depth (mm)" and "Bill length (mm)", respectively,
+&gt; **label the legend "Species"**
+]
+
+.pull-left[
+
+```r
+ggplot(
+  data = penguins,
+  mapping = aes(
+    x = bill_depth_mm,
+    y = bill_length_mm
+  )
+) +
+  geom_point(
+    mapping = aes(color = species)
+  ) +
+  labs(
+    title = "Bill depth and length",
+    subtitle = paste("Dimensions for Adelie,",
+                     "Chinstrap, and Gentoo",
+                     "Penguins"),
+    x = "Bill depth (mm)",
+    y = "Bill length (mm)",
+*   color = "Species"
+  ) 
+```
+]
+.pull-right[
+&lt;img src="Lec10_files/figure-html/unnamed-chunk-15-1.png" width="95%" style="display: block; margin: auto;" /&gt;
+]
+
+---
+
+.midi[
+&gt; Start with the `penguins` data frame,
+&gt; map bill depth to the x-axis
+&gt; and map bill length to the y-axis. 
+&gt; Represent each observation with a point
+&gt; and map species to the color of each point.
+&gt; Title the plot "Bill depth and length", 
+&gt; add the subtitle "Dimensions for Adelie, Chinstrap, and Gentoo Penguins", 
+&gt; label the x and y axes as "Bill depth (mm)" and "Bill length (mm)", respectively,
+&gt; label the legend "Species", 
+&gt; **and add a caption for the data source.**
+]
+
+.pull-left[
+
+```r
+ggplot(
+  data = penguins,
+  mapping = aes(
+    x = bill_depth_mm,
+    y = bill_length_mm
+  )
+) +
+  geom_point(
+    mapping = aes(color = species)
+  ) +
+  labs(
+    title = "Bill depth and length",
+    subtitle = paste("Dimensions for Adelie,",
+                     "Chinstrap, and Gentoo",
+                     "Penguins"),
+    x = "Bill depth (mm)",
+    y = "Bill length (mm)",
+    color = "Species",
+*   caption = "Source: palmerpenguins package"
+  )
+```
+]
+.pull-right[
+&lt;img src="Lec10_files/figure-html/unnamed-chunk-16-1.png" width="95%" style="display: block; margin: auto;" /&gt;
+]
+
+---
+
+.midi[
+&gt; Start with the `penguins` data frame,
+&gt; map bill depth to the x-axis
+&gt; and map bill length to the y-axis. 
+&gt; Represent each observation with a point
+&gt; and map species to the color of each point.
+&gt; Title the plot "Bill depth and length", 
+&gt; add the subtitle "Dimensions for Adelie, Chinstrap, and Gentoo Penguins", 
+&gt; label the x and y axes as "Bill depth (mm)" and "Bill length (mm)", respectively,
+&gt; label the legend "Species", 
+&gt; and add a caption for the data source.
+&gt; **Finally, use the viridis color palete for all points.**
+]
+
+.pull-left[
+
+```r
+ggplot(
+  data = penguins,
+  mapping = aes(
+    x = bill_depth_mm,
+    y = bill_length_mm
+  )
+) +
+  geom_point(
+    mapping = aes(color = species)
+  ) +
+  labs(
+    title = "Bill depth and length",
+    subtitle = paste("Dimensions for Adelie,",
+                     "Chinstrap, and Gentoo",
+                     "Penguins"),
+    x = "Bill depth (mm)",
+    y = "Bill length (mm)",
+    color = "Species",
+    caption = "Source: palmerpenguins package"
+  ) +
+* scale_color_viridis_d()
+```
+]
+.pull-right[
+&lt;img src="Lec10_files/figure-html/unnamed-chunk-17-1.png" width="95%" style="display: block; margin: auto;" /&gt;
+]
+
+---
+
+## Argument names
+
+Often we omit the names of first two arguments when building plots with `ggplot()`.
+
+.pull-left[
+
+```r
+ggplot(
+  data = penguins,
+  mapping = aes(
+    x = bill_depth_mm,
+    y = bill_length_mm
+  )
+) +
+  geom_point(
+    mapping = aes(color = species)
+  ) +
+  scale_color_viridis_d()
+```
+]
+.pull-right[
+
+```r
+ggplot(
+  penguins,
+  aes(
+    x = bill_depth_mm,
+    y = bill_length_mm
+  )
+) +
+  geom_point(
+    aes(color = species)
+  ) +
+  scale_color_viridis_d()
+```
+]
+
+.footnote[**Note** that `ggplot` and `geom_*` swap the order of the `data` and `mapping` arguments.]
+
+---
+
+class: middle
+
+# Aesthetics
+
+---
+
+## Aesthetics options
+
+Commonly used characteristics of plotting geometries that can be **mapped to a specific variable** in the data are
+
+- `color`
+- `shape`
+- `size`
+- `alpha` (transparency)
+
+Different geometries have different aesthetics that can be used - see the [ggplot2 geoms](https://ggplot2.tidyverse.org/reference/index.html#Geoms) help files for listings.
+
+
+* Aesthetics given in `ggplot` apply to all `geom`s.
+
+* Aesthetics for a specific `geom` can be overridden with the `geom_*`'s aesthetics.
+
+---
+
+## color
+
+.pull-left[
+
+```r
+ggplot(
+  penguins,
+  aes(
+    x = bill_depth_mm, 
+    y = bill_length_mm
+  )
+) + 
+  geom_point(
+*   aes(color = species)
+  )
+```
+]
+.pull-right[
+&lt;img src="Lec10_files/figure-html/unnamed-chunk-18-1.png" width="95%" style="display: block; margin: auto;" /&gt;
+]
+
+---
+
+## Shape
+
+Mapped to a different variable than `color`
+
+.pull-left[
+
+```r
+ggplot(
+  penguins,
+  aes(
+    x = bill_depth_mm, 
+    y = bill_length_mm
+  )
+) +
+  geom_point(
+    aes(
+*     color = species,
+*     shape = island
+    )
+  )
+```
+]
+.pull-right[
+&lt;img src="Lec10_files/figure-html/unnamed-chunk-19-1.png" width="95%" style="display: block; margin: auto;" /&gt;
+]
+
+---
+
+## Shape
+
+Mapped to same variable as `color`
+
+.pull-left[
+
+```r
+ggplot(
+  penguins,
+  aes(
+    x = bill_depth_mm, 
+    y = bill_length_mm
+  )
+) +
+  geom_point(
+    aes(
+*     color = species,
+*     shape = species
+    )
+  )
+```
+]
+.pull-right[
+&lt;img src="Lec10_files/figure-html/unnamed-chunk-20-1.png" width="95%" style="display: block; margin: auto;" /&gt;
+]
+
+---
+
+## Size
+
+Using a fixed value (note this value is outside of the `aes` call)
+
+.pull-left[
+
+```r
+ggplot(
+  penguins,
+  aes(
+    x = bill_depth_mm, 
+    y = bill_length_mm
+  )
+) +
+  geom_point(
+    aes(
+      color = species,
+      shape = species
+    ),
+*   size = 3
+  )
+```
+]
+.pull-right[
+&lt;img src="Lec10_files/figure-html/unnamed-chunk-21-1.png" width="95%" style="display: block; margin: auto;" /&gt;
+]
+
+---
+
+## Size
+
+Mapped to a variable
+
+.pull-left[
+
+```r
+ggplot(
+  penguins,
+  aes(
+    x = bill_depth_mm, 
+    y = bill_length_mm
+  )
+) +
+  geom_point(
+    aes(
+      color = species,
+      shape = species,
+      size = body_mass_g
+    ),
+  )
+```
+]
+.pull-right[
+&lt;img src="Lec10_files/figure-html/unnamed-chunk-22-1.png" width="95%" style="display: block; margin: auto;" /&gt;
+]
+
+---
+
+## Alpha
+
+.pull-left[
+
+```r
+ggplot(
+  penguins,
+  aes(
+    x = bill_depth_mm, 
+    y = bill_length_mm
+  )
+) +
+  geom_point(
+    aes(
+      color = species,
+      shape = species,
+      alpha = body_mass_g
+    ),
+    size = 3
+  )
+```
+]
+.pull-right[
+&lt;img src="Lec10_files/figure-html/unnamed-chunk-23-1.png" width="95%" style="display: block; margin: auto;" /&gt;
+]
+
+---
+
+## Mapping vs settings
+
+- **Mapping:** Determine an aesthetic (the size, alpha, etc.) of a geom based on the values of a variable in the data
+- goes into `aes()` as an argument which is then an argument of `ggplot2` or `geom_*()`.
+
+- **Setting:** Determine an aesthetic (the size, alpha, etc.) of a geom **not** based on the values of a variable in the data
+- goes directly into `geom_*()` as an argument.
+
+---
+
+class: middle
+
+# Faceting
+
+---
+
+## Faceting
+
+- Smaller plots that display different subsets of the data
+
+- Useful for exploring conditional relationships and large data
+
+- Sometimes refered to as "small multiples"
+
+---
+
+## facet_grid
+
+.pull-left[
+
+```r
+ggplot(
+  penguins, 
+  aes(
+    x = bill_depth_mm, 
+    y = bill_length_mm
+  )
+) + 
+  geom_point() +
+* facet_grid( species ~ island )
+```
+]
+
+.pull-right[
+&lt;img src="Lec10_files/figure-html/unnamed-chunk-24-1.png" width="95%" style="display: block; margin: auto;" /&gt;
+]
+
+---
+
+## Compare with ...
+
+.pull-left[
+
+```r
+ggplot(
+  penguins, 
+  aes(
+    x = bill_depth_mm, 
+    y = bill_length_mm
+  )
+) + 
+  geom_point(
+    aes(
+      color = species,
+      shape = island
+    ), 
+    size = 3
+  )
+```
+]
+
+.pull-right[
+&lt;img src="Lec10_files/figure-html/unnamed-chunk-25-1.png" width="95%" style="display: block; margin: auto;" /&gt;
+]
+
+---
+
+## facet_grid (cols)
+
+.pull-left[
+
+```r
+ggplot(
+  penguins, 
+  aes(
+    x = bill_depth_mm, 
+    y = bill_length_mm
+  )
+) + 
+  geom_point() +
+* facet_grid(  ~ species )
+```
+]
+
+.pull-right[
+&lt;img src="Lec10_files/figure-html/unnamed-chunk-26-1.png" width="95%" style="display: block; margin: auto;" /&gt;
+]
+
+---
+
+## facet_grid (rows)
+
+.pull-left[
+
+```r
+ggplot(
+  penguins, 
+  aes(
+    x = bill_depth_mm, 
+    y = bill_length_mm
+  )
+) + 
+  geom_point() +
+* facet_grid( species ~ . )
+```
+]
+
+.pull-right[
+&lt;img src="Lec10_files/figure-html/unnamed-chunk-27-1.png" width="95%" style="display: block; margin: auto;" /&gt;
+]
+
+
+
+---
+
+## facet_wrap
+
+.pull-left[
+
+```r
+ggplot(
+  penguins, 
+  aes(
+    x = bill_depth_mm, 
+    y = bill_length_mm
+  )
+) + 
+  geom_point() +
+* facet_wrap(~ species)
+```
+]
+
+.pull-right[
+&lt;img src="Lec10_files/figure-html/unnamed-chunk-28-1.png" width="95%" style="display: block; margin: auto;" /&gt;
+]
+
+---
+
+## facet_wrap
+
+.pull-left[
+
+```r
+ggplot(
+  penguins, 
+  aes(
+    x = bill_depth_mm, 
+    y = bill_length_mm
+  )
+) + 
+  geom_point() +
+* facet_wrap(~ species, ncol = 2)
+```
+]
+
+.pull-right[
+&lt;img src="Lec10_files/figure-html/unnamed-chunk-29-1.png" width="95%" style="display: block; margin: auto;" /&gt;
+]
+
+---
+
+## Faceting and color
+
+.pull-left[
+
+```r
+ggplot(
+  penguins, 
+  aes(
+    x = bill_depth_mm, 
+    y = bill_length_mm, 
+    color = species
+  )
+) +
+  geom_point() +
+  facet_grid(species ~ sex)
+```
+]
+.pull-right[
+&lt;img src="Lec10_files/figure-html/unnamed-chunk-30-1.png" width="95%" style="display: block; margin: auto;" /&gt;
+]
+
+---
+
+## Hiding redundancy
+
+.pull-left[
+
+```r
+ggplot(
+  penguins, 
+  aes(
+    x = bill_depth_mm, 
+    y = bill_length_mm, 
+    color = species
+  )
+) +
+  geom_point() +
+  facet_grid(species ~ sex) +
+* guides(color = FALSE)
+```
+]
+
+.pull-right[
+&lt;img src="Lec10_files/figure-html/unnamed-chunk-31-1.png" width="95%" style="display: block; margin: auto;" /&gt;
+]
+
+---
+class: middle
+
+# A brief plot Tour of ggplot2
+
+---
+
+## Histograms
+
+.pull-left[
+
+```r
+ggplot(
+  penguins, 
+  aes(
+    x = body_mass_g, 
+  )
+) +
+  geom_histogram()
+```
+
+```
+## `stat_bin()` using `bins = 30`. Pick better value with
+## `binwidth`.
+```
+]
+
+.pull-right[
+&lt;img src="Lec10_files/figure-html/unnamed-chunk-32-1.png" width="95%" style="display: block; margin: auto;" /&gt;
+]
+
+---
+
+## Histograms - bins
+
+.pull-left[
+
+```r
+ggplot(
+  penguins, 
+  aes(
+    x = body_mass_g, 
+  )
+) +
+  geom_histogram(bins = 50)
+```
+]
+
+.pull-right[
+&lt;img src="Lec10_files/figure-html/unnamed-chunk-33-1.png" width="95%" style="display: block; margin: auto;" /&gt;
+]
+
+---
+
+## Histograms - binwidth
+
+.pull-left[
+
+```r
+ggplot(
+  penguins, 
+  aes(
+    x = body_mass_g, 
+  )
+) +
+  geom_histogram(binwidth = 250)
+```
+]
+
+.pull-right[
+&lt;img src="Lec10_files/figure-html/unnamed-chunk-34-1.png" width="95%" style="display: block; margin: auto;" /&gt;
+]
+
+
+
+---
+
+## Histograms - color
+
+.pull-left[
+
+```r
+ggplot(
+  penguins, 
+  aes(
+    x = body_mass_g, 
+    color = species
+  )
+) +
+  geom_histogram(bins = 20)
+```
+]
+
+.pull-right[
+&lt;img src="Lec10_files/figure-html/unnamed-chunk-35-1.png" width="95%" style="display: block; margin: auto;" /&gt;
+]
+
+---
+
+## Histograms - fill
+
+.pull-left[
+
+```r
+ggplot(
+  penguins, 
+  aes(
+    x = body_mass_g, 
+    fill = species
+  )
+) +
+  geom_histogram(bins = 20)
+```
+]
+
+.pull-right[
+&lt;img src="Lec10_files/figure-html/unnamed-chunk-36-1.png" width="95%" style="display: block; margin: auto;" /&gt;
+]
+
+---
+
+## Histograms - position
+
+.pull-left[
+
+```r
+ggplot(
+  penguins, 
+  aes(
+    x = body_mass_g, 
+    fill = species
+  )
+) +
+  geom_histogram(
+    bins = 20,
+    position = "identity",
+    alpha = 0.5
+  )
+```
+]
+
+.pull-right[
+&lt;img src="Lec10_files/figure-html/unnamed-chunk-37-1.png" width="95%" style="display: block; margin: auto;" /&gt;
+]
+
+
+---
+
+## Histograms - facets
+
+.pull-left[
+
+```r
+ggplot(
+  penguins, 
+  aes(
+    x = body_mass_g, 
+    fill = species
+  )
+) +
+  geom_histogram(bins = 20) +
+  facet_grid(species ~ .) + 
+  guides(fill = FALSE)
+```
+]
+
+.pull-right[
+&lt;img src="Lec10_files/figure-html/unnamed-chunk-38-1.png" width="95%" style="display: block; margin: auto;" /&gt;
+]
+
+---
+
+## Density plot
+
+.pull-left[
+
+```r
+ggplot(
+  penguins, 
+  aes(
+    x = body_mass_g
+  )
+) +
+  geom_density()
+```
+]
+
+.pull-right[
+&lt;img src="Lec10_files/figure-html/unnamed-chunk-39-1.png" width="95%" style="display: block; margin: auto;" /&gt;
+]
+
+---
+
+## Density plot - fill
+
+.pull-left[
+
+```r
+ggplot(
+  penguins, 
+  aes(
+    x = body_mass_g, 
+    fill = species
+  )
+) +
+  geom_density(alpha = 0.25)
+```
+]
+
+.pull-right[
+&lt;img src="Lec10_files/figure-html/unnamed-chunk-40-1.png" width="95%" style="display: block; margin: auto;" /&gt;
+]
+
+---
+
+## Density plot - adjust
+
+.pull-left[
+
+```r
+ggplot(
+  penguins, 
+  aes(
+    x = body_mass_g,
+    fill = species
+  )
+) +
+  geom_density(
+    adjust = 0.5, 
+    alpha = 0.25
+  )
+```
+]
+
+.pull-right[
+&lt;img src="Lec10_files/figure-html/unnamed-chunk-41-1.png" width="95%" style="display: block; margin: auto;" /&gt;
+]
+
+---
+
+## Violin plot
+
+.pull-left[
+
+```r
+ggplot(
+  penguins, 
+  aes(
+    x = species,
+    y = body_mass_g,
+    fill = species
+  )
+) +
+  geom_violin()
+```
+]
+
+.pull-right[
+&lt;img src="Lec10_files/figure-html/unnamed-chunk-42-1.png" width="95%" style="display: block; margin: auto;" /&gt;
+]
+
+---
+
+## Ridge plot
+
+.pull-left[
+
+```r
+ggplot(
+  penguins, 
+  aes(
+    x = body_mass_g,
+    y = species,
+    fill = species
+  )
+) +
+  ggridges::geom_density_ridges(alpha = 0.5)
+```
+
+```
+## Picking joint bandwidth of 153
+```
+]
+
+.pull-right[
+&lt;img src="Lec10_files/figure-html/unnamed-chunk-43-1.png" width="95%" style="display: block; margin: auto;" /&gt;
+]
+
+---
+
+## Ridge plot - more categories + dplyr
+
+.pull-left[
+
+```r
+penguins %&gt;%
+  mutate(
+    species_sex = paste0(species, " (", sex, ")")
+  ) %&gt;%
+  ggplot(
+    aes(
+      x = body_mass_g,
+      y = species_sex,
+      fill = species
+    )
+  ) +
+  ggridges::geom_density_ridges(alpha = 0.5)
+```
+
+```
+## Picking joint bandwidth of 127
+```
+]
+
+.pull-right[
+&lt;img src="Lec10_files/figure-html/unnamed-chunk-44-1.png" width="95%" style="display: block; margin: auto;" /&gt;
+]
+
+---
+
+## Box plot
+
+.pull-left[
+
+```r
+ggplot(
+  penguins, 
+  aes(
+    x = body_mass_g,
+    y = species
+  )
+) +
+  geom_boxplot()
+```
+]
+
+.pull-right[
+&lt;img src="Lec10_files/figure-html/unnamed-chunk-45-1.png" width="95%" style="display: block; margin: auto;" /&gt;
+]
+
+---
+
+## Box plot - coord_flip
+
+.pull-left[
+
+```r
+ggplot(
+  penguins, 
+  aes(
+    x = body_mass_g,
+    y = species
+  )
+) +
+  geom_boxplot() + 
+  coord_flip()
+```
+]
+
+.pull-right[
+&lt;img src="Lec10_files/figure-html/unnamed-chunk-46-1.png" width="95%" style="display: block; margin: auto;" /&gt;
+]
+
+---
+
+## Box plot - swap coords
+
+.pull-left[
+
+```r
+ggplot(
+  penguins, 
+  aes(
+    x = species,
+    y = body_mass_g
+  )
+) +
+  geom_boxplot()
+```
+]
+
+.pull-right[
+&lt;img src="Lec10_files/figure-html/unnamed-chunk-47-1.png" width="95%" style="display: block; margin: auto;" /&gt;
+]
+
+---
+
+## Scatter plot
+
+.pull-left[
+
+```r
+ggplot(
+  penguins, 
+  aes(
+    x = bill_depth_mm, 
+    y = bill_length_mm, 
+    color = species
+  )
+) +
+  geom_point() 
+```
+]
+
+.pull-right[
+&lt;img src="Lec10_files/figure-html/unnamed-chunk-48-1.png" width="95%" style="display: block; margin: auto;" /&gt;
+]
+
+---
+
+## Scatter plot - geom_smooth
+
+.pull-left[
+
+```r
+ggplot(
+  penguins, 
+  aes(
+    x = bill_depth_mm, 
+    y = bill_length_mm, 
+    color = species
+  )
+) +
+  geom_point() +
+  geom_smooth(
+    fullrange = TRUE
+  )
+```
+
+```
+## `geom_smooth()` using method = 'loess' and formula 'y ~ x'
+```
+]
+
+.pull-right[
+&lt;img src="Lec10_files/figure-html/unnamed-chunk-49-1.png" width="95%" style="display: block; margin: auto;" /&gt;
+]
+
+---
+
+## Scatter plot - geom_smooth w/ lm
+
+.pull-left[
+
+```r
+ggplot(
+  penguins, 
+  aes(
+    x = bill_depth_mm, 
+    y = bill_length_mm, 
+    color = species
+  )
+) +
+  geom_point() +
+  geom_smooth(
+    method = "lm",
+    se = FALSE,
+    fullrange = TRUE
+  )
+```
+
+```
+## `geom_smooth()` using formula 'y ~ x'
+```
+]
+
+.pull-right[
+&lt;img src="Lec10_files/figure-html/unnamed-chunk-50-1.png" width="95%" style="display: block; margin: auto;" /&gt;
+]
+
+
+
+---
+
+## Line plot
+
+.pull-left[
+
+```r
+penguins %&gt;%
+  count(species, year) %&gt;%
+  ggplot(
+    aes(
+      x = year, 
+      y = n, 
+      color = species,
+      group = species
+    )
+  ) +
+  geom_line()
+```
+]
+
+.pull-right[
+&lt;img src="Lec10_files/figure-html/unnamed-chunk-51-1.png" width="95%" style="display: block; margin: auto;" /&gt;
+]
+
+---
+
+## Line plot - with points
+
+.pull-left[
+
+```r
+penguins %&gt;%
+  count(species, year) %&gt;%
+  ggplot(
+    aes(
+      x = year, 
+      y = n, 
+      color = species,
+      group = species
+    )
+  ) +
+  geom_line() + 
+  geom_point()
+```
+]
+
+.pull-right[
+&lt;img src="Lec10_files/figure-html/unnamed-chunk-52-1.png" width="95%" style="display: block; margin: auto;" /&gt;
+]
+
+
+---
+
+## Bar plot
+
+.pull-left[
+
+```r
+ggplot(
+  penguins, 
+  aes(
+    x = species
+  )
+) +
+  geom_bar()
+```
+]
+
+.pull-right[
+&lt;img src="Lec10_files/figure-html/unnamed-chunk-53-1.png" width="95%" style="display: block; margin: auto;" /&gt;
+]
+
+---
+
+## Stacked bar plot
+
+.pull-left[
+
+```r
+ggplot(
+  penguins, 
+  aes(
+    x = species,
+    fill = island
+  )
+) +
+  geom_bar()
+```
+]
+
+.pull-right[
+&lt;img src="Lec10_files/figure-html/unnamed-chunk-54-1.png" width="95%" style="display: block; margin: auto;" /&gt;
+]
+
+---
+
+## Stacked relative frequency bar plot
+
+.pull-left[
+
+```r
+ggplot(
+  penguins, 
+  aes(
+    x = species,
+    fill = island
+  )
+) +
+  geom_bar(position = "fill")
+```
+]
+
+.pull-right[
+&lt;img src="Lec10_files/figure-html/unnamed-chunk-55-1.png" width="95%" style="display: block; margin: auto;" /&gt;
+]
+
+---
+
+## Dodged bar plot
+
+.pull-left[
+
+```r
+ggplot(
+  penguins, 
+  aes(
+    x = species,
+    fill = sex
+  )
+) +
+  geom_bar(position = "dodge")
+```
+]
+
+.pull-right[
+&lt;img src="Lec10_files/figure-html/unnamed-chunk-56-1.png" width="95%" style="display: block; margin: auto;" /&gt;
+]
+
+---
+class: middle
+
+# Exercises
+
+---
+
+## Exercise 1
+
+Recreate, as faithfully as possible, the following plot using ggplot2 and the `penguins` data.
+
+&lt;img src="Lec10_files/figure-html/unnamed-chunk-57-1.png" width="60%" style="display: block; margin: auto;" /&gt;
+
+
+---
+
+## Exercise 2
+
+Recreate, as faithfully as possible, the following plot from the `palmerpenguin` package readme in ggplot2.
+
+&lt;img src="imgs/palmer_plot_ex2.png" width="55%" style="display: block; margin: auto;" /&gt;
+
+.footnote[
+`palmerpenguins` pkgdown [site](https://allisonhorst.github.io/palmerpenguins/)
+]
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "solarized-light",
+"highlightLines": true,
+"countIncrementalSlides": false,
+"ratio": "16:9"
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
