@@ -520,6 +520,25 @@ ggplot(d, aes(x = fct_reorder(category, value), y = value)) +
 
 ---
 
+## Judging relative area
+
+
+.footnote[From Data to Viz caveat collection - [The issue with pie chart](https://www.data-to-viz.com/caveat/pie.html)]
+
+
+```{r echo=FALSE, out.width="60%"}
+knitr::include_graphics("imgs/caveat_pie1.png")
+```
+
+--
+
+```{r echo=FALSE, out.width="60%"}
+knitr::include_graphics("imgs/caveat_pie2.png")
+```
+
+
+---
+
 ## Use color	to	draw	attention
 
 .pull-left[
