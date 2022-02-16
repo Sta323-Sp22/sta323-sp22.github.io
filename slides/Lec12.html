@@ -1,0 +1,1599 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Lec 12 - Text Processing &amp; Regular Expressions</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Sta 323 | Spring 2022" />
+    <script src="libs/header-attrs/header-attrs.js"></script>
+    <link rel="stylesheet" href="slides.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Lec 12 - Text Processing &amp;<br/>Regular Expressions
+## <br/> Statistical Programming
+### Sta 323 | Spring 2022
+### <br/> Dr. Colin Rundel
+
+---
+
+exclude: true
+
+
+
+
+---
+
+## Base R string functions
+
+As you have likely noticed, the individual characters in a string (element of a character vector) cannot be directly accessed. The base language provides a number helper functions for pattern matching and manipulation of these objects:
+
+- `paste()`, `paste0()` - concatenate strings
+- `substr()`, `substring()` - extract or replace substrings
+- `sprintf()` - C-like string construction
+- `nchar()` - counts characters
+- `strsplit()` - split a string into substrings 
+- `grep()`, `grepl()` - regular expression pattern matching
+- `sub()`, `gsub()` - regular expression pattern replacement
+
+- `+` many more - the *See Also* section of the the above functions' documentation is a good place to discover additional functions.
+
+---
+class: middle
+
+
+&lt;img src="https://github.com/rstudio/hex-stickers/raw/master/PNG/stringr.png" width="33%" style="display: block; margin: auto;" /&gt;
+
+---
+
+## Fixed width strings - `str_pad()`
+
+.pull-left[
+
+```r
+str_pad(10^(0:5), width = 8, side = "left") %&gt;%
+  cat(sep="\n")
+```
+
+```
+##        1
+##       10
+##      100
+##     1000
+##    10000
+##    1e+05
+```
+]
+
+.pull-right[
+
+```r
+str_pad(10^(0:5), width = 8, side = "right") %&gt;%
+  cat(sep="\n")
+```
+
+```
+## 1       
+## 10      
+## 100     
+## 1000    
+## 10000   
+## 1e+05
+```
+]
+
+
+--
+
+&lt;div&gt;
+.pull-left[
+
+```r
+cat(10^(0:5), sep="\n")
+```
+
+```
+## 1
+## 10
+## 100
+## 1000
+## 10000
+## 1e+05
+```
+
+```r
+formatC(10^(0:5), digits = 6, width = 6) %&gt;%
+  cat(sep="\n")
+```
+
+```
+##      1
+##     10
+##    100
+##   1000
+##  10000
+## 100000
+```
+]
+
+.pull-right[
+
+```r
+cat(1/10^(0:5), sep="\n")
+```
+
+```
+## 1
+## 0.1
+## 0.01
+## 0.001
+## 1e-04
+## 1e-05
+```
+
+```r
+formatC(1/10^(0:5), digits = 6, width = 6, format = "fg") %&gt;% 
+  cat(sep="\n")
+```
+
+```
+##      1
+##    0.1
+##   0.01
+##  0.001
+## 0.0001
+## 0.00001
+```
+]
+&lt;/div&gt;
+
+---
+
+## Whitespace cleaning - `str_trim()` + `str_squish()`
+
+
+```r
+x = c("   abc" , "ABC   " , " Hello.  World ")
+```
+
+&lt;br/&gt;
+
+
+```r
+str_trim(x)
+```
+
+```
+## [1] "abc"           "ABC"           "Hello.  World"
+```
+
+```r
+str_trim(x, side="left")
+```
+
+```
+## [1] "abc"            "ABC   "         "Hello.  World "
+```
+
+```r
+str_trim(x, side="right")
+```
+
+```
+## [1] "   abc"         "ABC"            " Hello.  World"
+```
+
+```r
+str_squish(x)
+```
+
+```
+## [1] "abc"          "ABC"          "Hello. World"
+```
+
+---
+
+## String shortening - `str_trunc()`
+
+
+```r
+x = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
+```
+
+&lt;br/&gt;
+
+
+```r
+str_trunc(x, width=60)
+```
+
+```
+## [1] "Lorem ipsum dolor sit amet, consectetur adipiscing elit, ..."
+```
+
+```r
+str_trunc(x, width=60, side = "left")
+```
+
+```
+## [1] "...in culpa qui officia deserunt mollit anim id est laborum."
+```
+
+```r
+str_trunc(x, width=60, side = "center")
+```
+
+```
+## [1] "Lorem ipsum dolor sit amet, c... mollit anim id est laborum."
+```
+
+---
+
+### String wrapping - `str_wrap()`
+
+
+```r
+cat(x)
+```
+
+```
+## Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+```
+
+--
+
+&lt;br/&gt;
+
+
+```r
+str_wrap(x)
+```
+
+```
+## [1] "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor\nincididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis\nnostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.\nDuis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu\nfugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in\nculpa qui officia deserunt mollit anim id est laborum."
+```
+
+```r
+str_wrap(x) %&gt;% cat()
+```
+
+```
+## Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
+## incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis
+## nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+## Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu
+## fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in
+## culpa qui officia deserunt mollit anim id est laborum.
+```
+
+```r
+str_wrap(x, width=60) %&gt;% cat()
+```
+
+```
+## Lorem ipsum dolor sit amet, consectetur adipiscing elit,
+## sed do eiusmod tempor incididunt ut labore et dolore magna
+## aliqua. Ut enim ad minim veniam, quis nostrud exercitation
+## ullamco laboris nisi ut aliquip ex ea commodo consequat.
+## Duis aute irure dolor in reprehenderit in voluptate velit
+## esse cillum dolore eu fugiat nulla pariatur. Excepteur sint
+## occaecat cupidatat non proident, sunt in culpa qui officia
+## deserunt mollit anim id est laborum.
+```
+
+---
+
+## Strings templates - `str_glue()`
+
+This is a simplified wrapper around `glue::glue()`, use the original for additional control.
+
+
+.pull-left[
+
+```r
+paste("The value of pi is" , pi)
+```
+
+```
+## [1] "The value of pi is 3.14159265358979"
+```
+
+```r
+str_glue("The value of pi is {pi}")
+```
+
+```
+## The value of pi is 3.14159265358979
+```
+]
+
+--
+
+.pull-right[
+
+```r
+paste("The value of tau is" , 2*pi)
+```
+
+```
+## [1] "The value of tau is 6.28318530717959"
+```
+
+```r
+str_glue("The value of tau is {2*pi}")
+```
+
+```
+## The value of tau is 6.28318530717959
+```
+]
+
+--
+
+
+```r
+str_glue_data(
+  iris %&gt;% count(Species),
+  "{Species} has {n} observations"
+)
+```
+
+```
+## setosa has 50 observations
+## versicolor has 50 observations
+## virginica has 50 observations
+```
+
+---
+
+## String capitalization
+
+
+```r
+x = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+```
+
+&lt;br/&gt;
+
+
+```r
+str_to_lower(x)
+```
+
+```
+## [1] "lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+```
+
+```r
+str_to_upper(x)
+```
+
+```
+## [1] "LOREM IPSUM DOLOR SIT AMET, CONSECTETUR ADIPISCING ELIT, SED DO EIUSMOD TEMPOR INCIDIDUNT UT LABORE ET DOLORE MAGNA ALIQUA."
+```
+
+```r
+str_to_title(x)
+```
+
+```
+## [1] "Lorem Ipsum Dolor Sit Amet, Consectetur Adipiscing Elit, Sed Do Eiusmod Tempor Incididunt Ut Labore Et Dolore Magna Aliqua."
+```
+
+```r
+str_to_sentence(x)
+```
+
+```
+## [1] "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+```
+
+---
+class: middle
+
+
+# Regular Expressions
+
+
+---
+
+## Regular expression functions
+
+.small[
+| Function     | Description                         |
+|:-------------|:------------------------------------|
+|`str_detect`  | Detect the presence or absence of a pattern in a string. |
+|`str_locate`  | Locate the first position of a pattern and return a matrix with start and end. |
+|`str_extract` | Extracts text corresponding to the first match. |
+|`str_match`   | Extracts capture groups formed by `()` from the first match. |
+|`str_split`   | Splits string into pieces and returns a list of character vectors. |
+|`str_replace` | Replaces the first matched pattern and returns a character vector. |
+|`str_remove`  | Removes the first matched pattern and returns a character vector. |
+|`str_view`    | Show the matches made by a pattern. |
+]
+
+&lt;br /&gt;
+
+Many of these functions have variants with an `_all` suffix (e.g. `str_replace_all`) which will match more than one occurrence of the pattern in a given string.
+
+
+---
+
+## Simple Pattern Detection
+
+
+```r
+text = c("The quick brown" , "fox jumps over" , "the lazy dog")
+```
+
+&lt;br/&gt;
+
+--
+
+.pull-left[
+
+```r
+str_detect(text, "quick")
+```
+
+```
+## [1]  TRUE FALSE FALSE
+```
+]
+
+.pull-right[
+
+```r
+str_subset(text, "quick")
+```
+
+```
+## [1] "The quick brown"
+```
+]
+
+--
+
+&lt;div&gt;
+.pull-left[
+
+```r
+str_detect(text, "o")
+```
+
+```
+## [1] TRUE TRUE TRUE
+```
+]
+
+.pull-right[
+
+```r
+str_subset(text, "o")
+```
+
+```
+## [1] "The quick brown" "fox jumps over"  "the lazy dog"
+```
+]
+&lt;/div&gt;
+
+--
+
+&lt;div&gt;
+.pull-left[
+
+```r
+str_detect(text, "row")
+```
+
+```
+## [1]  TRUE FALSE FALSE
+```
+]
+
+.pull-right[
+
+```r
+str_subset(text, "row")
+```
+
+```
+## [1] "The quick brown"
+```
+]
+&lt;/div&gt;
+
+--
+
+&lt;div&gt;
+.pull-left[
+
+```r
+str_detect(text, "the")
+```
+
+```
+## [1] FALSE FALSE  TRUE
+```
+]
+
+.pull-right[
+
+```r
+str_subset(text, "the")
+```
+
+```
+## [1] "the lazy dog"
+```
+]
+&lt;/div&gt;
+
+
+--
+
+&lt;div&gt;
+.pull-left[
+
+```r
+str_detect(text, regex("quick", ignore_case=TRUE))
+```
+
+```
+## [1]  TRUE FALSE FALSE
+```
+]
+
+.pull-right[
+
+```r
+str_subset(text, regex("quick", ignore_case=TRUE))
+```
+
+```
+## [1] "The quick brown"
+```
+]
+&lt;/div&gt;
+
+---
+
+## Aside - Escape Characters 
+
+An escape character is a character which results in an alternative interpretation of the subsequent character(s). These vary from language to language but for most string implementations `\` is the escape character which is modified by a single following character.
+
+Some common examples:
+
+.small[
+| Literal | Character        |
+|:--------|:-----------------|
+|`\'`     | single quote     |
+|`\"`     | double quote     |
+|`\\`     | backslash        |
+|`\n`     | new line         |
+|`\r`     | carriage return  |
+|`\t`     | tab              |
+|`\b`     | backspace        |
+|`\f`     | form feed        |
+]
+
+---
+
+## Examples
+
+&lt;div&gt;
+.pull-left[
+
+```r
+print("a\"b")
+```
+
+```
+## [1] "a\"b"
+```
+]
+
+.pull-right[
+
+```r
+cat("a\"b")
+```
+
+```
+## a"b
+```
+]
+&lt;/div&gt;
+
+--
+
+&lt;div&gt;
+.pull-left[
+
+```r
+print("a\tb")
+```
+
+```
+## [1] "a\tb"
+```
+]
+
+.pull-right[
+
+```r
+cat("a\tb")
+```
+
+```
+## a	b
+```
+]
+&lt;/div&gt;
+
+--
+
+&lt;div&gt;
+.pull-left[
+
+```r
+print("a\nb")
+```
+
+```
+## [1] "a\nb"
+```
+]
+
+.pull-right[
+
+```r
+cat("a\nb")
+```
+
+```
+## a
+## b
+```
+]
+&lt;/div&gt;
+
+--
+
+&lt;div&gt;
+.pull-left[
+
+```r
+print("a\\b")
+```
+
+```
+## [1] "a\\b"
+```
+]
+
+.pull-right[
+
+```r
+cat("a\\b")
+```
+
+```
+## a\b
+```
+]
+&lt;/div&gt;
+
+
+
+
+---
+
+## Raw character constants
+
+As of R 4.0, R has the ability to define raw character sequences which avoids the need for most escape characters using the `r"(...)"` syntax, where `...` is the raw string.
+
+
+.pull-left[
+
+```r
+print("\\int_0^\\infty 1/e^x")
+```
+
+```
+## [1] "\\int_0^\\infty 1/e^x"
+```
+
+```r
+cat("\\int_0^\\infty 1/e^x")
+```
+
+```
+## \int_0^\infty 1/e^x
+```
+]
+
+.pull-right[
+
+```r
+print(r"(\int_0^\infty 1/e^x)")
+```
+
+```
+## [1] "\\int_0^\\infty 1/e^x"
+```
+
+```r
+cat(r"(\int_0^\infty 1/e^x)")
+```
+
+```
+## \int_0^\infty 1/e^x
+```
+]
+
+--
+
+&lt;br/&gt;
+
+
+```r
+print("\"test\" and 'test'")
+```
+
+```
+## [1] "\"test\" and 'test'"
+```
+
+```r
+print('"test" and \'test\'')
+```
+
+```
+## [1] "\"test\" and 'test'"
+```
+
+```r
+print(r"("test" and 'test')")
+```
+
+```
+## [1] "\"test\" and 'test'"
+```
+
+.footnote[`[]` and `{}` can be used instead of `()` - see `?Quotes` for details]
+
+---
+
+## RegEx Metacharacters
+
+The power of regular expressions comes from their ability to use special metacharacters to modify how pattern matching is performed.
+
+```regex
+. ^ $ * + ? { } [ ] \ | ( )
+```
+
+--
+
+Because of their special properties they cannot be matched directly, if you need to match one you need to escape it first (precede it by `\`). 
+
+--
+
+The problem is that regex escapes live on top of character escapes, so there needs to use *two* levels of escapes.
+
+&lt;br/&gt;
+
+--
+
+| To match | Regex | Literal   | Raw
+|----------|-------|-----------|---------
+| `.`      | `\.`  | `"\\."`   | `r"(\.)"`
+| `?`      | `\?`  | `"\\?"`   | `r"(\?)"`
+| `!`      | `\!`  | `"\\!"`   | `r"(\!)"`
+
+
+---
+
+## Example
+
+```r
+str_detect("abc[def" ,"\[")
+```
+```
+## Error: '\[' is an unrecognized escape in character string starting ""\["
+```
+
+--
+
+
+```r
+str_detect("abc[def" ,"\\[")
+```
+
+```
+## [1] TRUE
+```
+
+--
+
+&lt;br/&gt;
+
+How do we detect if a string contains a `\` character?
+
+--
+
+
+```r
+cat("abc\\def\n")
+```
+
+```
+## abc\def
+```
+
+--
+
+
+```r
+str_detect("abc\\def" ,"\\\\")
+```
+
+```
+## [1] TRUE
+```
+
+---
+
+## XKCD's take
+
+&lt;br/&gt;
+&lt;br/&gt;
+
+&lt;img src="imgs/xkcd_backslashes.png" width="80%" style="display: block; margin: auto;" /&gt;
+
+
+---
+
+## Anchors
+
+Sometimes we want to specify that our pattern occurs at a particular location in a string, we indicate this using anchor metacharacters.
+
+&lt;br /&gt;
+
+| Regex | Anchor    |
+|-------|:----------|
+| `^` or `\A` | Start of string   |
+| `$` or `\Z` | End of string     |
+| `\b`        | Word boundary     |  
+| `\B`        | Not word boundary |
+
+---
+
+## Anchor Examples
+
+
+```r
+text = "the quick brown fox jumps over the lazy dog"
+```
+
+--
+
+
+```r
+str_replace(text, "^the" , "---")
+```
+
+```
+## [1] "--- quick brown fox jumps over the lazy dog"
+```
+
+--
+
+
+```r
+str_replace(text, "^dog" , "---")
+```
+
+```
+## [1] "the quick brown fox jumps over the lazy dog"
+```
+
+--
+
+
+```r
+str_replace(text, "the$" , "---")
+```
+
+```
+## [1] "the quick brown fox jumps over the lazy dog"
+```
+
+--
+
+
+```r
+str_replace(text, "dog$" , "---")
+```
+
+```
+## [1] "the quick brown fox jumps over the lazy ---"
+```
+
+--
+
+
+```r
+str_replace(text, "the" , "---")
+```
+
+```
+## [1] "--- quick brown fox jumps over the lazy dog"
+```
+
+--
+
+
+```r
+str_replace_all(text, "the" , "---")
+```
+
+```
+## [1] "--- quick brown fox jumps over --- lazy dog"
+```
+
+
+---
+
+## Anchor Examples - word boundaries
+
+
+```r
+text = "the quick brown fox jumps over the lazy dog"
+```
+
+--
+
+
+```r
+str_replace_all(text, "\\Brow\\B" , "---")
+```
+
+```
+## [1] "the quick b---n fox jumps over the lazy dog"
+```
+
+--
+
+
+```r
+str_replace_all(text, "\\brow\\b" , "---")
+```
+
+```
+## [1] "the quick brown fox jumps over the lazy dog"
+```
+
+--
+
+
+```r
+str_replace_all(text, "\\bthe" , "---")
+```
+
+```
+## [1] "--- quick brown fox jumps over --- lazy dog"
+```
+
+--
+
+
+```r
+str_replace_all(text, "the\\b" , "---")
+```
+
+```
+## [1] "--- quick brown fox jumps over --- lazy dog"
+```
+
+
+
+---
+
+## More complex patterns
+
+If there are more than one pattern we would like to match we can use the or (`|`) metacharacter.
+
+--
+
+
+```r
+str_replace_all(text,"the|dog" ,"---")
+```
+
+```
+## [1] "--- quick brown fox jumps over --- lazy ---"
+```
+
+--
+
+
+```r
+str_replace_all(text,"a|e|i|o|u" ,"*")
+```
+
+```
+## [1] "th* q**ck br*wn f*x j*mps *v*r th* l*zy d*g"
+```
+
+--
+
+
+```r
+str_replace_all(text,"\\ba|e|i|o|u" ,"*")
+```
+
+```
+## [1] "th* q**ck br*wn f*x j*mps *v*r th* lazy d*g"
+```
+
+--
+
+
+```r
+str_replace_all(text,"\\b(a|e|i|o|u)" ,"*")
+```
+
+```
+## [1] "the quick brown fox jumps *ver the lazy dog"
+```
+
+
+
+---
+
+## Character Classes
+
+When we want to match whole classes of characters at a time there are a number of convenience patterns built in,
+
+&lt;br /&gt;
+
+| Meta Char | Class | Description |
+|:----:|:------------|:-|
+| `.`  |             | Any character except new line (`\n`) | 
+| `\s` | `[:space:]` | White space |
+| `\S` |             | Not white space |
+| `\d` | `[:digit:]` | Digit (0-9)|
+| `\D` |             | Not digit |
+| `\w` |             | Word (A-Z, a-z, 0-9, or _) |
+| `\W` |             | Not word |
+|      | `[:punct:]` | Punctionation |
+
+---
+
+## A hierarchical view
+
+&lt;center&gt;
+  &lt;img src="imgs/regex_char_classes.png" width=450&gt;
+&lt;/center&gt;
+
+.footnote[
+From http://perso.ens-lyon.fr/lise.vaudor/strings-et-expressions-regulieres/
+]
+
+---
+
+## Example
+
+How would we write a regular expression to match a telephone number with the form `(###) ###-####`?
+
+
+```r
+text = c("apple" , "(219) 733-8965" , "(329) 293-8753")
+```
+
+--
+
+```r
+str_detect(text, "(\d\d\d) \d\d\d-\d\d\d\d")
+```
+```
+## Error: '\d' is an unrecognized escape in character string starting ""(\d"
+```
+
+--
+
+
+```r
+str_detect(text, "(\\d\\d\\d) \\d\\d\\d-\\d\\d\\d\\d")
+```
+
+```
+## [1] FALSE FALSE FALSE
+```
+
+--
+
+
+```r
+str_detect(text, "\\(\\d\\d\\d\\) \\d\\d\\d-\\d\\d\\d\\d")
+```
+
+```
+## [1] FALSE  TRUE  TRUE
+```
+
+---
+
+## Classes and Ranges
+
+We can also specify our own classes using square brackets
+
+&lt;br /&gt;
+
+| Class    | Type        |
+|----------|:------------|
+| `[abc]`  | Class (a or b or c) |
+| `[^abc]` | Negated class (not a or b or c) |
+| `[a-c]`  | Range lower case letter from a to c |
+| `[A-C]`  | Range upper case letter from A to C |
+| `[0-7]`  | Digit between 0 to 7 |
+
+---
+
+## Example
+
+
+```r
+text = c("apple" , "(219) 733-8965" , "(329) 293-8753")
+```
+
+&lt;br/&gt;
+
+--
+
+
+```r
+str_replace_all(text, "[aeiou]" , "*")
+```
+
+```
+## [1] "*ppl*"          "(219) 733-8965" "(329) 293-8753"
+```
+
+--
+
+
+```r
+str_replace_all(text, "[13579]" , "*")
+```
+
+```
+## [1] "apple"          "(2**) ***-8*6*" "(*2*) 2**-8***"
+```
+
+--
+
+
+```r
+str_replace_all(text, "[1-5a-ep]" , "*")
+```
+
+```
+## [1] "***l*"          "(**9) 7**-896*" "(**9) *9*-87**"
+```
+
+--
+
+
+```r
+str_replace_all(text, "[^1-5a-ep]" , "*")
+```
+
+```
+## [1] "app*e"          "*21****33****5" "*32***2*3***53"
+```
+
+---
+
+## Exercises 1
+
+For the following vector of randomly generated names, write a regular expression that,
+
+* detects if the person's first name starts with a vowel (a,e,i,o,u)
+
+* detects if the person's last name starts with a vowel
+
+* detects if either the person's first or last name start with a vowel
+
+* detects if neither the person's first nor last name start with a vowel
+
+
+
+```
+c("Jeremy Cruz", "Nathaniel Le", "Jasmine Chu", "Bradley Calderon Raygoza", 
+"Quinten Weller", "Katelien Kanamu-Hauanio", "Zuhriyaa al-Amen", 
+"Travale York", "Alexis Ahmed", "David Alcocer", "Jairo Martinez", 
+"Dwone Gallegos", "Amanda Sherwood", "Hadiyya el-Eid", "Shaimaaa al-Can", 
+"Sarah Love", "Shelby Villano", "Sundus al-Hashmi", "Dyani Loving", 
+"Shanelle Douglas")
+```
+
+
+---
+
+## Quantifiers
+
+Attached to literals or character classes these allow a match to repeat some number of time.
+
+&lt;br /&gt;
+
+| Quantifier | Description |
+|:-----------|:------------|
+| `*`        | Match 0 or more |
+| `+`        | Match 1 or more |
+| `?`        | Match 0 or 1 |
+| `{3}`      | Match Exactly 3 |
+| `{3,}`     | Match 3 or more |
+| `{3,5}`    | Match 3, 4 or 5 |
+
+---
+
+## Example
+
+How would we improve our previous regular expression for matching a telephone number with the form `(###) ###-####`?
+
+
+```r
+text = c("apple" , "(219) 733-8965" , "(329) 293-8753")
+```
+
+--
+
+
+```r
+str_detect(text, "\\(\\d\\d\\d\\) \\d\\d\\d-\\d\\d\\d\\d")
+```
+
+```
+## [1] FALSE  TRUE  TRUE
+```
+
+--
+
+
+```r
+str_detect(text, "\\(\\d{3}\\) \\d{3}-\\d{4}")
+```
+
+```
+## [1] FALSE  TRUE  TRUE
+```
+
+--
+
+
+```r
+str_extract(text, "\\(\\d{3}\\) \\d{3}-\\d{4}")
+```
+
+```
+## [1] NA               "(219) 733-8965" "(329) 293-8753"
+```
+
+---
+
+## Greedy vs ungreedy matching
+
+What went wrong here?
+
+
+```r
+text = "&lt;div class='main'&gt; &lt;div&gt; &lt;a href='here.pdf'&gt;Here!&lt;/a&gt; &lt;/div&gt; &lt;/div&gt;"
+```
+
+
+```r
+str_extract(text, "&lt;div&gt;.*&lt;/div&gt;")
+```
+
+```
+## [1] "&lt;div&gt; &lt;a href='here.pdf'&gt;Here!&lt;/a&gt; &lt;/div&gt; &lt;/div&gt;"
+```
+
+&lt;br/&gt;
+
+--
+
+If you add `?` after a quantifier, the matching will be *non-greedy* (find the shortest possible match, not the longest). 
+
+
+```r
+str_extract(text, "&lt;div&gt;.*?&lt;/div&gt;")
+```
+
+```
+## [1] "&lt;div&gt; &lt;a href='here.pdf'&gt;Here!&lt;/a&gt; &lt;/div&gt;"
+```
+
+---
+
+## Groups
+
+Groups allow you to connect pieces of a regular expression for modification or capture.
+
+&lt;br /&gt;
+
+| Group     | Description |
+|-----------------|:------------|
+| (a &amp;vert; b)    | match literal "a" or "b" , group either |
+| `a(bc)?`        | match "a" or "abc" , group bc or nothing |
+| `(abc)def(hig)` | match "abcdefhig" , group abc and hig |
+| `(?:abc)`       | match "abc" , non-capturing group | 
+
+---
+
+## Example
+
+
+```r
+text = c("Bob Smith" , "Alice Smith" , "Apple")
+```
+
+&lt;br/&gt;
+
+--
+
+.pull-left[
+
+```r
+str_extract(text, "^[:alpha:]+")
+```
+
+```
+## [1] "Bob"   "Alice" "Apple"
+```
+]
+
+.pull-right[
+
+```r
+str_match(text, "^[:alpha:]+")
+```
+
+```
+##      [,1]   
+## [1,] "Bob"  
+## [2,] "Alice"
+## [3,] "Apple"
+```
+]
+
+--
+
+&lt;div&gt;
+.pull-left[
+
+```r
+str_extract(text, "^([:alpha:]+) [:alpha:]+")
+```
+
+```
+## [1] "Bob Smith"   "Alice Smith" NA
+```
+]
+
+.pull-right[
+
+```r
+str_match(text, "^([:alpha:]+) [:alpha:]+")
+```
+
+```
+##      [,1]          [,2]   
+## [1,] "Bob Smith"   "Bob"  
+## [2,] "Alice Smith" "Alice"
+## [3,] NA            NA
+```
+]
+
+&lt;/div&gt;
+
+--
+
+
+&lt;div&gt;
+.pull-left[
+
+```r
+str_extract(text, "^([:alpha:]+) ([:alpha:]+)")
+```
+
+```
+## [1] "Bob Smith"   "Alice Smith" NA
+```
+]
+
+.pull-right[
+
+```r
+str_match(text, "^([:alpha:]+) ([:alpha:]+)")
+```
+
+```
+##      [,1]          [,2]    [,3]   
+## [1,] "Bob Smith"   "Bob"   "Smith"
+## [2,] "Alice Smith" "Alice" "Smith"
+## [3,] NA            NA      NA
+```
+]
+
+&lt;/div&gt;
+
+
+
+
+---
+
+## How not to use a RegEx
+
+Validating an email address:
+
+&lt;br /&gt;
+
+
+```
+(?:[a-z0-9!#$%&amp;'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&amp;'*+/=?^_`{|}~-]+)*|"
+(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")
+@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\\[
+(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}
+(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:
+(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])
+```
+
+.footnote[Behold the horror of an old school perl regex for email addresses [here](http://www.ex-parrot.com/~pdw/Mail-RFC822-Address.html)]
+
+---
+
+## Exercise 2
+
+
+```r
+text = c(
+  "apple" , 
+  "219 733 8965" , 
+  "329-293-8753" ,
+  "Work: (579) 499-7527; Home: (543) 355 3679"
+)
+```
+
+* Write a regular expression that will extract *all* phone numbers contained in the vector above.
+
+
+* Once that works use groups to extracts the area code separately from the rest of the phone number.
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "solarized-light",
+"highlightLines": true,
+"countIncrementalSlides": false,
+"ratio": "16:9"
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
