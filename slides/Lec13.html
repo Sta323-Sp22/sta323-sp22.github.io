@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Lec 13 - Web Scraping</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Sta 323 | Spring 2022" />
+    <script src="libs/header-attrs/header-attrs.js"></script>
+    <link href="libs/font-awesome/css/all.css" rel="stylesheet" />
+    <link href="libs/font-awesome/css/v4-shims.css" rel="stylesheet" />
+    <link rel="stylesheet" href="slides.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Lec 13 - Web Scraping
+## <br/> Statistical Programming
+### Sta 323 | Spring 2022
+### <br/> Dr. Colin Rundel
+
+---
+
+exclude: true
+
+
+
+
+```r
+library(magrittr)
+library(rvest)
+```
+
+---
+class: middle, center
+
+&lt;img src="imgs/hex-rvest.png" width="45%" style="display: block; margin: auto;" /&gt;
+
+---
+
+## Hypertext Markup Language
+
+Most of the data on the web is still largely available as HTML - while it is structured (hierarchical) it often is not available in a form useful for analysis (flat / tidy).
+
+```html
+&lt;html&gt;
+  &lt;head&gt;
+    &lt;title&gt;This is a title&lt;/title&gt;
+  &lt;/head&gt;
+  &lt;body&gt;
+    &lt;p align="center"&gt;Hello world!&lt;/p&gt;
+    &lt;br/&gt;
+    &lt;div class="name" id="first"&gt;John&lt;/div&gt;
+    &lt;div class="name" id="last"&gt;Doe&lt;/div&gt;
+    &lt;div class="contact"&gt;
+      &lt;div class="home"&gt;555-555-1234&lt;/div&gt;
+      &lt;div class="home"&gt;555-555-2345&lt;/div&gt;
+      &lt;div class="work"&gt;555-555-9999&lt;/div&gt;
+      &lt;div class="fax"&gt;555-555-8888&lt;/div&gt;
+    &lt;/div&gt;
+  &lt;/body&gt;
+&lt;/html&gt;
+```
+
+---
+
+## rvest
+
+`rvest` is a package from the tidyverse that makes basic processing and manipulation of HTML data straight forward. It provides high level functions for interacting with html via the xml2 library.
+
+&lt;br/&gt;
+
+Core functions:
+
+* `read_html()` - read HTML data from a url or character string.
+
+* `html_elements()` / `html_elements()` - select specified elements from the HTML document using CSS selectors.
+
+* `html_table()` - parse an HTML table into a data frame.
+
+* `html_text()` / `html_text2()` - extract tag's text content.
+
+* `html_name` - extract tag's names.
+
+* `html_attrs` - extract all of each tag's attributes.
+
+* `html_attr` - extract tags' attribute value by name.
+
+---
+
+## html, rvest, &amp; xml2
+
+
+```r
+html = 
+'&lt;html&gt;
+  &lt;head&gt;
+    &lt;title&gt;This is a title&lt;/title&gt;
+  &lt;/head&gt;
+  &lt;body&gt;
+    &lt;p align="center"&gt;Hello world!&lt;/p&gt;
+    &lt;br/&gt;
+    &lt;div class="name" id="first"&gt;John&lt;/div&gt;
+    &lt;div class="name" id="last"&gt;Doe&lt;/div&gt;
+    &lt;div class="contact"&gt;
+      &lt;div class="home"&gt;555-555-1234&lt;/div&gt;
+      &lt;div class="home"&gt;555-555-2345&lt;/div&gt;
+      &lt;div class="work"&gt;555-555-9999&lt;/div&gt;
+      &lt;div class="fax"&gt;555-555-8888&lt;/div&gt;
+    &lt;/div&gt;
+  &lt;/body&gt;
+&lt;/html&gt;'
+
+
+read_html(html)
+```
+
+```
+## {html_document}
+## &lt;html&gt;
+## [1] &lt;head&gt;\n&lt;meta http-equiv="Content-Type" content="text/html; charset=UTF-8 ...
+## [2] &lt;body&gt;\n    &lt;p align="center"&gt;Hello world!&lt;/p&gt;\n    &lt;br&gt;&lt;div class="name" ...
+```
+
+---
+
+## css selectors
+
+We will be using a tool called selector gadget to help up identify the html elements of interest - it does this by constructing a css selector which can be used to subset the html document.
+
+&lt;br/&gt;
+
+.small[
+
+Selector          |  Example         | Description
+:-----------------|:-----------------|:--------------------------------------------------
+element           |  `p`             | Select all &amp;lt;p&amp;gt; elements
+element element   |  `div p`         | Select all &amp;lt;p&amp;gt; elements inside a &amp;lt;div&amp;gt; element
+element&gt;element   |  `div &gt; p`       | Select all &amp;lt;p&amp;gt; elements with &amp;lt;div&amp;gt; as a parent
+.class            |  `.title`        | Select all elements with class="title"
+#id               |  `#name`         | Select all elements with id="name"
+[attribute]       |  `[class]`       | Select all elements with a class attribute
+[attribute=value] |  `[class=title]` | Select all elements with class="title"
+
+]
+
+
+.footnote[There are also a number of additional combinators and pseudo-classes that improve flexibility, see examples [here](https://www.w3schools.com/cssref/css_selectors.asp)]
+
+---
+
+## Selecting tags
+
+
+```r
+read_html(html) %&gt;% html_elements("p")
+```
+
+```
+## {xml_nodeset (1)}
+## [1] &lt;p align="center"&gt;Hello world!&lt;/p&gt;
+```
+
+--
+
+
+```r
+read_html(html) %&gt;% html_elements("p") %&gt;% html_text()
+```
+
+```
+## [1] "Hello world!"
+```
+
+--
+
+
+```r
+read_html(html) %&gt;% html_elements("p") %&gt;% html_attrs()
+```
+
+```
+## [[1]]
+##    align 
+## "center"
+```
+
+--
+
+
+```r
+read_html(html) %&gt;% html_elements("p") %&gt;% html_attr("align")
+```
+
+```
+## [1] "center"
+```
+
+---
+
+## More selecting tags
+
+
+```r
+read_html(html) %&gt;% html_elements("div")
+```
+
+```
+## {xml_nodeset (7)}
+## [1] &lt;div class="name" id="first"&gt;John&lt;/div&gt;
+## [2] &lt;div class="name" id="last"&gt;Doe&lt;/div&gt;
+## [3] &lt;div class="contact"&gt;\n      &lt;div class="home"&gt;555-555-1234&lt;/div&gt;\n       ...
+## [4] &lt;div class="home"&gt;555-555-1234&lt;/div&gt;
+## [5] &lt;div class="home"&gt;555-555-2345&lt;/div&gt;
+## [6] &lt;div class="work"&gt;555-555-9999&lt;/div&gt;
+## [7] &lt;div class="fax"&gt;555-555-8888&lt;/div&gt;
+```
+
+--
+
+
+```r
+read_html(html) %&gt;% html_elements("div") %&gt;% html_text()
+```
+
+```
+## [1] "John"                                                                                  
+## [2] "Doe"                                                                                   
+## [3] "\n      555-555-1234\n      555-555-2345\n      555-555-9999\n      555-555-8888\n    "
+## [4] "555-555-1234"                                                                          
+## [5] "555-555-2345"                                                                          
+## [6] "555-555-9999"                                                                          
+## [7] "555-555-8888"
+```
+
+
+---
+
+## Nesting tags
+
+
+```r
+read_html(html) %&gt;% html_elements("body div")
+```
+
+```
+## {xml_nodeset (7)}
+## [1] &lt;div class="name" id="first"&gt;John&lt;/div&gt;
+## [2] &lt;div class="name" id="last"&gt;Doe&lt;/div&gt;
+## [3] &lt;div class="contact"&gt;\n      &lt;div class="home"&gt;555-555-1234&lt;/div&gt;\n       ...
+## [4] &lt;div class="home"&gt;555-555-1234&lt;/div&gt;
+## [5] &lt;div class="home"&gt;555-555-2345&lt;/div&gt;
+## [6] &lt;div class="work"&gt;555-555-9999&lt;/div&gt;
+## [7] &lt;div class="fax"&gt;555-555-8888&lt;/div&gt;
+```
+
+--
+
+
+```r
+read_html(html) %&gt;% html_elements("body&gt;div")
+```
+
+```
+## {xml_nodeset (3)}
+## [1] &lt;div class="name" id="first"&gt;John&lt;/div&gt;
+## [2] &lt;div class="name" id="last"&gt;Doe&lt;/div&gt;
+## [3] &lt;div class="contact"&gt;\n      &lt;div class="home"&gt;555-555-1234&lt;/div&gt;\n       ...
+```
+
+--
+
+
+```r
+read_html(html) %&gt;% html_elements("body div div")
+```
+
+```
+## {xml_nodeset (4)}
+## [1] &lt;div class="home"&gt;555-555-1234&lt;/div&gt;
+## [2] &lt;div class="home"&gt;555-555-2345&lt;/div&gt;
+## [3] &lt;div class="work"&gt;555-555-9999&lt;/div&gt;
+## [4] &lt;div class="fax"&gt;555-555-8888&lt;/div&gt;
+```
+
+---
+
+## CSS classes and ids
+
+
+```r
+read_html(html) %&gt;% html_elements(".name")
+```
+
+```
+## {xml_nodeset (2)}
+## [1] &lt;div class="name" id="first"&gt;John&lt;/div&gt;
+## [2] &lt;div class="name" id="last"&gt;Doe&lt;/div&gt;
+```
+
+--
+
+
+
+```r
+read_html(html) %&gt;% html_elements("div.name")
+```
+
+```
+## {xml_nodeset (2)}
+## [1] &lt;div class="name" id="first"&gt;John&lt;/div&gt;
+## [2] &lt;div class="name" id="last"&gt;Doe&lt;/div&gt;
+```
+
+--
+
+
+```r
+read_html(html) %&gt;% html_elements("#first")
+```
+
+```
+## {xml_nodeset (1)}
+## [1] &lt;div class="name" id="first"&gt;John&lt;/div&gt;
+```
+
+
+---
+
+## Mixing it up
+
+
+```r
+read_html(html) %&gt;% html_elements("[align]")
+```
+
+```
+## {xml_nodeset (1)}
+## [1] &lt;p align="center"&gt;Hello world!&lt;/p&gt;
+```
+
+
+```r
+read_html(html) %&gt;% html_elements(".contact div")
+```
+
+```
+## {xml_nodeset (4)}
+## [1] &lt;div class="home"&gt;555-555-1234&lt;/div&gt;
+## [2] &lt;div class="home"&gt;555-555-2345&lt;/div&gt;
+## [3] &lt;div class="work"&gt;555-555-9999&lt;/div&gt;
+## [4] &lt;div class="fax"&gt;555-555-8888&lt;/div&gt;
+```
+
+---
+
+## `html_text()` vs `html_text2()`
+
+
+```r
+html = read_html(
+  "&lt;p&gt;  
+    This is the first sentence in the paragraph.
+    This is the second sentence that should be on the same line as the first sentence.&lt;br&gt;This third sentence should start on a new line.
+  &lt;/p&gt;"
+)
+```
+
+--
+
+&lt;br/&gt;
+
+
+```r
+html %&gt;% html_text() %&gt;% cat(sep="\n")
+```
+
+```
+##   
+##     This is the first sentence in the paragraph.
+##     This is the second sentence that should be on the same line as the first sentence.This third sentence should start on a new line.
+## 
+```
+
+
+```r
+html %&gt;% html_text2() %&gt;% cat(sep="\n")
+```
+
+```
+## This is the first sentence in the paragraph. This is the second sentence that should be on the same line as the first sentence.
+## This third sentence should start on a new line.
+```
+
+---
+
+## html tables
+
+
+```r
+html_table = 
+'&lt;html&gt;
+  &lt;head&gt;
+    &lt;title&gt;This is a title&lt;/title&gt;
+  &lt;/head&gt;
+  &lt;body&gt;
+    &lt;table&gt;
+      &lt;tr&gt; &lt;th&gt;a&lt;/th&gt; &lt;th&gt;b&lt;/th&gt; &lt;th&gt;c&lt;/th&gt; &lt;/tr&gt;
+      &lt;tr&gt; &lt;td&gt;1&lt;/td&gt; &lt;td&gt;2&lt;/td&gt; &lt;td&gt;3&lt;/td&gt; &lt;/tr&gt;
+      &lt;tr&gt; &lt;td&gt;2&lt;/td&gt; &lt;td&gt;3&lt;/td&gt; &lt;td&gt;4&lt;/td&gt; &lt;/tr&gt;
+      &lt;tr&gt; &lt;td&gt;3&lt;/td&gt; &lt;td&gt;4&lt;/td&gt; &lt;td&gt;5&lt;/td&gt; &lt;/tr&gt;
+    &lt;/table&gt;
+  &lt;/body&gt;
+&lt;/html&gt;'
+```
+
+--
+
+
+```r
+read_html(html_table) %&gt;% html_elements("table") %&gt;% html_table()
+```
+
+```
+## [[1]]
+## # A tibble: 3 × 3
+##       a     b     c
+##   &lt;int&gt; &lt;int&gt; &lt;int&gt;
+## 1     1     2     3
+## 2     2     3     4
+## 3     3     4     5
+```
+
+---
+
+## SelectorGadget
+
+This is a javascript based tool that helps you interactively build an appropriate CSS selector for the content you are interested in.
+
+
+.center[
+&lt;img src="imgs/selectorgadget.png" width="45%" style="display: block; margin: auto;" /&gt;
+[selectorgadget.com](http://selectorgadget.com)
+]
+
+
+
+
+---
+class: middle
+
+# Web scraping considerations
+
+---
+
+## "Can you?" vs "Should you?"
+
+&lt;img src="imgs/ok-cupid-1.png" width="60%" style="display: block; margin: auto;" /&gt;
+
+.footnote[.small[
+Source: Brian Resnick, [Researchers just released profile data on 70,000 OkCupid users without permission](https://www.vox.com/2016/5/12/11666116/70000-okcupid-users-data-release), Vox.
+]]
+
+---
+
+## "Can you?" vs "Should you?"
+
+&lt;img src="imgs/ok-cupid-2.png" width="70%" style="display: block; margin: auto;" /&gt;
+
+---
+
+## Scraping permission &amp; `robots.txt`
+
+There is a standard for communicating to users if it is acceptable to automatically scrape a website via the [robots exclusion standard] or `robots.txt`.
+
+You can find examples at all of your favorite websites: [google](https://www.google.com/robots.txt), [facebook](https://facebook.com/robots.txt), etc.
+
+--
+
+These files are meant to be machine readable, but the `polite` package can handle this for us.
+
+
+```r
+polite::bow("http://google.com")
+```
+
+```
+## &lt;polite session&gt; http://google.com
+##     User-agent: polite R package - https://github.com/dmi3kno/polite
+##     robots.txt: 282 rules are defined for 4 bots
+##    Crawl delay: 5 sec
+##   The path is scrapable for this user-agent
+```
+
+```r
+polite::bow("http://facebook.com")
+```
+
+```
+## &lt;polite session&gt; http://facebook.com
+##     User-agent: polite R package - https://github.com/dmi3kno/polite
+##     robots.txt: 498 rules are defined for 20 bots
+##    Crawl delay: 5 sec
+##   The path is not scrapable for this user-agent
+```
+
+
+
+
+---
+
+## Example - Rotten Tomatoes
+
+
+For the movies listed in **Popular Steaming Movies** list on `rottentomatoes.com` create a data frame with the Movies' titles, their tomatometer score, and whether the movie is fresh or rotten, and the movie's url.
+
+---
+
+## Exercise
+
+Using the url for each movie, now go out and grab the number of reviews, the runtime, and number of user ratings.
+
+If you finish that you can then try to scrape the mpaa rating and the audience score,.
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "solarized-light",
+"highlightLines": true,
+"countIncrementalSlides": false,
+"ratio": "16:9"
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
