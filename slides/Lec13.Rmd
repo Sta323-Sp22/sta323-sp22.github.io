@@ -79,17 +79,19 @@ Core functions:
 
 * `read_html()` - read HTML data from a url or character string.
 
-* `html_elements()` / `html_elements()` - select specified elements from the HTML document using CSS selectors.
+* `html_elements()` / ~~`html_nodes()`~~ - select specified elements from the HTML document using CSS selectors (or xpath).
+
+* `html_element()` / ~~`html_node()`~~ - select a single element from the HTML document using CSS selectors (or xpath).
 
 * `html_table()` - parse an HTML table into a data frame.
 
 * `html_text()` / `html_text2()` - extract tag's text content.
 
-* `html_name` - extract tag's names.
+* `html_name` - extract a tag/element's name(s).
 
-* `html_attrs` - extract all of each tag's attributes.
+* `html_attrs` - extract all attributes.
 
-* `html_attr` - extract tags' attribute value by name.
+* `html_attr` - extract attribute value(s) by name.
 
 ---
 
@@ -127,15 +129,17 @@ We will be using a tool called selector gadget to help up identify the html elem
 
 <br/>
 
+Some examples of basic selector syntax is below,
+
 .small[
 
 Selector          |  Example         | Description
 :-----------------|:-----------------|:--------------------------------------------------
+.class            |  `.title`        | Select all elements with class="title"
+#id               |  `#name`         | Select all elements with id="name"
 element           |  `p`             | Select all &lt;p&gt; elements
 element element   |  `div p`         | Select all &lt;p&gt; elements inside a &lt;div&gt; element
 element>element   |  `div > p`       | Select all &lt;p&gt; elements with &lt;div&gt; as a parent
-.class            |  `.title`        | Select all elements with class="title"
-#id               |  `#name`         | Select all elements with id="name"
 [attribute]       |  `[class]`       | Select all elements with a class attribute
 [attribute=value] |  `[class=title]` | Select all elements with class="title"
 
@@ -156,6 +160,12 @@ read_html(html) %>% html_elements("p")
 
 ```{r}
 read_html(html) %>% html_elements("p") %>% html_text()
+```
+
+--
+
+```{r}
+read_html(html) %>% html_elements("p") %>% html_name()
 ```
 
 --
@@ -337,13 +347,13 @@ knitr::include_graphics("imgs/ok-cupid-2.png")
 
 ## Scraping permission & `robots.txt`
 
-There is a standard for communicating to users if it is acceptable to automatically scrape a website via the [robots exclusion standard] or `robots.txt`.
+There is a standard for communicating to users if it is acceptable to automatically scrape a website via the [robots exclusion standard](https://en.wikipedia.org/wiki/Robots_exclusion_standard) or `robots.txt`.
 
 You can find examples at all of your favorite websites: [google](https://www.google.com/robots.txt), [facebook](https://facebook.com/robots.txt), etc.
 
 --
 
-These files are meant to be machine readable, but the `polite` package can handle this for us.
+These files are meant to be machine readable, but the `polite` package can handle this for us (and much more).
 
 ```{r}
 polite::bow("http://google.com")
