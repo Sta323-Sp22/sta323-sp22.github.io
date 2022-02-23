@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Lec 14 - Filesystems &amp;  Denny’s + LQ scraping</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Sta 323 | Spring 2022" />
+    <script src="libs/header-attrs/header-attrs.js"></script>
+    <link href="libs/font-awesome/css/all.css" rel="stylesheet" />
+    <link href="libs/font-awesome/css/v4-shims.css" rel="stylesheet" />
+    <link rel="stylesheet" href="slides.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Lec 14 - Filesystems &amp;<br/> Denny’s + LQ scraping
+## <br/> Statistical Programming
+### Sta 323 | Spring 2022
+### <br/> Dr. Colin Rundel
+
+---
+
+exclude: true
+
+
+
+
+```r
+library(magrittr)
+library(rvest)
+```
+
+---
+
+## Filesystems
+
+Pretty much all commonly used operating systems make use of a hierarchically structured filesystem.
+
+This paradigm consists of directories which can contain files and other directories (which can then contain other files and directories and so on). 
+
+&lt;br/&gt;
+
+&lt;img src="imgs/automate_file_path.jpg" width="25%" style="display: block; margin: auto;" /&gt;
+
+.footnote[From [Chp 9](https://automatetheboringstuff.com/2e/chapter9/) of Automate the Boring Stuff with Python]
+
+---
+
+## Absolute vs relative paths
+
+Paths can either be absolute or relative, and the difference is very important. For portability reasons you should almost never use absolute paths.
+
+Absolute path examples:
+
+```shell
+/var/ftp/pub
+/etc/samba.smb.conf
+/boot/grub/grub.conf
+```
+
+Relative path examples:
+
+```shell
+Sta523/filesystem/
+data/access.log
+filesystem/nelle/pizza.cfg
+```
+
+---
+
+
+## Special directories
+
+
+```r
+dir(path = "./")
+```
+
+```
+##  [1] "data"          "imgs"          "Lec01.html"    "Lec01.Rmd"    
+##  [5] "Lec02.html"    "Lec02.Rmd"     "Lec03.html"    "Lec03.Rmd"    
+##  [9] "Lec04.html"    "Lec04.Rmd"     "Lec05.html"    "Lec05.Rmd"    
+## [13] "Lec06.html"    "Lec06.Rmd"     "Lec07.html"    "Lec07.Rmd"    
+## [17] "Lec08_notes.R" "Lec08.html"    "Lec08.Rmd"     "Lec09_notes.R"
+## [21] "Lec09.html"    "Lec09.Rmd"     "Lec10_cache"   "Lec10_files"  
+## [25] "lec10_notes.R" "Lec10.html"    "Lec10.Rmd"     "Lec11_cache"  
+## [29] "Lec11_files"   "Lec11.html"    "Lec11.Rmd"     "Lec12.html"   
+## [33] "Lec12.Rmd"     "Lec13_notes.R" "Lec13.html"    "Lec13.Rmd"    
+## [37] "Lec14_notes.R" "Lec14.html"    "Lec14.Rmd"     "libs"         
+## [41] "notes.md"      "prev"          "prev_323"      "slides 2.css" 
+## [45] "slides.css"    "slides.Rproj"
+```
+
+--
+
+
+```r
+dir(path = "./", all.files = TRUE)
+```
+
+```
+##  [1] "."             ".."            ".DS_Store"     ".gitignore"   
+##  [5] ".Rhistory"     ".Rproj.user"   "data"          "imgs"         
+##  [9] "Lec01.html"    "Lec01.Rmd"     "Lec02.html"    "Lec02.Rmd"    
+## [13] "Lec03.html"    "Lec03.Rmd"     "Lec04.html"    "Lec04.Rmd"    
+## [17] "Lec05.html"    "Lec05.Rmd"     "Lec06.html"    "Lec06.Rmd"    
+## [21] "Lec07.html"    "Lec07.Rmd"     "Lec08_notes.R" "Lec08.html"   
+## [25] "Lec08.Rmd"     "Lec09_notes.R" "Lec09.html"    "Lec09.Rmd"    
+## [29] "Lec10_cache"   "Lec10_files"   "lec10_notes.R" "Lec10.html"   
+## [33] "Lec10.Rmd"     "Lec11_cache"   "Lec11_files"   "Lec11.html"   
+## [37] "Lec11.Rmd"     "Lec12.html"    "Lec12.Rmd"     "Lec13_notes.R"
+## [41] "Lec13.html"    "Lec13.Rmd"     "Lec14_notes.R" "Lec14.html"   
+## [45] "Lec14.Rmd"     "libs"          "notes.md"      "prev"         
+## [49] "prev_323"      "slides 2.css"  "slides.css"    "slides.Rproj"
+```
+
+---
+
+
+```r
+dir(path = "../")
+```
+
+```
+## [1] "css"    "slides"
+```
+
+```r
+dir(path = "../slides")
+```
+
+```
+##  [1] "data"          "imgs"          "Lec01.html"    "Lec01.Rmd"    
+##  [5] "Lec02.html"    "Lec02.Rmd"     "Lec03.html"    "Lec03.Rmd"    
+##  [9] "Lec04.html"    "Lec04.Rmd"     "Lec05.html"    "Lec05.Rmd"    
+## [13] "Lec06.html"    "Lec06.Rmd"     "Lec07.html"    "Lec07.Rmd"    
+## [17] "Lec08_notes.R" "Lec08.html"    "Lec08.Rmd"     "Lec09_notes.R"
+## [21] "Lec09.html"    "Lec09.Rmd"     "Lec10_cache"   "Lec10_files"  
+## [25] "lec10_notes.R" "Lec10.html"    "Lec10.Rmd"     "Lec11_cache"  
+## [29] "Lec11_files"   "Lec11.html"    "Lec11.Rmd"     "Lec12.html"   
+## [33] "Lec12.Rmd"     "Lec13_notes.R" "Lec13.html"    "Lec13.Rmd"    
+## [37] "Lec14_notes.R" "Lec14.html"    "Lec14.Rmd"     "libs"         
+## [41] "notes.md"      "prev"          "prev_323"      "slides 2.css" 
+## [45] "slides.css"    "slides.Rproj"
+```
+
+```r
+dir(path = "../../")
+```
+
+```
+##  [1] "config.yaml"   "content"       "data"          "docs"         
+##  [5] "layouts"       "Makefile"      "public"        "README.md"    
+##  [9] "resources"     "static"        "website.Rproj"
+```
+
+---
+
+## Home directory and `~`
+
+Tilde (`~`) is a shortcut that expands to the name of your home directory on unix-like systems. If you append a user's login to `~`, it then refers to that user's home directory (e.g. `~cr173`).
+
+
+```r
+dir(path = "~/")
+```
+
+```
+##  [1] "Applications" "Books"        "Desktop"      "Documents"    "Downloads"   
+##  [6] "Library"      "Movies"       "Music"        "Pictures"     "Public"      
+## [11] "Scratch"      "seaborn-data" "tm-log.sh"    "tmp"
+```
+
+---
+
+## Working directories
+
+R (and OSes) have the concept of a working directory, this is the directory where a program / script is being executed and determines the absolute path of any relative paths used.
+
+
+```r
+getwd()
+```
+
+```
+## [1] "/Users/rundel/Desktop/Sta323-Sp22/website/static/slides"
+```
+
+--
+
+
+```r
+setwd("~/")
+getwd()
+```
+
+```
+## [1] "/Users/rundel"
+```
+
+---
+class: middle
+
+&lt;img src="imgs/jenny_fire.png" width="66%" style="display: block; margin: auto;" /&gt;
+&lt;br/&gt;
+
+.footnote[
+Source: Jenny Bryan's [Zen and the Art of Workflow Maintenance](https://speakerdeck.com/jennybc/zen-and-the-art-of-workflow-maintenance)
+]
+
+---
+
+
+## RStudio and Working Directories
+
+Just like R, RStudio also makes use of a working directory for each of your sessions -  we haven't had to discuss these yet because when you use an RStudio project, the working directory is automatically set to the directory containing the `Rproj` file.
+
+This makes your project portable as all you need to do is to send the project folder to a collaborator (or push to GitHub) and they can open the project file and have identical *relative* path structure.
+
+---
+
+## `here`
+
+Thus far we've dealt with mostly simple project organizational structures - all the code has lived in the root directory and sometimes we've had a separate `data` directory for other files. As organization gets more complex to known what the working directory will be for a given script or RMarkdown document.
+
+`here` is a package that tries to simplify this process by identifying the root of your project for you using simple heuristics and then providing relative paths from that root directory to everything else in your project.
+
+
+```r
+here::here()
+```
+
+```
+## [1] "/Users/rundel/Desktop/Sta323-Sp22/website/static/slides"
+```
+
+--
+
+
+```r
+here::here("data/")
+```
+
+```
+## [1] "/Users/rundel/Desktop/Sta323-Sp22/website/static/slides/data/"
+```
+
+--
+
+
+```r
+here::here("../../data/")
+```
+
+```
+## [1] "/Users/rundel/Desktop/Sta323-Sp22/website/static/slides/../../data/"
+```
+
+---
+
+## Rules of `here::here()`
+
+&gt; The project root is established with a call to `here::i_am()`. Although not recommended, it can be changed by calling `here::i_am()` again.
+&gt;
+&gt; In the absence of such a call (e.g. for a new project), starting with the current working directory during package load time, the directory hierarchy is walked upwards until a directory with at least one of the following conditions is found:
+&gt;
+&gt; - contains a file .here
+&gt; 
+&gt; - contains a file matching [.]Rproj$ with contents matching ^Version: in the first line
+&gt; 
+&gt; - contains a file DESCRIPTION with contents matching ^Package:
+&gt; 
+&gt; - contains a file remake.yml
+&gt; 
+&gt; - contains a file .projectile
+&gt; 
+&gt; - contains a directory .git
+&gt; 
+&gt; - contains a file .git with contents matching ^gitdir:
+&gt; 
+&gt; - contains a directory .svn
+&gt; 
+&gt; In either case, here() appends its arguments as path components to the root directory.
+
+---
+
+## Other useful filesystem functions
+
+- `dir()` - list the contents of a directory
+
+- `basename()` - Removes all of the path up to and include the last path separator (`/`)
+
+- `dirname()` - Returns the path up to but excluding the last path separator 
+
+- `file.path()` - a useful alternative to `paste0()` when combining paths (and urls) as it will add a `/` when necessary.
+
+- `unlink()` - delete files and or directories
+
+- `dir.create()` - create directories
+
+- `fs` package - collection of filesystem related tools based on unix cli tools (e.g. `ls`)
+
+---
+class: center, middle
+
+## Denny's and LQ Scraping &lt;br/&gt; Demo
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "solarized-light",
+"highlightLines": true,
+"countIncrementalSlides": false,
+"ratio": "16:9"
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
