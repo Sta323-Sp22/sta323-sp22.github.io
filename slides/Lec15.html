@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Lec 15 - make</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Sta 323 | Spring 2022" />
+    <script src="libs/header-attrs/header-attrs.js"></script>
+    <link rel="stylesheet" href="slides.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Lec 15 - make
+## <br/> Statistical Programming
+### Sta 323 | Spring 2022
+### <br/> Dr. Colin Rundel
+
+---
+
+exclude: true
+
+
+
+---
+
+## make
+
+* build tool for the creation of software / libraries / documents by specifying dependencies
+
+  - Almost any process that has files as input and outputs can be automated via make
+
+* Originally created by Stuart Feldman in 1976 at Bell Labs
+
+* Almost universally available (all flavors of unix / linux / MacOS / Windows w/ RTools)
+
+* Dependencies are specified using a `Makefile` with a simple syntax
+
+---
+
+## Makefile
+
+A `Makefile` provides a list of target files along, their dependencies, and the steps necessary to generate each of the targets from the dependencies.
+
+```
+target1: depend1 depend2 depend3 ...
+    step1
+    step2
+    step3
+    ...
+
+depend1: depend1.1
+    step1.1
+    step1.2
+```
+
+In the above example `target*` and `depened*` are all just files (given by a relative or absolute path).
+
+
+---
+
+## Makefile (basic example)
+
+```make
+paper.html: paper.Rmd fig1/fig.png fig2/fig.png
+    Rscript -e "rmarkdown::render('paper.Rmd')"
+
+fig1/fig.png: fig1/fig.R
+    cd fig1;Rscript fig.R
+
+fig2/fig.png: fig2/fig.R
+    cd fig2;Rscript fig.R
+```
+
+---
+
+## Smart Building
+
+Because the `Makefile` specifies the dependency structure `make` knows when a file has changed (by examining the file's modification timestamp) and only runs the steps that depend on the file(s) that have changed.
+
+&lt;br /&gt;
+
+* After running `make` the first time, I edit `paper.Rmd`, what steps run if I run `make` again?
+
+* What about editing `fig1/fig.R`?
+
+---
+
+## Variables
+
+Like R or other language we can define variables
+
+```make
+R_OPTS=--no-save --no-restore --no-site-file --no-init-file --no-environ
+
+fig1/fig.png: fig1/fig.R
+    cd fig1;Rscript $(R_OPTS) fig.R
+```
+
+---
+
+## Special Targets
+
+By default if you run `make` without arguments it will attempt to build the *first* target in the `Makefile` (whose name does not start with a `.`). By convention we often include an `all` target which explicitly specifies how to build everything within the project.
+
+&lt;br /&gt;
+
+`all` is an example of what is called a phony target - because there is no file named `all` in the directory. Other common phony targets:
+
+* `clean` - remove any files created by the Makefile, restores to the original state
+
+* `install` - for software packages, installs the compiled programs / libraries / header files
+
+&lt;br /&gt;
+
+
+We specify phony targets by including a line with `.PHONY` as the target and the phony targets as dependencies, i.e.:
+
+```make
+.PHONY: all clean install
+```
+
+---
+
+## Builtin / Automatic Variables
+
+* `$@` - the file name of the target
+
+* `$&lt;` - the name of the first dependency
+
+* `$^` - the names of all dependencies
+
+* `$(@D)` - the directory part of the target
+
+* `$(@F)` - the file part of the target
+
+* `$(&lt;D)` - the directory part of the first dependency
+
+* `$(&lt;F)` - the file part of the first dependency
+
+.footnote[See GNU make [documentation](https://www.gnu.org/software/make/manual/html_node/Automatic-Variables.html) for a complete list] 
+---
+
+## Pattern Rules
+
+Often we want to build several files in the same way, in these cases we can use `%` as a special wildcard character to match both targets and dependencies.
+
+So we can go from
+
+```make
+fig1/fig.png: fig1/fig.R
+	cd fig1;Rscript fig.R
+
+fig2/fig.png: fig2/fig.R
+	cd fig2;Rscript fig.R
+```
+
+to
+
+```make
+fig%/fig.png: fig%/fig.R
+	cd $(&lt;D);Rscript $(&lt;F)
+```
+
+---
+
+## Makefile (fancier example)
+
+```make
+all: paper.html
+
+paper.html: paper.Rmd fig1/fig.png fig2/fig.png
+    Rscript -e "library(rmarkdown);render('paper.Rmd')"
+
+Fig%/fig.png: Fig%/fig.R
+    cd $(&lt;D);Rscript $(&lt;F)
+
+clean:
+    rm -f paper.html
+    rm -f Fig*/*.png
+
+.PHONY: all clean
+```
+
+---
+
+## HW3's Makefile
+
+&lt;br/&gt; &lt;br/&gt; &lt;br/&gt; &lt;br/&gt;
+
+.center[ .larger[
+Live Demo
+] ]
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "solarized-light",
+"highlightLines": true,
+"countIncrementalSlides": false,
+"ratio": "16:9"
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
