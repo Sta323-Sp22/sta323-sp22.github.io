@@ -63,13 +63,13 @@ In the above example `target*` and `depened*` are all just files (given by a rel
 
 ```make
 paper.html: paper.Rmd fig1/fig.png fig2/fig.png
-    Rscript -e "rmarkdown::render('paper.Rmd')"
+	Rscript -e "rmarkdown::render('paper.Rmd')"
 
 fig1/fig.png: fig1/fig.R
-    cd fig1;Rscript fig.R
+	Rscript fig1/fig.R
 
 fig2/fig.png: fig2/fig.R
-    cd fig2;Rscript fig.R
+	Rscript fig2/fig.R
 ```
 
 ---
@@ -184,12 +184,12 @@ clean:
 
 ---
 
-## HW3's Makefile
+## HW3 Makefile
 
 &lt;br/&gt; &lt;br/&gt; &lt;br/&gt; &lt;br/&gt;
 
 .center[ .larger[
-Live Demo
+# Live Demo
 ] ]
     </textarea>
 <style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
