@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Lec 17 - Profiling &amp; Parallelization</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Sta 323 | Spring 2022" />
+    <script src="libs/header-attrs/header-attrs.js"></script>
+    <link rel="stylesheet" href="slides.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Lec 17 - Profiling &amp; Parallelization
+## <br/> Statistical Programming
+### Sta 323 | Spring 2022
+### <br/> Dr. Colin Rundel
+
+---
+
+exclude: true
+
+
+
+
+```
+## 
+## Attaching package: 'dplyr'
+```
+
+```
+## The following objects are masked from 'package:stats':
+## 
+##     filter, lag
+```
+
+```
+## The following objects are masked from 'package:base':
+## 
+##     intersect, setdiff, setequal, union
+```
+
+```
+## Loading required package: iterators
+```
+
+```
+## 
+## Attaching package: 'purrr'
+```
+
+```
+## The following objects are masked from 'package:foreach':
+## 
+##     accumulate, when
+```
+
+---
+class: middle
+
+
+# Profiling &amp; Benchmarking
+
+---
+
+## profvis demo
+
+
+```r
+n = 1e6
+
+d = tibble(
+  x1 = rt(n, df = 3),
+  x2 = rt(n, df = 3),
+  x3 = rt(n, df = 3),
+  x4 = rt(n, df = 3),
+  x5 = rt(n, df = 3),
+) %&gt;%
+  mutate(y = -2*x1 - 1*x2 + 0*x3 + 1*x4 + 2*x5 + rnorm(n))
+
+profvis::profvis(lm(y~., data=d))
+```
+
+---
+
+## Benchmarking - `bench`
+
+
+```r
+d = tibble(
+  x = runif(10000),
+  y=runif(10000)
+)
+
+(b = bench::mark(
+  d[d$x &gt; 0.5, ],
+  d[which(d$x &gt; 0.5), ],
+  subset(d, x &gt; 0.5),
+  filter(d, x &gt; 0.5)
+))
+```
+
+```
+## # A tibble: 4 × 6
+##   expression                 min   median `itr/sec` mem_alloc `gc/sec`
+##   &lt;bch:expr&gt;            &lt;bch:tm&gt; &lt;bch:tm&gt;     &lt;dbl&gt; &lt;bch:byt&gt;    &lt;dbl&gt;
+## 1 d[d$x &gt; 0.5, ]        123.16µs  148.4µs     6641.  250.66KB     17.6
+## 2 d[which(d$x &gt; 0.5), ] 118.78µs    139µs     7092.  270.07KB     36.0
+## 3 subset(d, x &gt; 0.5)    196.31µs  221.2µs     4459.  286.71KB     24.0
+## 4 filter(d, x &gt; 0.5)      1.63ms    1.8ms      550.    2.41MB     53.5
+```
+
+---
+
+## `bench` - relative results
+
+
+```r
+summary(b, relative=TRUE)
+```
+
+```
+## # A tibble: 4 × 6
+##   expression              min median `itr/sec` mem_alloc `gc/sec`
+##   &lt;bch:expr&gt;            &lt;dbl&gt;  &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;    &lt;dbl&gt;
+## 1 d[d$x &gt; 0.5, ]         1.04   1.07     12.1       1        1   
+## 2 d[which(d$x &gt; 0.5), ]  1      1        12.9       1.08     2.05
+## 3 subset(d, x &gt; 0.5)     1.65   1.59      8.11      1.14     1.36
+## 4 filter(d, x &gt; 0.5)    13.7   12.9       1         9.83     3.04
+```
+
+---
+class: middle
+
+
+# Parallelization
+
+---
+
+## `parallel`
+
+Part of the base packages in R 
+
+* tools for the forking of R processes (some functions do not work on Windows)
+
+* Core functions:
+    
+    * `detectCores`
+
+    * `pvec`
+
+    * `mclapply`
+
+    * `mcparallel` &amp; `mccollect`
+
+
+---
+
+## `detectCores`
+
+Surprisingly, detects the number of cores of the current system.
+
+
+```r
+detectCores()
+
+## [1] 16
+```
+
+---
+
+## pvec
+
+Parallelization of a vectorized function call
+
+
+```r
+system.time(pvec(1:1e7, sqrt, mc.cores = 1))
+
+##   user  system elapsed 
+##  0.214   0.029   0.243 
+
+system.time(pvec(1:1e7, sqrt, mc.cores = 4))
+
+##   user  system elapsed 
+##  0.442   0.185   0.631 
+
+system.time(pvec(1:1e7, sqrt, mc.cores = 8))
+
+##   user  system elapsed 
+##  0.532   0.389   0.372 
+```
+
+---
+
+## pvec - `bench::system_time`
+
+
+
+```r
+bench::system_time(pvec(1:1e7, sqrt, mc.cores = 1))
+
+##  process    real 
+##    180ms   180ms 
+
+bench::system_time(pvec(1:1e7, sqrt, mc.cores = 4))
+
+##  process    real 
+##    935ms   980ms 
+
+bench::system_time(pvec(1:1e7, sqrt, mc.cores = 8))
+
+##  process    real 
+##    1.01s   1.05s 
+```
+
+--
+
+
+```r
+bench::system_time(Sys.sleep(.5))
+
+##  process     real 
+##   1.93ms 500.09ms 
+
+system.time(Sys.sleep(.5))
+
+##   user  system elapsed 
+##  0.001   0.000   0.500 
+```
+
+---
+
+
+```r
+cores = c(1,4,8,16)
+order = 6:8
+f = function(x,y) {
+  system.time(
+    pvec(1:(10^y), sqrt, mc.cores = x)
+  )[3]
+}
+
+res = map(
+  cores, 
+  function(x) {
+     map_dbl(order, f, x = x)
+  }
+) %&gt;% 
+  do.call(rbind, .)
+
+rownames(res) = paste0(cores," cores")
+colnames(res) = paste0("10^",order)
+
+res
+
+##            10^6  10^7  10^8
+##  1 cores  0.011 0.133 1.662
+##  4 cores  0.059 0.360 4.664
+##  8 cores  0.072 0.372 3.971
+##  16 cores 0.098 0.432 3.979
+```
+
+---
+
+## mclapply
+
+Parallelized version of `lapply`
+
+
+```r
+system.time(rnorm(1e6))
+
+##   user  system elapsed 
+##  0.101   0.007   0.107 
+
+system.time(unlist(mclapply(1:10, function(x) rnorm(1e5), mc.cores = 2)))
+
+##   user  system elapsed 
+##  0.148   0.136   0.106 
+
+system.time(unlist(mclapply(1:10, function(x) rnorm(1e5), mc.cores = 4)))
+
+##   user  system elapsed 
+##  0.242   0.061   0.052
+```
+
+---
+
+
+```r
+system.time(unlist(mclapply(1:10, function(x) rnorm(1e5), mc.cores = 4)))
+
+##   user  system elapsed 
+##  0.097   0.047   0.079 
+
+system.time(unlist(mclapply(1:10, function(x) rnorm(1e5), mc.cores = 8)))
+
+##   user  system elapsed 
+##  0.193   0.076   0.040 
+
+system.time(unlist(mclapply(1:10, function(x) rnorm(1e5), mc.cores = 10)))
+
+##   user  system elapsed 
+##  0.162   0.083   0.041 
+
+system.time(unlist(mclapply(1:10, function(x) rnorm(1e5), mc.cores = 12)))
+
+##   user  system elapsed 
+##  0.098   0.065   0.037 
+```
+
+
+---
+
+## mcparallel
+
+Asynchronously evaluation of an R expression in a separate process
+
+
+```r
+m = mcparallel(rnorm(1e6))
+n = mcparallel(rbeta(1e6,1,1))
+o = mcparallel(rgamma(1e6,1,1))
+
+str(m)
+```
+
+```
+## List of 2
+##  $ pid: int 64229
+##  $ fd : int [1:2] 4 7
+##  - attr(*, "class")= chr [1:3] "parallelJob" "childProcess" "process"
+```
+
+```r
+str(n)
+```
+
+```
+## List of 2
+##  $ pid: int 64230
+##  $ fd : int [1:2] 5 9
+##  - attr(*, "class")= chr [1:3] "parallelJob" "childProcess" "process"
+```
+
+
+---
+
+## mccollect
+
+Checks `mcparallel` objects for completion
+
+
+```r
+str(mccollect(list(m,n,o)))
+```
+
+```
+## List of 3
+##  $ 64229: num [1:1000000] -0.965 -1.247 1.095 1.305 -1.612 ...
+##  $ 64230: num [1:1000000] 0.1638 0.0281 0.9566 0.2742 0.9598 ...
+##  $ 64231: num [1:1000000] 1.279 0.981 0.212 0.842 0.373 ...
+```
+
+---
+
+## mccollect - waiting
+
+
+```r
+p = mcparallel(mean(rnorm(1e5)))
+mccollect(p, wait = FALSE, 10) # will retrieve the result (since it's fast)
+```
+
+```
+## $`64232`
+## [1] -0.001158855
+```
+
+```r
+mccollect(p, wait = FALSE)     # will signal the job as terminating
+```
+
+```
+## Warning in selectChildren(jobs, timeout): cannot wait for child 64232 as it does
+## not exist
+```
+
+```
+## NULL
+```
+
+```r
+mccollect(p, wait = FALSE)     # there is no longer such a job
+```
+
+```
+## Warning in selectChildren(jobs, timeout): cannot wait for child 64232 as it does
+## not exist
+```
+
+```
+## NULL
+```
+
+
+---
+class: middle
+
+
+# doMC &amp; foreach
+
+---
+
+## doMC &amp; foreach
+
+Packages by Revolution Analytics that provides the `foreach` function which is a parallelizable `for` loop (and then some).
+
+* Core functions:
+    
+    * `registerDoMC`
+
+    * `foreach`, `%dopar%`, `%do%`
+
+---
+
+## `registerDoMC` 
+
+Primarily used to set the number of cores used by `foreach`, by default uses `options("cores")` or half the number of cores found by `detectCores` from the parallel package.
+
+
+```r
+options("cores")
+
+## $cores
+## NULL
+
+detectCores()
+
+## [1] 16
+
+getDoParWorkers()
+
+## [1] 1
+
+registerDoMC(4)
+getDoParWorkers()
+
+## [1] 4
+```
+
+---
+
+## `foreach`
+
+A slightly more powerful version of base `for` loops (think `for` with an `lapply` flavor). Combined with `%do%` or `%dopar%` for single or multicore execution.
+
+
+```r
+for(i in 1:10) {
+  sqrt(i)
+}
+
+foreach(i = 1:5) %do% {
+  sqrt(i)   
+}
+```
+
+```
+## [[1]]
+## [1] 1
+## 
+## [[2]]
+## [1] 1.414214
+## 
+## [[3]]
+## [1] 1.732051
+## 
+## [[4]]
+## [1] 2
+## 
+## [[5]]
+## [1] 2.236068
+```
+
+
+---
+
+## `foreach` - iterators
+
+`foreach` can iterate across more than one value, but it doesn't do length coercion
+
+.pull-left[
+
+```r
+foreach(i = 1:5, j = 1:5) %do% {
+  sqrt(i^2+j^2)   
+}
+```
+
+```
+## [[1]]
+## [1] 1.414214
+## 
+## [[2]]
+## [1] 2.828427
+## 
+## [[3]]
+## [1] 4.242641
+## 
+## [[4]]
+## [1] 5.656854
+## 
+## [[5]]
+## [1] 7.071068
+```
+]
+
+.pull-right[
+
+```r
+foreach(i = 1:5, j = 1:2) %do% {
+  sqrt(i^2+j^2)   
+}
+```
+
+```
+## [[1]]
+## [1] 1.414214
+## 
+## [[2]]
+## [1] 2.828427
+```
+]
+
+---
+
+## `foreach` - combining results
+
+
+```r
+foreach(i = 1:5, .combine='c') %do% {
+  sqrt(i)
+}
+```
+
+```
+## [1] 1.000000 1.414214 1.732051 2.000000 2.236068
+```
+
+```r
+foreach(i = 1:5, .combine='cbind') %do% {
+  sqrt(i)
+}
+```
+
+```
+##      result.1 result.2 result.3 result.4 result.5
+## [1,]        1 1.414214 1.732051        2 2.236068
+```
+
+```r
+foreach(i = 1:5, .combine='+') %do% {
+  sqrt(i)
+}
+```
+
+```
+## [1] 8.382332
+```
+
+---
+
+## `foreach` - parallelization
+
+Swapping out `%do%` for `%dopar%` will use the parallel backend.
+
+
+```r
+registerDoMC(4)
+```
+
+
+```r
+system.time(foreach(i = 1:10) %dopar% mean(rnorm(1e6)))
+```
+
+```
+##    user  system elapsed 
+##   0.268   0.025   0.092
+```
+
+```r
+registerDoMC(8)
+system.time(foreach(i = 1:10) %dopar% mean(rnorm(1e6)))
+```
+
+```
+##    user  system elapsed 
+##   0.274   0.031   0.063
+```
+
+```r
+registerDoMC(12)
+system.time(foreach(i = 1:10) %dopar% mean(rnorm(1e6)))
+```
+
+```
+##    user  system elapsed 
+##   0.296   0.036   0.050
+```
+
+---
+class: middle
+
+&lt;img src="imgs/hex-furrr.png" width="50%" style="display: block; margin: auto;" /&gt;
+
+
+--- 
+
+## furrr / future
+
+
+```r
+system.time( purrr::map(c(2,2,2), Sys.sleep) )
+
+##  user  system elapsed 
+##  0.032   0.024   6.004 
+
+system.time( furrr::future_map(c(2,2,2), Sys.sleep) )
+
+##   user  system elapsed 
+##  0.110   0.028   6.066 
+
+future::plan(future::multisession) # See also future::multicore
+system.time( furrr::future_map(c(2,2,2), Sys.sleep) )
+
+##   user  system elapsed 
+##  0.075   0.010   2.395 
+```
+
+---
+
+## Example - Bootstraping
+
+Bootstrapping is a resampling scheme where the original data is repeatedly reconstructed by taking a samples of size *n* (with replacement) from the original data, and using that to repeat an analysis procedure of interest. Below is an example of fitting a local regression (`loess`) to some synthetic data, we will construct a bootstrap prediction interval for this model.
+
+--
+
+
+```r
+set.seed(3212016)
+d = data.frame(x = 1:120) %&gt;%
+    mutate(y = sin(2*pi*x/120) + runif(length(x),-1,1))
+
+l = loess(y ~ x, data=d)
+p = predict(l, se=TRUE)
+
+d = d %&gt;% mutate(
+  pred_y = p$fit,
+  pred_y_se = p$se.fit
+)
+```
+
+---
+
+
+```r
+ggplot(d, aes(x,y)) +
+  geom_point(color="gray50") +
+  geom_ribbon(
+    aes(ymin = pred_y - 1.96 * pred_y_se, 
+        ymax = pred_y + 1.96 * pred_y_se), 
+    fill="red", alpha=0.25
+  ) +
+  geom_line(aes(y=pred_y)) +
+  theme_bw()
+```
+
+&lt;img src="Lec17_files/figure-html/unnamed-chunk-25-1.png" style="display: block; margin: auto;" /&gt;
+
+
+
+---
+
+## What to use when?
+
+Optimal use of multiple cores is hard, there isn't one best solution
+
+* Don't underestimate the overhead cost
+
+* Experimentation is key
+
+* Measure it or it didn't happen
+
+* Be aware of the trade off between developer time and run time
+
+
+---
+class: middle
+
+
+# BLAS and LAPACK
+
+---
+
+## Statistics and Linear Algebra
+
+An awful lot of statistics is at its core linear algebra.
+
+&lt;br/&gt;
+
+For example:
+
+* Linear regession models, find
+
+$$ \hat{\beta} = (X^T X)^{-1} X^Ty $$
+
+* Principle component analysis
+
+    * Find `\(T = XW\)` where `\(W\)` is a matrix whose columns are the eigenvectors of `\(X^TX\)`.
+    
+    * Often solved via SVD - Let `\(X = U\Sigma W^T\)` then `\(T = U\Sigma\)`.
+
+
+---
+
+## Numerical Linear Algebra
+
+Not unique to Statistics, these are the type of problems that come up across all areas of numerical computing.
+
+* Numerical linear algebra `\(\ne\)` mathematical linear algebra
+
+&lt;br/&gt;
+
+* Efficiency and stability of numerical algorithms matter
+
+    * Designing and implementing these algorithms is hard
+
+&lt;br/&gt;
+
+* Don't reinvent the wheel - common core linear algebra tools (well defined API)
+
+
+
+---
+
+## BLAS and LAPACK
+
+Low level algorithms for common linear algebra operations
+
+&lt;br/&gt;
+
+BLAS
+
+* **B**asic **L**inear **A**lgebra **S**ubprograms
+
+* Copying, scaling, multiplying vectors and matrices
+
+* Origins go back to 1979, written in Fortran
+
+LAPACK
+
+* **L**inear **A**lgebra **Pack**age
+
+* Higher level functionality building on BLAS.
+
+* Linear solvers, eigenvalues, and matrix decompositions
+
+* Origins go back to 1992, mostly Fortran (expanded on LINPACK, EISPACK)
+
+
+---
+
+## Modern variants?
+
+Most default BLAS and LAPACK implementations (like R's defaults) are somewhat dated
+
+* Written in Fortran and designed for a single cpu core  
+
+* Certain (potentially non-optimal) hard coded defaults (e.g. block size).
+
+Multithreaded alternatives:
+
+* ATLAS - Automatically Tuned Linear Algebra Software
+
+* OpenBLAS - fork of GotoBLAS from TACC at UTexas
+
+* Intel MKL - Math Kernel Library, part of Intel's commercial compiler tools
+
+* cuBLAS / Magma - GPU libraries from Nvidia and UTK respectively
+
+
+---
+
+## OpenBLAS  Matrix Multiply (DGEMM) Performance
+
+
+
+|  n   | 1 core | 2 cores | 4 cores | 8 cores |
+|------|--------|---------|---------|---------|
+| 100  |  0.001 | 0.001   | 0.000   | 0.000   |
+| 500  |  0.018 | 0.011   | 0.008   | 0.008   |
+| 1000 |  0.128 | 0.068   | 0.041   | 0.036   |
+| 2000 |  0.930 | 0.491   | 0.276   | 0.162   |
+| 3000 |  3.112 | 1.604   | 0.897   | 0.489   |
+| 4000 |  7.330 | 3.732   | 1.973   | 1.188   |
+| 5000 | 14.223 | 7.341   | 3.856   | 2.310   |
+
+---
+
+&lt;img src="Lec17_files/figure-html/unnamed-chunk-27-1.png" width="66%" style="display: block; margin: auto;" /&gt;
+
+---
+
+&lt;img src="Lec17_files/figure-html/unnamed-chunk-28-1.png" width="66%" style="display: block; margin: auto;" /&gt;
+
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "solarized-light",
+"highlightLines": true,
+"countIncrementalSlides": false,
+"ratio": "16:9"
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
