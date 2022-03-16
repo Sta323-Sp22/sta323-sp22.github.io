@@ -1,0 +1,54 @@
+---
+title: "Lec 18 - Shiny"
+subtitle: "<br/> Statistical Programming"
+author: "Sta 323 | Spring 2022"
+date: "<br/> Dr. Colin Rundel"
+output:
+  xaringan::moon_reader:
+    css: ["slides.css"]
+    lib_dir: libs
+    nature:
+      highlightStyle: solarized-light
+      highlightLines: true
+      countIncrementalSlides: false
+      ratio: "16:9"
+---
+exclude: true
+
+```{r, message=FALSE, warning=FALSE, include=FALSE}
+options(
+  htmltools.dir.version = FALSE, # for blogdown
+  width = 80,
+  tibble.width = 80
+)
+
+knitr::opts_chunk$set(
+  fig.align = "center"
+)
+
+library(dplyr)
+```
+
+---
+
+## Final Projects
+
+For the final project you will be asked to do something interesting with something that we have learned in this class. 
+
+Almost anything vaguely related to statistical computing is fine
+
+* The final project will be due on Friday, April 29th by 5:00 pm.
+
+* You can form your own team of up to 5 students to work on the project
+
+* Examples of previous projects: shiny apps, data scraping, data analysis, visualizations, and combinations of the above
+
+* Deliverable include all necessary source code and a detailed Rmd based report
+
+* Proposals due Monday, April 1st (requirements: team name, members, 1 paragraph description)
+
+
+---
+class: center, middle
+
+# Shiny live demo - ABC
