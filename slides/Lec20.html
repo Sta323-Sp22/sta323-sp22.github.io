@@ -1,0 +1,1401 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Lec 20 - databases &amp; dplyr</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Sta 323 | Spring 2022" />
+    <script src="libs/header-attrs/header-attrs.js"></script>
+    <link href="libs/font-awesome/css/all.css" rel="stylesheet" />
+    <link href="libs/font-awesome/css/v4-shims.css" rel="stylesheet" />
+    <link rel="stylesheet" href="slides.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Lec 20 - databases &amp; dplyr
+## <br/> Statistical Programming
+### Sta 323 | Spring 2022
+### <br/> Dr. Colin Rundel
+
+---
+
+exclude: true
+
+
+
+---
+class: middle
+
+
+# The why of databases
+
+---
+
+## Numbers every programmer should know
+
+| Task                                | Timing (ns)       | Timing (μs)       |
+|-------------------------------------|-------------------|-------------------|
+| L1 cache reference                  | 0.5               |                   |
+| L2 cache reference                  | 7                 |                   |
+| Main memory reference               | 100               | 0.1               |
+| Random seek SSD                     | 150,000           | 150               |
+| Read 1 MB sequentially from memory  | 250,000           | 250               |
+| Read 1 MB sequentially from SSD     | 1,000,000         | 1,000             |
+| Disk seek                           | 10,000,000        | 10,000            |  
+| Read 1 MB sequentially from disk    | 20,000,000        | 20,000            |
+| Send packet CA-&gt;Netherlands-&gt;CA     | 150,000,000       | 150,000           |
+
+
+.footnote[
+From [jboner/latency.txt](https://gist.github.com/jboner/2841832) &amp; [sirupsen/napkin-math](https://github.com/sirupsen/napkin-math) &lt;br/&gt;
+Jeff Dean's original [talk](http://static.googleusercontent.com/media/research.google.com/en/us/people/jeff/stanford-295-talk.pdf) 
+]
+
+
+---
+
+## Implications for big data
+
+Lets imagine we have a *10 GB* flat data file and that we want to select certain rows based on a particular criteria. This requires a sequential read across the entire data set.
+
+
+If we can store the file in memory:
+
+* `\(10~GB \times (250~\mu s / 1~MB) = 2.5\)` seconds
+
+If we have to access the file from SSD:
+
+* `\(10~GB \times (1~ms / 1~MB) = 10\)` seconds
+
+If we have to access the file from disk:
+
+* `\(10~GB \times (20~ms / 1~MB) = 200\)` seconds
+
+&lt;br/&gt;
+
+This is just for *reading* sequential data, if we make any modifications (*writing*) or the data is fragmented things are much worse. 
+
+
+---
+
+## Blocks
+
+.center[
+*Cost*: Disk &lt;&lt; SSD &lt;&lt;&lt; Memory
+]
+&lt;br/&gt;
+.center[
+*Speed*: Disk &lt;&lt;&lt; SSD &lt;&lt; Memory
+]
+
+
+&lt;br/&gt;
+
+So usually possible to grow our disk storage to accommodate our data. However, memory is usually the limiting resource, and if we can't fit everything into memory?
+
+&lt;br/&gt;
+
+Create *blocks* - group related data (i.e. rows) and read in multiple rows at a time. Optimal size will depend on the task and the properties of the disk.
+
+
+
+---
+
+## Linear vs Binary Search
+
+Even with blocks, any kind of querying / subsetting of rows requires a linear search, which requires `\(\mathcal{O}(N)\)` accesses where `\(N\)` is the number of blocks.
+
+&lt;br/&gt;
+
+We can do much better if we are careful about how we structure our data, specifically sorting some or all of the columns. 
+
+* Sorting is expensive, `\(\mathcal{O}(N \log N)\)`, but it only needs to be done once. 
+
+* After sorting, we can use a binary search for any subsetting tasks ( `\(\mathcal{O}(\log N)\)` ).
+
+* These "sorted" columns are known as *indexes*.
+
+* Indexes require additional storage, but usually small enough to be kept in memory while blocks stay on disk.
+
+---
+
+## and then?
+
+This is just barely scratching the surface,
+
+* Efficiency gains are not just for disk, access is access
+
+* In general, trade off between storage and efficiency
+
+* Reality is a lot more complicated for everything mentioned so far, lots of very smart people have spent a lot of time thinking about and implementing tools
+
+* Different tasks with different requirements require different implementations and have different criteria for optimization
+
+---
+class: middle
+
+
+# Databases
+
+---
+
+## R &amp; databases - the DBI package
+
+Low level package for interfacing R with Database management systems (DBMS) that provides a common interface to achieve the following functionality:
+
+* connect/disconnect from DB
+* create and execute statements in the DB
+* extract results/output from statements
+* error/exception handling
+* information (meta-data) from database objects
+* transaction management (optional)
+
+
+.footnote[
+See [r-dbi.org](https://www.r-dbi.org/) for more details
+]
+
+---
+
+## RSQLite
+
+Provides the implementation necessary to use DBI to interface with an SQLite database.
+
+```r
+library(RSQLite)
+```
+
+this package also loads the necessary DBI functions as well.
+
+--
+
+&lt;br/&gt;
+
+Once loaded we can create a connection to our database,
+
+```r
+con = dbConnect(RSQLite::SQLite(), ":memory:")
+str(con)
+
+## Formal class 'SQLiteConnection' [package "RSQLite"] with 5 slots
+##   ..@ Id                 :&lt;externalptr&gt; 
+##   ..@ dbname             : chr ":memory:"
+##   ..@ loadable.extensions: logi TRUE
+##   ..@ flags              : int 6
+##   ..@ vfs                : chr ""
+```
+
+---
+
+## Example Table
+ 
+```r
+employees = data.frame(
+  name   = c("Alice","Bob","Carol","Dave","Eve","Frank"),
+  email  = c("alice@company.com", "bob@company.com",
+             "carol@company.com", "dave@company.com",
+             "eve@company.com",   "frank@comany.com"),
+  salary = c(52000, 40000, 30000, 33000, 44000, 37000),
+  dept   = c("Accounting", "Accounting","Sales",
+             "Accounting","Sales","Sales"),
+)
+```
+
+```r
+dbWriteTable(con, name = "employees", value = employees)
+## [1] TRUE
+
+dbListTables(con)
+## [1] "employees"
+```
+
+---
+
+## Removing Tables
+
+```r
+dbWriteTable(con, "employs", employees)
+## [1] TRUE
+
+dbListTables(con)
+## [1] "employees" "employs"
+
+dbRemoveTable(con,"employs")
+## [1] TRUE
+
+dbListTables(con)
+## [1] "employees"
+```
+
+---
+
+## Querying Tables
+
+```r
+(res = dbSendQuery(con, "SELECT * FROM employees"))
+## &lt;SQLiteResult&gt;
+##   SQL  SELECT * FROM employees
+##   ROWS Fetched: 0 [incomplete]
+##        Changed: 0
+
+dbFetch(res)
+##    name             email salary       dept
+## 1 Alice alice@company.com  52000 Accounting
+## 2   Bob   bob@company.com  40000 Accounting
+## 3 Carol carol@company.com  30000      Sales
+## 4  Dave  dave@company.com  33000 Accounting
+## 5   Eve   eve@company.com  44000      Sales
+## 6 Frank  frank@comany.com  37000      Sales
+
+dbClearResult(res)
+## [1] TRUE
+```
+
+---
+
+## Creating empty tables
+
+```r
+dbCreateTable(con, "iris", iris)
+
+(res = dbSendQuery(con, "select * from iris"))
+## &lt;SQLiteResult&gt;
+##   SQL  select * from iris
+##   ROWS Fetched: 0 [complete]
+##        Changed: 0
+
+dbFetch(res)
+## [1] Sepal.Length Sepal.Width  Petal.Length Petal.Width  Species     
+## &lt;0 rows&gt; (or 0-length row.names)
+```
+
+--
+
+```r
+dbFetch(res) %&gt;% as_tibble()
+## # A tibble: 0 × 5
+## # … with 5 variables: Sepal.Length &lt;dbl&gt;, Sepal.Width &lt;dbl&gt;, Petal.Length &lt;dbl&gt;,
+## #   Petal.Width &lt;dbl&gt;, Species &lt;chr&gt;
+
+dbClearResult(res)
+```
+
+---
+
+## Adding to tables
+
+```r
+dbAppendTable(con, name = "iris", value = iris)
+## [1] 150
+## Warning message:
+## Factors converted to character 
+```
+
+```r
+(res = dbSendQuery(con, "select * from iris"))
+## &lt;SQLiteResult&gt;
+##   SQL  select * from iris
+##   ROWS Fetched: 0 [incomplete]
+##        Changed: 0
+
+dbFetch(res) %&gt;% as_tibble()
+## # A tibble: 150 x 5
+##    Sepal.Length Sepal.Width Petal.Length Petal.Width Species
+##           &lt;dbl&gt;       &lt;dbl&gt;        &lt;dbl&gt;       &lt;dbl&gt; &lt;chr&gt;  
+##  1          5.1         3.5          1.4         0.2 setosa 
+##  2          4.9         3            1.4         0.2 setosa 
+##  3          4.7         3.2          1.3         0.2 setosa 
+##  4          4.6         3.1          1.5         0.2 setosa 
+##  5          5           3.6          1.4         0.2 setosa 
+##  6          5.4         3.9          1.7         0.4 setosa 
+##  7          4.6         3.4          1.4         0.3 setosa 
+##  8          5           3.4          1.5         0.2 setosa 
+##  9          4.4         2.9          1.4         0.2 setosa 
+## 10          4.9         3.1          1.5         0.1 setosa 
+## # … with 140 more rows
+```
+
+---
+
+## Ephemeral results
+
+```r
+res
+## &lt;SQLiteResult&gt;
+##   SQL  select * from iris
+##   ROWS Fetched: 150 [complete]
+##        Changed: 0
+
+dbFetch(res) %&gt;% as_tibble()
+## # A tibble: 0 x 5
+## # … with 5 variables: Sepal.Length &lt;dbl&gt;, Sepal.Width &lt;dbl&gt;, Petal.Length &lt;dbl&gt;, Petal.Width &lt;dbl&gt;,
+## #   Species &lt;chr&gt;
+
+dbClearResult(res)
+```
+
+
+---
+
+## Closing the connection
+
+```r
+con
+## &lt;SQLiteConnection&gt;
+##   Path: :memory:
+##   Extensions: TRUE
+
+dbDisconnect(con)
+## [1] TRUE
+
+con
+## &lt;SQLiteConnection&gt;
+##   DISCONNECTED
+```
+
+---
+class: center, middle
+
+# dplyr &amp; databases
+
+---
+
+## Creating a database 
+
+
+
+
+```r
+(db = DBI::dbConnect(RSQLite::SQLite(), "flights.sqlite"))
+```
+
+```
+## &lt;SQLiteConnection&gt;
+##   Path: flights.sqlite
+##   Extensions: TRUE
+```
+
+--
+
+
+```r
+flight_tbl = dplyr::copy_to(db, nycflights13::flights, name = "flights", temporary = FALSE)
+flight_tbl
+```
+
+```
+## # Source:   table&lt;flights&gt; [?? x 19]
+## # Database: sqlite 3.37.2 [flights.sqlite]
+##     year month   day dep_time sched_dep_time dep_delay arr_time sched_arr_time
+##    &lt;int&gt; &lt;int&gt; &lt;int&gt;    &lt;int&gt;          &lt;int&gt;     &lt;dbl&gt;    &lt;int&gt;          &lt;int&gt;
+##  1  2013     1     1      517            515         2      830            819
+##  2  2013     1     1      533            529         4      850            830
+##  3  2013     1     1      542            540         2      923            850
+##  4  2013     1     1      544            545        -1     1004           1022
+##  5  2013     1     1      554            600        -6      812            837
+##  6  2013     1     1      554            558        -4      740            728
+##  7  2013     1     1      555            600        -5      913            854
+##  8  2013     1     1      557            600        -3      709            723
+##  9  2013     1     1      557            600        -3      838            846
+## 10  2013     1     1      558            600        -2      753            745
+## # … with more rows, and 11 more variables: arr_delay &lt;dbl&gt;, carrier &lt;chr&gt;,
+## #   flight &lt;int&gt;, tailnum &lt;chr&gt;, origin &lt;chr&gt;, dest &lt;chr&gt;, air_time &lt;dbl&gt;,
+## #   distance &lt;dbl&gt;, hour &lt;dbl&gt;, minute &lt;dbl&gt;, time_hour &lt;dbl&gt;
+```
+
+---
+
+## What have we created?
+
+All of this data now lives in the database on the *filesystem* not in *memory*,
+
+
+```r
+pryr::object_size(db)
+```
+
+```
+## 2,456 B
+```
+
+```r
+pryr::object_size(flight_tbl)
+```
+
+```
+## 6,192 B
+```
+
+
+```r
+pryr::object_size(nycflights13::flights)
+```
+
+```
+## 40,650,048 B
+```
+--
+
+
+```bash
+ls -lah *.sqlite
+```
+
+```
+## -rw-r--r--  1 rundel  staff    21M Mar 21 22:04 flights.sqlite
+```
+
+
+---
+
+## What is `flight_tbl`?
+
+
+```r
+class(nycflights13::flights)
+```
+
+```
+## [1] "tbl_df"     "tbl"        "data.frame"
+```
+
+```r
+class(flight_tbl)
+```
+
+```
+## [1] "tbl_SQLiteConnection" "tbl_dbi"              "tbl_sql"             
+## [4] "tbl_lazy"             "tbl"
+```
+
+--
+
+
+```r
+str(flight_tbl)
+```
+
+```
+## List of 2
+##  $ src:List of 2
+##   ..$ con  :Formal class 'SQLiteConnection' [package "RSQLite"] with 8 slots
+##   .. .. ..@ ptr                :&lt;externalptr&gt; 
+##   .. .. ..@ dbname             : chr "flights.sqlite"
+##   .. .. ..@ loadable.extensions: logi TRUE
+##   .. .. ..@ flags              : int 70
+##   .. .. ..@ vfs                : chr ""
+##   .. .. ..@ ref                :&lt;environment: 0x1241d2ef0&gt; 
+##   .. .. ..@ bigint             : chr "integer64"
+##   .. .. ..@ extended_types     : logi FALSE
+##   ..$ disco: NULL
+##   ..- attr(*, "class")= chr [1:4] "src_SQLiteConnection" "src_dbi" "src_sql" "src"
+##  $ ops:List of 2
+##   ..$ x   : 'ident' chr "flights"
+##   ..$ vars: chr [1:19] "year" "month" "day" "dep_time" ...
+##   ..- attr(*, "class")= chr [1:3] "op_base_remote" "op_base" "op"
+##  - attr(*, "class")= chr [1:5] "tbl_SQLiteConnection" "tbl_dbi" "tbl_sql" "tbl_lazy" ...
+```
+
+
+---
+
+## Accessing existing tables
+
+
+```r
+(dplyr::tbl(db, "flights"))
+```
+
+```
+## # Source:   table&lt;flights&gt; [?? x 19]
+## # Database: sqlite 3.37.2 [flights.sqlite]
+##     year month   day dep_time sched_dep_time dep_delay arr_time sched_arr_time
+##    &lt;int&gt; &lt;int&gt; &lt;int&gt;    &lt;int&gt;          &lt;int&gt;     &lt;dbl&gt;    &lt;int&gt;          &lt;int&gt;
+##  1  2013     1     1      517            515         2      830            819
+##  2  2013     1     1      533            529         4      850            830
+##  3  2013     1     1      542            540         2      923            850
+##  4  2013     1     1      544            545        -1     1004           1022
+##  5  2013     1     1      554            600        -6      812            837
+##  6  2013     1     1      554            558        -4      740            728
+##  7  2013     1     1      555            600        -5      913            854
+##  8  2013     1     1      557            600        -3      709            723
+##  9  2013     1     1      557            600        -3      838            846
+## 10  2013     1     1      558            600        -2      753            745
+## # … with more rows, and 11 more variables: arr_delay &lt;dbl&gt;, carrier &lt;chr&gt;,
+## #   flight &lt;int&gt;, tailnum &lt;chr&gt;, origin &lt;chr&gt;, dest &lt;chr&gt;, air_time &lt;dbl&gt;,
+## #   distance &lt;dbl&gt;, hour &lt;dbl&gt;, minute &lt;dbl&gt;, time_hour &lt;dbl&gt;
+```
+
+
+---
+
+## Using dplyr with sqlite 
+
+.pull-left[
+
+```r
+(oct_21 = flight_tbl %&gt;%
+   filter(month == 10, day == 21) %&gt;%
+   select(origin, dest, tailnum)
+)
+```
+
+```
+## # Source:   lazy query [?? x 3]
+## # Database: sqlite 3.37.2 [flights.sqlite]
+##    origin dest  tailnum
+##    &lt;chr&gt;  &lt;chr&gt; &lt;chr&gt;  
+##  1 EWR    CLT   N152UW 
+##  2 EWR    IAH   N535UA 
+##  3 JFK    MIA   N5BSAA 
+##  4 JFK    SJU   N531JB 
+##  5 JFK    BQN   N827JB 
+##  6 LGA    IAH   N15710 
+##  7 JFK    IAD   N825AS 
+##  8 EWR    TPA   N802UA 
+##  9 LGA    ATL   N996DL 
+## 10 JFK    FLL   N627JB 
+## # … with more rows
+```
+]
+
+--
+
+.pull-right[
+
+```r
+dplyr::collect(oct_21)
+```
+
+```
+## # A tibble: 991 × 3
+##    origin dest  tailnum
+##    &lt;chr&gt;  &lt;chr&gt; &lt;chr&gt;  
+##  1 EWR    CLT   N152UW 
+##  2 EWR    IAH   N535UA 
+##  3 JFK    MIA   N5BSAA 
+##  4 JFK    SJU   N531JB 
+##  5 JFK    BQN   N827JB 
+##  6 LGA    IAH   N15710 
+##  7 JFK    IAD   N825AS 
+##  8 EWR    TPA   N802UA 
+##  9 LGA    ATL   N996DL 
+## 10 JFK    FLL   N627JB 
+## # … with 981 more rows
+```
+]
+
+
+
+
+
+---
+
+## Laziness
+
+dplyr / dbplyr uses lazy evaluation as much as possible, particularly when working with non-local backends.
+
+* When building a query, we don't want the entire table, often we want just enough to check if our query is working / makes sense.
+
+* Since we would prefer to run one complex query over many simple queries, laziness allows for verbs to be strung together.
+
+* Therefore, by default `dplyr`
+
+    * won't connect and query the database until absolutely necessary (e.g. show output),
+
+    * and unless explicitly told to, will only query a handful of rows to give a sense of what the result will look like.
+    
+    * we can force evaluation via `compute()`, `collect()`, or `collapse()`
+
+---
+
+## A crude benchmark
+
+.pull-left[
+
+```r
+system.time({
+  (oct_21 = flight_tbl %&gt;%
+    filter(month == 10, day == 21) %&gt;%
+    select(origin, dest, tailnum)
+  )
+})
+```
+
+```
+##    user  system elapsed 
+##   0.001   0.000   0.001
+```
+]
+
+--
+
+.pull-right[
+
+```r
+system.time({
+  print(oct_21) %&gt;% 
+    capture.output() %&gt;% 
+    invisible()
+})
+```
+
+```
+##    user  system elapsed 
+##   0.015   0.000   0.015
+```
+]
+
+--
+
+&lt;br/&gt;
+
+&lt;div&gt;
+.pull-left[
+
+```r
+system.time({
+  dplyr::collect(oct_21) %&gt;% 
+    capture.output() %&gt;% 
+    invisible()
+})
+```
+
+```
+##    user  system elapsed 
+##   0.038   0.003   0.043
+```
+]
+&lt;/div&gt;
+
+
+
+
+---
+
+## dplyr -&gt; SQL - dplyr::show_query()
+
+
+```r
+class(oct_21)
+```
+
+```
+## [1] "tbl_SQLiteConnection" "tbl_dbi"              "tbl_sql"             
+## [4] "tbl_lazy"             "tbl"
+```
+
+
+```r
+show_query(oct_21)
+```
+
+```
+## &lt;SQL&gt;
+## SELECT `origin`, `dest`, `tailnum`
+## FROM `flights`
+## WHERE ((`month` = 10.0) AND (`day` = 21.0))
+```
+
+---
+
+## More complex queries
+
+
+```r
+oct_21 %&gt;% group_by(origin, dest) %&gt;% summarize(n=n())
+```
+
+```
+## `summarise()` has grouped output by 'origin'. You can override using the
+## `.groups` argument.
+```
+
+```
+## # Source:   lazy query [?? x 3]
+## # Database: sqlite 3.37.2 [flights.sqlite]
+## # Groups:   origin
+##    origin dest      n
+##    &lt;chr&gt;  &lt;chr&gt; &lt;int&gt;
+##  1 EWR    ATL      15
+##  2 EWR    AUS       3
+##  3 EWR    AVL       1
+##  4 EWR    BNA       7
+##  5 EWR    BOS      17
+##  6 EWR    BTV       3
+##  7 EWR    BUF       2
+##  8 EWR    BWI       1
+##  9 EWR    CHS       4
+## 10 EWR    CLE       4
+## # … with more rows
+```
+
+
+```r
+oct_21 %&gt;% group_by(origin, dest) %&gt;% summarize(n=n()) %&gt;% show_query()
+```
+
+```
+## `summarise()` has grouped output by 'origin'. You can override using the
+## `.groups` argument.
+```
+
+```
+## &lt;SQL&gt;
+## SELECT `origin`, `dest`, COUNT(*) AS `n`
+## FROM (SELECT `origin`, `dest`, `tailnum`
+## FROM `flights`
+## WHERE ((`month` = 10.0) AND (`day` = 21.0)))
+## GROUP BY `origin`, `dest`
+```
+
+---
+
+
+```r
+oct_21 %&gt;% count(origin, dest) %&gt;% show_query()
+```
+
+```
+## &lt;SQL&gt;
+## SELECT `origin`, `dest`, COUNT(*) AS `n`
+## FROM (SELECT `origin`, `dest`, `tailnum`
+## FROM `flights`
+## WHERE ((`month` = 10.0) AND (`day` = 21.0)))
+## GROUP BY `origin`, `dest`
+```
+
+---
+
+## SQL Translation 
+
+In general, dplyr / dbplyr knows how to translate basic math, logical, and summary functions from R to SQL. dbplyr has a function, `translate_sql`, that lets you experiment with how R functions are translated to SQL. 
+
+
+```r
+dbplyr::translate_sql(x == 1 &amp; (y &lt; 2 | z &gt; 3))
+```
+
+```
+## &lt;SQL&gt; `x` = 1.0 AND (`y` &lt; 2.0 OR `z` &gt; 3.0)
+```
+
+```r
+dbplyr::translate_sql(x ^ 2 &lt; 10)
+```
+
+```
+## &lt;SQL&gt; POWER(`x`, 2.0) &lt; 10.0
+```
+
+```r
+dbplyr::translate_sql(x %% 2 == 10)
+```
+
+```
+## &lt;SQL&gt; `x` % 2.0 = 10.0
+```
+
+
+```r
+dbplyr::translate_sql(mean(x))
+```
+
+```
+## Warning: Missing values are always removed in SQL.
+## Use `AVG(x, na.rm = TRUE)` to silence this warning
+## This warning is displayed only once per session.
+```
+
+```
+## &lt;SQL&gt; AVG(`x`) OVER ()
+```
+
+```r
+dbplyr::translate_sql(mean(x, na.rm=TRUE))
+```
+
+```
+## &lt;SQL&gt; AVG(`x`) OVER ()
+```
+
+
+---
+
+
+```r
+dbplyr::translate_sql(sd(x))
+```
+
+```
+## &lt;SQL&gt; sd(`x`)
+```
+
+```r
+dbplyr::translate_sql(paste(x,y))
+```
+
+```
+## &lt;SQL&gt; CONCAT_WS(' ', `x`, `y`)
+```
+
+```r
+dbplyr::translate_sql(cumsum(x))
+```
+
+```
+## Warning: Windowed expression 'SUM(`x`)' does not have explicit order.
+## Please use arrange() or window_order() to make determinstic.
+```
+
+```
+## &lt;SQL&gt; SUM(`x`) OVER (ROWS UNBOUNDED PRECEDING)
+```
+
+```r
+dbplyr::translate_sql(lag(x))
+```
+
+```
+## &lt;SQL&gt; LAG(`x`, 1, NULL) OVER ()
+```
+
+---
+
+## Dialectic variations?
+
+By default `dbplyr::translate_sql()` will translate R / dplyr code into ANSI SQL, if we want to see results specific to a certain database we can pass in a connection object,
+
+
+```r
+dbplyr::translate_sql(sd(x), con = db)
+```
+
+```
+## Warning: Missing values are always removed in SQL.
+## Use `STDEV(x, na.rm = TRUE)` to silence this warning
+## This warning is displayed only once per session.
+```
+
+```
+## &lt;SQL&gt; STDEV(`x`) OVER ()
+```
+
+```r
+dbplyr::translate_sql(paste(x,y), con = db)
+```
+
+```
+## &lt;SQL&gt; `x` || ' ' || `y`
+```
+
+```r
+dbplyr::translate_sql(cumsum(x), con = db)
+```
+
+```
+## Warning: Windowed expression 'SUM(`x`)' does not have explicit order.
+## Please use arrange() or window_order() to make determinstic.
+```
+
+```
+## &lt;SQL&gt; SUM(`x`) OVER (ROWS UNBOUNDED PRECEDING)
+```
+
+```r
+dbplyr::translate_sql(lag(x), con = db)
+```
+
+```
+## &lt;SQL&gt; LAG(`x`, 1, NULL) OVER ()
+```
+
+
+---
+
+## Complications?
+
+
+```r
+oct_21 %&gt;% mutate(tailnum_n_prefix = grepl("^N", tailnum))
+```
+
+```
+## Error: no such function: grepl
+```
+
+
+```r
+oct_21 %&gt;% mutate(tailnum_n_prefix = grepl("^N", tailnum)) %&gt;% show_query()
+```
+
+```
+## &lt;SQL&gt;
+## SELECT `origin`, `dest`, `tailnum`, grepl('^N', `tailnum`) AS `tailnum_n_prefix`
+## FROM `flights`
+## WHERE ((`month` = 10.0) AND (`day` = 21.0))
+```
+
+---
+class: middle, center
+
+# SQL -&gt; R / dplyr
+
+---
+
+## Running SQL queries against R objects
+
+There are two packages that implement this in R which take very different approaches,
+
+* [`tidyquery`](https://github.com/ianmcook/tidyquery) - this package parses your SQL code using the `queryparser` package and then translates the result into R / dplyr code.
+
+* [`sqldf`](https://github.com/ggrothendieck/sqldf) - transparently creates a database with teh data and then runs the query using that database. Defaults to SQLite but other backends are available.
+
+---
+
+## tidyquery
+
+.pull-left[
+
+```r
+data(flights, package = "nycflights13")
+
+tidyquery::query(
+  "SELECT origin, dest, COUNT(*) AS n
+   FROM flights
+   WHERE month = 10 AND day = 21
+   GROUP BY origin, dest"
+)
+```
+
+```
+## # A tibble: 181 × 3
+##    origin dest      n
+##    &lt;chr&gt;  &lt;chr&gt; &lt;int&gt;
+##  1 EWR    ATL      15
+##  2 EWR    AUS       3
+##  3 EWR    AVL       1
+##  4 EWR    BNA       7
+##  5 EWR    BOS      17
+##  6 EWR    BTV       3
+##  7 EWR    BUF       2
+##  8 EWR    BWI       1
+##  9 EWR    CHS       4
+## 10 EWR    CLE       4
+## # … with 171 more rows
+```
+]
+
+--
+
+.pull-right[
+
+```r
+flights %&gt;%
+  tidyquery::query(
+    "SELECT origin, dest, COUNT(*) AS n
+     WHERE month = 10 AND day = 21
+     GROUP BY origin, dest"
+  ) %&gt;%
+  arrange(desc(n))
+```
+
+```
+## # A tibble: 181 × 3
+##    origin dest      n
+##    &lt;chr&gt;  &lt;chr&gt; &lt;int&gt;
+##  1 JFK    LAX      32
+##  2 LGA    ORD      31
+##  3 LGA    ATL      30
+##  4 JFK    SFO      24
+##  5 LGA    CLT      22
+##  6 EWR    ORD      18
+##  7 EWR    SFO      18
+##  8 EWR    BOS      17
+##  9 LGA    MIA      17
+## 10 EWR    LAX      16
+## # … with 171 more rows
+```
+]
+
+---
+
+## Translating to dplyr
+
+
+```r
+tidyquery::show_dplyr(
+  "SELECT origin, dest, COUNT(*) AS n
+   FROM flights
+   WHERE month = 10 AND day = 21
+   GROUP BY origin, dest"
+)
+```
+
+```
+## flights %&gt;%
+##   filter(month == 10 &amp; day == 21) %&gt;%
+##   group_by(origin, dest) %&gt;%
+##   summarise(n = dplyr::n()) %&gt;%
+##   ungroup()
+```
+
+---
+
+## sqldf
+
+.pull-left[
+
+```r
+sqldf::sqldf(
+  "SELECT origin, dest, COUNT(*) AS n
+   FROM flights
+   WHERE month = 10 AND day = 21
+   GROUP BY origin, dest"
+)
+```
+
+```
+##     origin dest  n
+## 1      EWR  ATL 15
+## 2      EWR  AUS  3
+## 3      EWR  AVL  1
+## 4      EWR  BNA  7
+## 5      EWR  BOS 17
+## 6      EWR  BTV  3
+## 7      EWR  BUF  2
+## 8      EWR  BWI  1
+## 9      EWR  CHS  4
+## 10     EWR  CLE  4
+## 11     EWR  CLT 15
+## 12     EWR  CMH  3
+## 13     EWR  CVG  9
+## 14     EWR  DAY  4
+## 15     EWR  DCA  3
+## 16     EWR  DEN  8
+## 17     EWR  DFW  9
+## 18     EWR  DSM  2
+## 19     EWR  DTW 10
+## 20     EWR  FLL 10
+## 21     EWR  GRR  2
+## 22     EWR  GSO  4
+## 23     EWR  GSP  2
+## 24     EWR  HNL  1
+## 25     EWR  HOU  3
+## 26     EWR  IAD  5
+## 27     EWR  IAH 11
+## 28     EWR  IND  5
+## 29     EWR  JAX  4
+## 30     EWR  LAS  6
+## 31     EWR  LAX 16
+## 32     EWR  MCI  4
+## 33     EWR  MCO 13
+## 34     EWR  MDW  6
+## 35     EWR  MEM  3
+## 36     EWR  MHT  3
+## 37     EWR  MIA  7
+## 38     EWR  MKE  3
+## 39     EWR  MSN  1
+## 40     EWR  MSP 10
+## 41     EWR  MSY  4
+## 42     EWR  OKC  1
+## 43     EWR  OMA  2
+## 44     EWR  ORD 18
+## 45     EWR  ORF  1
+## 46     EWR  PBI  5
+## 47     EWR  PDX  2
+## 48     EWR  PHX  7
+## 49     EWR  PIT  1
+## 50     EWR  PVD  1
+## 51     EWR  PWM  1
+## 52     EWR  RDU  4
+## 53     EWR  RIC  5
+## 54     EWR  RSW  3
+## 55     EWR  SAN  3
+## 56     EWR  SAT  1
+## 57     EWR  SAV  2
+## 58     EWR  SDF  3
+## 59     EWR  SEA  5
+## 60     EWR  SFO 18
+## 61     EWR  SJU  2
+## 62     EWR  SLC  1
+## 63     EWR  SNA  3
+## 64     EWR  STL  8
+## 65     EWR  TPA  6
+## 66     EWR  TUL  1
+## 67     EWR  TYS  1
+## 68     EWR  XNA  1
+## 69     JFK  ABQ  1
+## 70     JFK  ATL  5
+## 71     JFK  AUS  4
+## 72     JFK  BNA  2
+## 73     JFK  BOS 16
+## 74     JFK  BQN  1
+## 75     JFK  BTV  4
+## 76     JFK  BUF 12
+## 77     JFK  BUR  1
+## 78     JFK  BWI  3
+## 79     JFK  CHS  3
+## 80     JFK  CLE  1
+## 81     JFK  CLT  8
+## 82     JFK  CMH  2
+## 83     JFK  CVG  3
+## 84     JFK  DCA  9
+## 85     JFK  DEN  2
+## 86     JFK  DFW  2
+## 87     JFK  DTW  3
+## 88     JFK  FLL  9
+## 89     JFK  HNL  1
+## 90     JFK  HOU  2
+## 91     JFK  IAD  7
+## 92     JFK  IAH  1
+## 93     JFK  IND  2
+## 94     JFK  JAX  3
+## 95     JFK  LAS 12
+## 96     JFK  LAX 32
+## 97     JFK  LGB  2
+## 98     JFK  MCI  1
+## 99     JFK  MCO 14
+## 100    JFK  MIA  9
+## 101    JFK  MSP  3
+## 102    JFK  MSY  5
+## 103    JFK  OAK  1
+## 104    JFK  ORD  7
+## 105    JFK  ORF  2
+## 106    JFK  PBI  4
+## 107    JFK  PDX  2
+## 108    JFK  PHL  2
+## 109    JFK  PHX  6
+## 110    JFK  PIT  3
+## 111    JFK  PSE  1
+## 112    JFK  PWM  4
+## 113    JFK  RDU  9
+## 114    JFK  ROC  4
+## 115    JFK  RSW  2
+## 116    JFK  SAN  5
+## 117    JFK  SAT  1
+## 118    JFK  SEA  7
+## 119    JFK  SFO 24
+## 120    JFK  SJC  1
+## 121    JFK  SJU 11
+## 122    JFK  SLC  6
+## 123    JFK  SMF  1
+## 124    JFK  SRQ  1
+## 125    JFK  SYR  4
+## 126    JFK  TPA  8
+## 127    LGA  ATL 30
+## 128    LGA  BGR  2
+## 129    LGA  BHM  1
+## 130    LGA  BNA 11
+## 131    LGA  BOS 16
+## 132    LGA  BTV  1
+## 133    LGA  BUF  2
+## 134    LGA  CAK  2
+## 135    LGA  CHS  3
+## 136    LGA  CLE  6
+## 137    LGA  CLT 22
+## 138    LGA  CMH  7
+## 139    LGA  CVG  1
+## 140    LGA  DAY  1
+## 141    LGA  DCA 16
+## 142    LGA  DEN 11
+## 143    LGA  DFW 14
+## 144    LGA  DSM  1
+## 145    LGA  DTW 15
+## 146    LGA  FLL 10
+## 147    LGA  GSO  4
+## 148    LGA  GSP  1
+## 149    LGA  HOU  2
+## 150    LGA  IAD  6
+## 151    LGA  IAH  9
+## 152    LGA  ILM  1
+## 153    LGA  IND  1
+## 154    LGA  JAX  2
+## 155    LGA  MCI  1
+## 156    LGA  MCO 10
+## 157    LGA  MDW  6
+## 158    LGA  MEM  3
+## 159    LGA  MIA 17
+## 160    LGA  MKE  5
+## 161    LGA  MSN  2
+## 162    LGA  MSP 11
+## 163    LGA  MSY  3
+## 164    LGA  OMA  1
+## 165    LGA  ORD 31
+## 166    LGA  ORF  1
+## 167    LGA  PBI  6
+## 168    LGA  PHL  2
+## 169    LGA  PIT  5
+## 170    LGA  RDU 11
+## 171    LGA  RIC  3
+## 172    LGA  ROC  2
+## 173    LGA  RSW  2
+## 174    LGA  SAV  1
+## 175    LGA  SDF  1
+## 176    LGA  SRQ  2
+## 177    LGA  STL  6
+## 178    LGA  SYR  1
+## 179    LGA  TPA  6
+## 180    LGA  TYS  1
+## 181    LGA  XNA  3
+```
+]
+
+--
+
+.pull-right[
+
+```r
+sqldf::sqldf(
+  "SELECT origin, dest, COUNT(*) AS n
+   FROM flights
+   WHERE month = 10 AND day = 21
+   GROUP BY origin, dest"
+) %&gt;%
+  as_tibble() %&gt;%
+  arrange(desc(n))
+```
+
+```
+## # A tibble: 181 × 3
+##    origin dest      n
+##    &lt;chr&gt;  &lt;chr&gt; &lt;int&gt;
+##  1 JFK    LAX      32
+##  2 LGA    ORD      31
+##  3 LGA    ATL      30
+##  4 JFK    SFO      24
+##  5 LGA    CLT      22
+##  6 EWR    ORD      18
+##  7 EWR    SFO      18
+##  8 EWR    BOS      17
+##  9 LGA    MIA      17
+## 10 EWR    LAX      16
+## # … with 171 more rows
+```
+]
+
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "solarized-light",
+"highlightLines": true,
+"countIncrementalSlides": false,
+"ratio": "16:9"
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
