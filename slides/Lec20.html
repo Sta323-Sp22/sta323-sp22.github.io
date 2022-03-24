@@ -443,7 +443,7 @@ ls -lah *.sqlite
 ```
 
 ```
-## -rw-r--r--  1 rundel  staff    21M Mar 21 22:04 flights.sqlite
+## -rw-r--r--  1 rundel  staff    21M Mar 23 10:36 flights.sqlite
 ```
 
 
@@ -485,7 +485,7 @@ str(flight_tbl)
 ##   .. .. ..@ loadable.extensions: logi TRUE
 ##   .. .. ..@ flags              : int 70
 ##   .. .. ..@ vfs                : chr ""
-##   .. .. ..@ ref                :&lt;environment: 0x1241d2ef0&gt; 
+##   .. .. ..@ ref                :&lt;environment: 0x1254dc5d8&gt; 
 ##   .. .. ..@ bigint             : chr "integer64"
 ##   .. .. ..@ extended_types     : logi FALSE
 ##   ..$ disco: NULL
@@ -625,7 +625,7 @@ system.time({
 
 ```
 ##    user  system elapsed 
-##   0.001   0.000   0.001
+##   0.002   0.000   0.002
 ```
 ]
 
@@ -664,7 +664,7 @@ system.time({
 
 ```
 ##    user  system elapsed 
-##   0.038   0.003   0.043
+##   0.038   0.003   0.041
 ```
 ]
 &lt;/div&gt;
@@ -702,20 +702,17 @@ show_query(oct_21)
 
 ## More complex queries
 
+.pull-left[
 
 ```r
-oct_21 %&gt;% group_by(origin, dest) %&gt;% summarize(n=n())
-```
-
-```
-## `summarise()` has grouped output by 'origin'. You can override using the
-## `.groups` argument.
+oct_21 %&gt;% 
+  group_by(origin, dest) %&gt;% 
+  summarize(n=n(), .groups = "drop")
 ```
 
 ```
 ## # Source:   lazy query [?? x 3]
 ## # Database: sqlite 3.37.2 [flights.sqlite]
-## # Groups:   origin
 ##    origin dest      n
 ##    &lt;chr&gt;  &lt;chr&gt; &lt;int&gt;
 ##  1 EWR    ATL      15
@@ -730,15 +727,15 @@ oct_21 %&gt;% group_by(origin, dest) %&gt;% summarize(n=n())
 ## 10 EWR    CLE       4
 ## # … with more rows
 ```
+]
 
+.pull-right[
 
 ```r
-oct_21 %&gt;% group_by(origin, dest) %&gt;% summarize(n=n()) %&gt;% show_query()
-```
-
-```
-## `summarise()` has grouped output by 'origin'. You can override using the
-## `.groups` argument.
+oct_21 %&gt;% 
+  group_by(origin, dest) %&gt;% 
+  summarize(n=n(), .groups = "drop") %&gt;% 
+  show_query()
 ```
 
 ```
@@ -749,6 +746,7 @@ oct_21 %&gt;% group_by(origin, dest) %&gt;% summarize(n=n()) %&gt;% show_query()
 ## WHERE ((`month` = 10.0) AND (`day` = 21.0)))
 ## GROUP BY `origin`, `dest`
 ```
+]
 
 ---
 

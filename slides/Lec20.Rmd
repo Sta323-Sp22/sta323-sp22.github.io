@@ -537,13 +537,22 @@ show_query(oct_21)
 
 ## More complex queries
 
+.pull-left[
 ```{r}
-oct_21 %>% group_by(origin, dest) %>% summarize(n=n())
+oct_21 %>% 
+  group_by(origin, dest) %>% 
+  summarize(n=n(), .groups = "drop")
 ```
+]
 
+.pull-right[
 ```{r}
-oct_21 %>% group_by(origin, dest) %>% summarize(n=n()) %>% show_query()
+oct_21 %>% 
+  group_by(origin, dest) %>% 
+  summarize(n=n(), .groups = "drop") %>% 
+  show_query()
 ```
+]
 
 ---
 
