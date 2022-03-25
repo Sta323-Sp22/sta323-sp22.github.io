@@ -1,5 +1,5 @@
 ---
-title: databases & sql
+title: Lec 21 - SQL
 subtitle: "<br/> Statistical Programming"
 author: "Sta 323 | Spring 2022"
 date: "<br/> Dr. Colin Rundel"
@@ -36,23 +36,22 @@ library(dplyr)
 
 ## SQL
 
-Structures Query Language is a special purpose language for interacting with (querying and modifying) these indexed tabular data structures. 
+Structures Query Language is a special purpose language for interacting with (querying and modifying) indexed tabular data. 
 
-* ANSI Standard but with dialect divergence (MySql, Postgre, sqlite, etc.)
+* ANSI Standard but with dialect divergence (MySql, Postgres, SQLite, etc.)
 
 * This functionality maps very closely (but not exactly) with the data manipulation verbs present in dplyr.
-
-* We will see this mapping in more detail next time.
 
 * SQL is likely to be a foundational skill if you go into industry - learn it and put it on your CV
 
 ---
 
-## Connecting
+## Connecting via CLI
 
 ```shell
-cr173@trig2 [class_2021_10_19]$ sqlite3 employees.sqlite
-SQLite version 3.34.1 2021-01-20 14:10:07
+cr173@trig2 [class_2022_04_25]$ sqlite3 employees.sqlite
+
+SQLite version 3.36.0 2021-06-18 18:36:39
 Enter ".help" for usage hints.
 Connected to a transient in-memory database.
 Use ".open FILENAME" to reopen on a persistent database.
@@ -127,7 +126,7 @@ Frank       frank@comany.com   37000.0     Sales
 
 ---
 
-## select using SELECT
+## select() using SELECT
 
 We can subset for certain columns (and rename them) using `SELECT`
 
@@ -146,7 +145,7 @@ Frank       37000.0
 
 ---
 
-## arrange using ORDER BY
+## arrange() using ORDER BY
 
 We can sort our results by adding `ORDER BY` to our `SELECT` statement
 
@@ -182,7 +181,7 @@ Carol       30000.0
 
 ---
 
-## filter via WHERE
+## filter() using WHERE
 
 We can filter rows by adding `WHERE` to our statements
 
@@ -205,7 +204,7 @@ Frank       frank@comany.com   37000.0     Sales
 
 ---
 
-## group_by via GROUP BY
+## group_by() using GROUP BY
 
 We can create groups for the purpose of summarizing using `GROUP BY`. As with dplyr it is not terribly useful by itself.
 
@@ -216,7 +215,9 @@ name        email             salary      dept
 ----------  ----------------  ----------  ----------
 Dave        dave@company.com  33000.0     Accounting
 Frank       frank@comany.com  37000.0     Sales     
+```
 
+```sqlite
 sqlite> SELECT dept, COUNT(*) AS n FROM employees GROUP BY dept;
 
 dept        n         
@@ -228,7 +229,7 @@ Sales       3
 
 ---
 
-## head via LIMIT
+## head() using LIMIT
 
 We can limit the number of rows we get by using `LIMIT` and order results with `ORDER BY` with or without `DESC`
 
@@ -240,7 +241,9 @@ name        email              salary      dept
 Alice       alice@company.com  52000.0     Accounting
 Bob         bob@company.com    40000.0     Accounting
 Carol       carol@company.com  30000.0     Sales 
+```
 
+```sqlite
 sqlite> SELECT * FROM employees ORDER BY name DESC LIMIT 3;
 
 name        email             salary      dept      
@@ -441,7 +444,8 @@ Frank       frank@comany.com   37000.0     Sales       Frank       919 555-44
 As above to avoid the duplicate `name` column we can use `USING`, or can be more selective about our returned columns,
 
 ```sqlite
-SELECT employees.*, phone FROM employees LEFT JOIN phone ON employees.name = phone.name;
+sqlite> SELECT employees.*, phone FROM employees LEFT JOIN phone ON employees.name = phone.name;
+
 name   email              salary   dept        phone       
 -----  -----------------  -------  ----------  ------------
 Alice  alice@company.com  52000.0  Accounting              
@@ -542,15 +546,18 @@ class:center, middle
 
 ## Setup
 
-To give us a bit more variety, I am going to add one more table to our SQLite database - `nycflights13::planes` which has details on the characteristics of the planes in the dataset as identified by their tail numbers.
+To give us a bit more variety, we have created another SQLite database `flights.sqlite` that contains both `nycflights13::planes` and `nycflights13::planes`, the latter of which has details on the characteristics of the planes in the dataset as identified by their tail numbers.
 
 ```{r eval=FALSE}
+db = DBI::dbConnect(RSQLite::SQLite(), "flights.sqlite")
+dplyr::copy_to(db, nycflights13::flights, name = "flights", temporary = FALSE)
 dplyr::copy_to(db, nycflights13::planes, name = "planes", temporary = FALSE)
+DBI::dbDisconnect(db)
 ```
 
 <br/>
 
-All of the following code will be run in the SQLite commandline interface, to make sure you have the database make sure you've created the database and copied both the flights and planes tables into the db. 
+All of the following code will be run in the SQLite command line interface, to make sure you have the database make sure you've created the database and copied both the flights and planes tables into the db. 
 
 The database can then be opened from the terminal tab using,
 ```shell
@@ -572,7 +579,7 @@ sqlite> .timer on
 .small[
 
 ```sql
-sqlite> select * from flights limit 10;
+sqlite> SELECT * FROM flights LIMIT 10;
 year  month  day  dep_time  sched_dep_time  dep_delay  arr_time  sched_arr_time  arr_delay  carrier  flight  tailnum  origin  dest  air_time  distance  hour  minute  time_hour   
 ----  -----  ---  --------  --------------  ---------  --------  --------------  ---------  -------  ------  -------  ------  ----  --------  --------  ----  ------  ------------
 2013  1      1    517       515             2.0        830       819             11.0       UA       1545    N14228   EWR     IAH   227.0     1400.0    5.0   15.0    1357034400.0
@@ -589,7 +596,7 @@ Run Time: real 0.051 user 0.000258 sys 0.000126
 ```
 
 ```sql
-sqlite> select * from planes limit 10;
+sqlite> SELECT * FROM planes LIMIT 10;
 tailnum  year  type                     manufacturer      model      engines  seats  speed  engine   
 -------  ----  -----------------------  ----------------  ---------  -------  -----  -----  ---------
 N10156   2004  Fixed wing multi engine  EMBRAER           EMB-145XR  2        55            Turbo-fan
@@ -608,7 +615,7 @@ Run Time: real 0.001 user 0.000159 sys 0.000106
 
 ---
 
-## Exercise 1
+## Exercise 3
 
 Write a query that determines the total number of seats available on all of the planes that flew out of New York in 2013.
 
@@ -616,10 +623,10 @@ Write a query that determines the total number of seats available on all of the 
 
 ## Options
 
-* incorrect 
+Incorrect:
 
 ```sql
-sqlite> select sum(seats) from flights natural left join planes;
+sqlite> SELECT sum(seats) FROM flights NATURAL LEFT JOIN planes;
 
 sum(seats)
 ----------
@@ -629,10 +636,10 @@ Run Time: real 0.148 user 0.139176 sys 0.007804
 
 --
 
-* join and select
+Join and select:
 
 ```sql
-sqlite> select sum(seats) from flights left join planes using (tailnum);
+sqlite> SELECT sum(seats) FROM flights LEFT JOIN planes USING (tailnum);
 
 sum(seats)
 ----------
@@ -640,10 +647,10 @@ sum(seats)
 Run Time: real 0.176 user 0.167993 sys 0.007354
 ```
 
-* select then join
+Select then join:
 
 ```sql
-sqlite> select sum(seats) from (select tailnum from flights) left join (select tailnum, seats from planes) using (tailnum);
+sqlite> SELECT sum(seats) FROM (SELECT tailnum FROM flights) LEFT JOIN (SELECT tailnum, seats FROM planes) USING (tailnum);
 
 sum(seats)
 ----------
@@ -656,7 +663,7 @@ Run Time: real 0.174 user 0.166085 sys 0.007122
 ## `EXPLAIN QUERY PLAN`
 
 ```sql
-sqlite> explain query plan select sum(seats) from flights left join planes using (tailnum);
+sqlite> EXPLAIN QUERY PLAN SELECT sum(seats) FROM flights LEFT JOIN planes USING (tailnum);
 
 QUERY PLAN
 |--SCAN flights
@@ -664,7 +671,7 @@ QUERY PLAN
 ```
 
 ```sql
-sqlite> explain query plan select sum(seats) from (select tailnum from flights) left join (select tailnum, seats from planes) using (tailnum);
+sqlite> EXPLAIN QUERY PLAN SELECT sum(seats) FROM (SELECT tailnum FROM flights) LFET JOIN (SELECT tailnum, seats FROM planes) USING (tailnum);
 
 QUERY PLAN
 |--MATERIALIZE SUBQUERY 2
@@ -688,12 +695,12 @@ Key things to look for:
 ## Adding indexes
 
 ```sql
-sqlite> create index flight_tailnum on flights (tailnum);
+sqlite> CREATE INDEX flight_tailnum ON flights (tailnum);
 Run Time: real 0.241 user 0.210099 sys 0.027611
 ```
 
 ```sql
-sqlite> create index plane_tailnum on planes (tailnum);
+sqlite> CREATE INDEX plane_tailnum ON planes (tailnum);
 Run Time: real 0.003 user 0.001407 sys 0.001442
 ```
 
@@ -709,7 +716,7 @@ flight_tailnum  plane_tailnum
 ## Improvements?
 
 ```sql
-sqlite> select sum(seats) from flights left join planes using (tailnum);
+sqlite> SELECT sum(seats) FROM flights LEFT JOIN planes USING (tailnum);
 sum(seats)
 ----------
 38851317  
@@ -717,7 +724,7 @@ Run Time: real 0.118 user 0.115899 sys 0.001952
 ```
 
 ```sql
-sqlite> select sum(seats) from (select tailnum from flights) left join (select tailnum, seats from planes) using (tailnum);
+sqlite> SELECT sum(seats) FROM (SELECT tailnum FROM flights) LEFT JOIN (SELECT tailnum, seats FROM planes) USING (tailnum);
 sum(seats)
 ----------
 38851317  
@@ -727,14 +734,14 @@ Run Time: real 0.131 user 0.129165 sys 0.001214
 --
 
 ```sql
-sqlite> explain query plan select sum(seats) from flights left join planes using (tailnum);
+sqlite> EXPLAIN QUERY PLAN SELECT sum(seats) FROM flights LEFT JOIN planes USING (tailnum);
 QUERY PLAN
 |--SCAN flights USING COVERING INDEX flight_tailnum
 `--SEARCH planes USING INDEX plane_tailnum (tailnum=?)
 ```
 
 ```sql
-sqlite> explain query plan select sum(seats) from (select tailnum from flights) left join (select tailnum, seats from planes) using (tailnum);
+sqlite> EXPLAIN QUERY PLAN SELECT sum(seats) FROM (SELECT tailnum FROM flights) LEFT JOIN (SELECT tailnum, seats FROM planes) USING (tailnum);
 QUERY PLAN
 |--MATERIALIZE SUBQUERY 2
 |  `--SCAN planes
@@ -747,7 +754,7 @@ QUERY PLAN
 ## Filtering
 
 ```sql
-sqlite> select origin, count(*) from flights where origin = "EWR";
+sqlite> SELECT origin, count(*) FROM flights WHERE origin = "EWR";
 origin  count(*)
 ------  --------
 EWR     120835
@@ -755,7 +762,7 @@ Run Time: real 0.034 user 0.028124 sys 0.005847
 ```
 
 ```sql
-sqlite> explain query plan select origin, count(*) from flights where origin = "EWR";
+sqlite> EXPLAIN QUERY PLAN  SELECT origin, count(*) FROM flights WHERE origin = "EWR";
 QUERY PLAN
 `--SCAN flights
 ```
@@ -764,7 +771,7 @@ QUERY PLAN
 
 
 ```sql
-sqlite> select origin, count(*) from flights where origin != "EWR";
+sqlite> SELECT origin, count(*) FROM flights WHERE origin != "EWR";
 origin  count(*)
 ------  --------
 LGA     215941
@@ -772,7 +779,7 @@ Run Time: real 0.036 user 0.029798 sys 0.006171
 ```
 
 ```sql
-sqlite> explain query plan select origin, count(*) from flights where origin != "EWR";
+sqlite> EXPLAIN QUERY PLAN  SELECT origin, count(*) FROM flights WHERE origin != "EWR";
 QUERY PLAN
 `--SCAN flights
 ```
@@ -780,7 +787,7 @@ QUERY PLAN
 --
 
 ```sql
-sqlite> create index flights_orig_dest on flights (origin, dest);
+sqlite> CREATE INDEX flights_orig_dest ON flights (origin, dest);
 Run Time: real 0.267 user 0.232886 sys 0.030270
 ```
 
@@ -789,13 +796,13 @@ Run Time: real 0.267 user 0.232886 sys 0.030270
 ## Filtering w/ indexes
 
 ```sql
-sqlite> select origin, count(*) from flights where origin = "EWR";
+sqlite> SELECT origin, count(*) FROM flights WHERE origin = "EWR";
 origin  count(*)
 ------  --------
 EWR     120835
 Run Time: real 0.007 user 0.006419 sys 0.000159
 
-sqlite> select origin, count(*) from flights where origin != "EWR";
+sqlite> SELECT origin, count(*) FROM flights WHERE origin != "EWR";
 origin  count(*)
 ------  --------
 JFK     215941
@@ -805,11 +812,11 @@ Run Time: real 0.020 user 0.019203 sys 0.000497
 --
 
 ```sql
-sqlite> explain query plan select origin, count(*) from flights where origin = "EWR";
+sqlite> EXPLAIN QUERY PLAN  SELECT origin, count(*) FROM flights WHERE origin = "EWR";
 QUERY PLAN
 `--SEARCH flights USING COVERING INDEX flights_orig_dest (origin=?)
 
-sqlite> explain query plan select origin, count(*) from flights where origin != "EWR";
+sqlite> EXPLAIN QUERY PLAN  SELECT origin, count(*) FROM flights WHERE origin != "EWR";
 QUERY PLAN
 `--SCAN flights USING COVERING INDEX flights_orig_dest
 ```
@@ -819,7 +826,7 @@ QUERY PLAN
 ## `!=` alternative
 
 ```sql
-sqlite> select origin, count(*) from flights where origin > "EWR" OR origin < "EWR";
+sqlite> SELECT origin, count(*) FROM flights WHERE origin > "EWR" OR origin < "EWR";
 origin  count(*)
 ------  --------
 JFK     215941
@@ -827,7 +834,7 @@ Run Time: real 0.022 user 0.021148 sys 0.001290
 ```
 
 ```sql
-sqlite> explain query plan select origin, count(*) from flights where origin > "EWR" OR origin < "EWR";
+sqlite> EXPLAIN QUERY PLAN SELECT origin, count(*) FROM flights WHERE origin > "EWR" OR origin < "EWR";
 QUERY PLAN
 `--MULTI-INDEX OR
    |--INDEX 1
@@ -841,7 +848,7 @@ QUERY PLAN
 ## What about dest?
 
 ```sql
-sqlite> select dest, count(*) from flights where dest = "LAX";
+sqlite> SELECT dest, count(*) FROM flights WHERE dest = "LAX";
 dest  count(*)
 ----  --------
 LAX   16174
@@ -849,7 +856,7 @@ Run Time: real 0.017 user 0.016513 sys 0.000237
 ```
 
 ```sql
-sqlite> explain query plan select dest, count(*) from flights where dest = "LAX";
+sqlite> EXPLAIN QUERY PLAN SELECT dest, count(*) FROM flights WHERE dest = "LAX";
 QUERY PLAN
 `--SCAN flights USING COVERING INDEX flights_orig_dest
 ```
@@ -857,7 +864,7 @@ QUERY PLAN
 --
 
 ```sql
-sqlite> select dest, count(*) from flights where dest = "LAX" AND origin = "EWR";
+sqlite> SELECT dest, count(*) FROM flights WHERE dest = "LAX" AND origin = "EWR";
 dest  count(*)
 ----  --------
 LAX   4912
@@ -865,7 +872,7 @@ Run Time: real 0.003 user 0.000729 sys 0.000778
 ```
 
 ```sql
-sqlite> explain query plan select dest, count(*) from flights where dest = "LAX" AND origin = "EWR";
+sqlite> EXPLAIN QUERY PLAN  SELECT dest, count(*) FROM flights WHERE dest = "LAX" AND origin = "EWR";
 QUERY PLAN
 `--SEARCH flights USING COVERING INDEX flights_orig_dest (origin=? AND dest=?)
 ```
@@ -876,7 +883,8 @@ QUERY PLAN
 
 .pull-left[ .small[
 ```sql
-sqlite> select carrier, count(*) from flights group by carrier;
+sqlite> SELECT carrier, count(*) FROM flights GROUP BY carrier;
+
 carrier  count(*)
 -------  --------
 9E       18460
@@ -897,15 +905,10 @@ WN       12275
 YV       601
 Run Time: real 0.172 user 0.114274 sys 0.018946
 
-sqlite> explain query plan select carrier, count(*) from flights group by carrier;
+sqlite> EXPLAIN QUERY PLAN SELECT carrier, count(*) FROM flights GROUP BY carrier;
 QUERY PLAN
 |--SCAN flights
 `--USE TEMP B-TREE FOR GROUP BY
-```
-
-```sql
-sqlite> create index flight_carrier on flights (carrier);
-Run Time: real 0.131 user 0.113260 sys 0.014691
 ```
 ] ]
 
@@ -913,7 +916,12 @@ Run Time: real 0.131 user 0.113260 sys 0.014691
 
 .pull-right[ .small[
 ```sql
-sqlite> select carrier, count(*) from flights group by carrier;
+sqlite> CREATE INDEX flight_carrier ON flights (carrier);
+Run Time: real 0.131 user 0.113260 sys 0.014691
+```
+
+```sql
+sqlite> SELECT carrier, count(*) FROM flights GROUP BY carrier;
 carrier  count(*)
 -------  --------
 9E       18460
@@ -934,7 +942,7 @@ WN       12275
 YV       601
 Run Time: real 0.023 user 0.022521 sys 0.000411
 
-sqlite> explain query plan select carrier, count(*) from flights group by carrier;
+sqlite> EXPLAIN QUERY PLAN SELECT carrier, count(*) FROM flights GROUP BY carrier;
 QUERY PLAN
 `--SCAN flights USING COVERING INDEX flight_carrier
 ```
