@@ -513,7 +513,7 @@ Frank       frank@comany.co  37000.0     Sales       919 555-4444
 
 ---
 
-## Excercise 2
+## Exercise 2
 
 Lets try to create a table that has a new column - `abv_avg` which contains how much more (or less) than the average, for their department, each person is paid.
 
