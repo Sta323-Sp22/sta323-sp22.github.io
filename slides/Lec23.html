@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Lec 23 - Bigish data</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Sta 323 | Spring 2022" />
+    <script src="libs/header-attrs/header-attrs.js"></script>
+    <link href="libs/font-awesome/css/all.css" rel="stylesheet" />
+    <link href="libs/font-awesome/css/v4-shims.css" rel="stylesheet" />
+    <link rel="stylesheet" href="slides.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Lec 23 - Bigish data
+## <br/> Statistical Programming
+### Sta 323 | Spring 2022
+### <br/> Dr. Colin Rundel
+
+---
+
+exclude: true
+
+
+
+
+---
+class: middle
+
+
+# Background
+
+---
+
+## Big vs Bigish data
+
+* We will be working with data that is large, but it will still fit in memory. 
+
+* R *loves* to make extra copies of objects, so we need to be careful - even a handful of copies with exhaust the memory on most systems. 
+    
+    * Less of an issue on departental server (256 GB of Ram), but this is a shared resource - use too much and your session/process might be killed.
+
+
+---
+## NYC parking ticket data
+
+New York City is at the forefront of the open data movement among local, state and federal governments. They have made publicly available a huge amount of data (NYC Open Data) on everything from street trees, to restaurant inspections, to parking violations.
+
+We will be looking at all parking tickets issued in NYC for the 2022 Fiscal year - the data were obtained from [NYC Open Data](https://data.cityofnewyork.us/City-Government/Parking-Violations-Issued-Fiscal-Year-2022/pvqr-7yc4).
+
+
+```r
+fs::file_size("data/Parking_Violations_Issued_-_Fiscal_Year_2022.csv")
+```
+
+```
+## 1.76G
+```
+
+---
+
+## Reading the data
+
+If we use the basic approach of `read.csv`, we end up waiting awhile,
+
+
+```r
+system.time(
+  read.csv("data/Parking_Violations_Issued_-_Fiscal_Year_2022.csv")
+)
+
+##   user  system elapsed 
+## 90.764  11.426 108.169 
+```
+
+Almost 2 minutes to read in a 1.76 gigabyte CSV file.
+
+---
+
+## Improvements 
+
+If we use `stringsAsFactors=FALSE` and `comment.char=""` arguments we can speed things up a bit.
+
+
+```r
+system.time(
+  read.csv(
+    "data/Parking_Violations_Issued_-_Fiscal_Year_2022.csv", 
+    stringsAsFactors=FALSE, 
+    comment.char=""
+  )
+)
+
+##   user  system elapsed 
+## 75.470  14.124  96.476 
+```
+
+We can take this farther by specifying the structure of the data using the `colClasses` argument.
+
+---
+
+## data.table::fread
+
+
+```r
+system.time({
+  nyc_fread = data.table::fread("data/Parking_Violations_Issued_-_Fiscal_Year_2022.csv")
+})
+
+## |--------------------------------------------------|
+## |==================================================|
+
+##   user  system elapsed 
+## 17.233   1.041  21.857 
+```
+
+
+--
+
+
+```r
+class(nyc_fread)
+
+## "data.table" "data.frame"
+
+nyc = as.data.frame(nyc_fread)
+class(nyc)
+
+## [1] "data.frame"
+```
+
+
+---
+
+## readr::read_csv
+
+
+```r
+system.time({
+  nyc = readr::read_csv("data/Parking_Violations_Issued_-_Fiscal_Year_2022.csv")
+})
+  
+## Rows: 9980449 Columns: 43
+## ── Column specification ──────────────────────────────────────────────────────────────────────────
+## Delimiter: ","
+## chr (25): Plate ID, Registration State, Plate Type, Issue Date, Vehicle Body Type, Vehicle Mak...
+## dbl (14): Summons Number, Violation Code, Street Code1, Street Code2, Street Code3, Vehicle Ex...
+## lgl  (4): Violation Legal Code, No Standing or Stopping Violation, Hydrant Violation, Double P...
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+
+##   user  system elapsed 
+## 55.796  10.596  40.465 
+```
+
+
+---
+
+## readr::read_csv - lazy
+
+
+```r
+system.time({
+  nyc_lazy = readr::read_csv("data/Parking_Violations_Issued_-_Fiscal_Year_2022.csv", lazy=TRUE)
+})
+
+## Rows: 9980449 Columns: 43
+## ── Column specification ──────────────────────────────────────────────────────────────────────────
+## Delimiter: ","
+## chr (25): Plate ID, Registration State, Plate Type, Issue Date, Vehicle Body Type, Vehicle Mak...
+## dbl (14): Summons Number, Violation Code, Street Code1, Street Code2, Street Code3, Vehicle Ex...
+## lgl  (4): Violation Legal Code, No Standing or Stopping Violation, Hydrant Violation, Double P...
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+
+##    user  system elapsed 
+##  13.972   4.729   4.497 
+```
+
+
+--
+
+
+```r
+pryr::object_size(nyc)
+## 3,461,255,280 B
+
+pryr::object_size(nyc_lazy)
+## 159,707,840 B
+```
+
+
+---
+
+## readr 
+
+This package is part of the tidyverse and is designed to be a fast and friendly way of reading tabular data into R.
+
+&lt;br/&gt;
+
+Core features:
+
+* Faster than base R (~3-4x)
+
+* No strings as factors
+
+* No column name mangling
+
+* Consistent argument/function naming scheme
+
+* Plays nice with dplyr (`tbl_df`)
+
+---
+
+## Ticket Data
+
+
+```r
+nyc
+
+## # A tibble: 9,980,449 × 43
+##    `Summons Number` `Plate ID` `Registration State` `Plate Type` `Issue Date` `Violation Code`
+##               &lt;dbl&gt; &lt;chr&gt;      &lt;chr&gt;                &lt;chr&gt;        &lt;chr&gt;                   &lt;dbl&gt;
+##  1       1457617912 JEB5683    NY                   PAS          06/25/2021                 40
+##  2       1457617924 JAN2986    NY                   PAS          06/25/2021                 20
+##  3       1457622427 FJH6630    TX                   PAS          06/17/2021                 98
+##  4       1457638629 RD1Y5N     MO                   PAS          06/16/2021                 98
+##  5       1457639580 T503814C   NY                   OMT          07/04/2021                 40
+##  6       1457643042 JLN5490    NY                   PAS          06/28/2021                 98
+##  7       1457663909 UMB4505    VA                   PAS          07/02/2021                 98
+##  8       1457670471 JPS7544    NY                   PAS          06/19/2021                 40
+##  9       1457670537 UPS7544    NY                   PAS          06/19/2021                 70
+## 10       1457677623 07027R5    TX                   PAS          07/03/2021                 74
+## # … with 9,980,439 more rows, and 37 more variables: `Vehicle Body Type` &lt;chr&gt;, `Vehicle Make` &lt;chr&gt;,
+## #   `Issuing Agency` &lt;chr&gt;, `Street Code1` &lt;dbl&gt;, `Street Code2` &lt;dbl&gt;, `Street Code3` &lt;dbl&gt;,
+## #   `Vehicle Expiration Date` &lt;dbl&gt;, `Violation Location` &lt;chr&gt;, `Violation Precinct` &lt;dbl&gt;,
+## #   `Issuer Precinct` &lt;dbl&gt;, `Issuer Code` &lt;dbl&gt;, `Issuer Command` &lt;chr&gt;, `Issuer Squad` &lt;chr&gt;,
+## #   `Violation Time` &lt;chr&gt;, `Time First Observed` &lt;chr&gt;, `Violation County` &lt;chr&gt;,
+## #   `Violation In Front Of Or Opposite` &lt;chr&gt;, `House Number` &lt;chr&gt;, `Street Name` &lt;chr&gt;,
+## #   `Intersecting Street` &lt;chr&gt;, `Date First Observed` &lt;dbl&gt;, `Law Section` &lt;dbl&gt;, …
+```
+
+
+---
+
+## Fixing column names
+
+
+```r
+(nyc = janitor::clean_names(nyc))
+
+## # A tibble: 9,980,449 × 43
+##    summons_number plate_id registration_sta… plate_type issue_date violation_code vehicle_body_ty… vehicle_make
+##             &lt;dbl&gt; &lt;chr&gt;    &lt;chr&gt;             &lt;chr&gt;      &lt;chr&gt;               &lt;dbl&gt; &lt;chr&gt;            &lt;chr&gt;       
+##  1     1457617912 JEB5683  NY                PAS        06/25/2021             40 VAN              FORD        
+##  2     1457617924 JAN2986  NY                PAS        06/25/2021             20 SUBN             DODGE       
+##  3     1457622427 FJH6630  TX                PAS        06/17/2021             98 SDN              AUDI        
+##  4     1457638629 RD1Y5N   MO                PAS        06/16/2021             98 SDN              TOYOT       
+##  5     1457639580 T503814C NY                OMT        07/04/2021             40 TAXI             HONDA       
+##  6     1457643042 JLN5490  NY                PAS        06/28/2021             98 SDN              HONDA       
+##  7     1457663909 UMB4505  VA                PAS        07/02/2021             98 SDN              SUBAR       
+##  8     1457670471 JPS7544  NY                PAS        06/19/2021             40 SDN              NISSA       
+##  9     1457670537 UPS7544  NY                PAS        06/19/2021             70 SDN              NISSA       
+## 10     1457677623 07027R5  TX                PAS        07/03/2021             74 SUBN             LEXUS       
+## # … with 9,980,439 more rows, and 35 more variables: issuing_agency &lt;chr&gt;, street_code1 &lt;dbl&gt;,
+## #   street_code2 &lt;dbl&gt;, street_code3 &lt;dbl&gt;, vehicle_expiration_date &lt;dbl&gt;, violation_location &lt;chr&gt;,
+## #   violation_precinct &lt;dbl&gt;, issuer_precinct &lt;dbl&gt;, issuer_code &lt;dbl&gt;, issuer_command &lt;chr&gt;,
+## #   issuer_squad &lt;chr&gt;, violation_time &lt;chr&gt;, time_first_observed &lt;chr&gt;, violation_county &lt;chr&gt;,
+## #   violation_in_front_of_or_opposite &lt;chr&gt;, house_number &lt;chr&gt;, street_name &lt;chr&gt;, intersecting_street &lt;chr&gt;,
+## #   date_first_observed &lt;dbl&gt;, law_section &lt;dbl&gt;, sub_division &lt;chr&gt;, violation_legal_code &lt;lgl&gt;,
+## #   days_parking_in_effect &lt;chr&gt;, from_hours_in_effect &lt;chr&gt;, to_hours_in_effect &lt;chr&gt;, vehicle_color &lt;chr&gt;, …
+```
+
+---
+
+## Simplifying 
+
+There is a lot of variables we won't care about for the time being, so lets make life easier by selecting a subset of columns.
+
+
+```r
+(nyc_trim = nyc %&gt;% 
+  select(
+    registration_state:issuing_agency, 
+    violation_location, violation_precinct, violation_time,
+    house_number:intersecting_street, vehicle_color
+  )
+)
+
+## # A tibble: 9,980,449 × 14
+##    registration_state plate_type issue_date violation_code vehicle_body_type vehicle_make issuing_agency
+##    &lt;chr&gt;              &lt;chr&gt;      &lt;chr&gt;               &lt;dbl&gt; &lt;chr&gt;             &lt;chr&gt;        &lt;chr&gt;         
+##  1 NY                 PAS        06/25/2021             40 VAN               FORD         P             
+##  2 NY                 PAS        06/25/2021             20 SUBN              DODGE        P             
+##  3 TX                 PAS        06/17/2021             98 SDN               AUDI         P             
+##  4 MO                 PAS        06/16/2021             98 SDN               TOYOT        P             
+##  5 NY                 OMT        07/04/2021             40 TAXI              HONDA        P             
+##  6 NY                 PAS        06/28/2021             98 SDN               HONDA        P             
+##  7 VA                 PAS        07/02/2021             98 SDN               SUBAR        P             
+##  8 NY                 PAS        06/19/2021             40 SDN               NISSA        P             
+##  9 NY                 PAS        06/19/2021             70 SDN               NISSA        P             
+## 10 TX                 PAS        07/03/2021             74 SUBN              LEXUS        P             
+## # … with 9,980,439 more rows, and 7 more variables: violation_location &lt;chr&gt;, violation_precinct &lt;dbl&gt;,
+## #   violation_time &lt;chr&gt;, house_number &lt;chr&gt;, street_name &lt;chr&gt;, intersecting_street &lt;chr&gt;,
+## #   vehicle_color &lt;chr&gt;
+```
+
+---
+
+## Clean data?
+
+How many different car colors are in this data set?
+
+--
+
+.pull-left[ .small[
+
+```r
+nyc %&gt;% 
+  count(vehicle_color) %&gt;% 
+  arrange(desc(n))
+
+## # A tibble: 953 × 2
+##    vehicle_color       n
+##    &lt;chr&gt;           &lt;int&gt;
+##  1 GY            1943084
+##  2 WH            1779206
+##  3 BK            1701522
+##  4 NA             683723
+##  5 WHITE          654584
+##  6 BL             653795
+##  7 BLACK          423010
+##  8 RD             377793
+##  9 GREY           302187
+## 10 SILVE          162462
+## # … with 943 more rows
+```
+] ]
+
+.pull-right[ .small[
+
+```r
+nyc %&gt;% 
+  count(vehicle_color)
+
+
+## # A tibble: 953 × 2
+##    vehicle_color     n
+##    &lt;chr&gt;         &lt;int&gt;
+##  1 -                 1
+##  2 - /               1
+##  3 -.I.              1
+##  4 ?:{              15
+##  5 .                 2
+##  6 ..                4
+##  7 .N                1
+##  8 .X                1
+##  9 '}                1
+## 10 //                4
+## # … with 943 more rows
+```
+] ]
+
+---
+
+## Issue Dates 
+
+
+```r
+library(lubridate)
+class(nyc$issue_date)
+## [1] "character"
+
+head(nyc$issue_date)
+## [1] "06/25/2021" "06/25/2021" "06/17/2021" "06/16/2021" "07/04/2021" "06/28/2021"
+
+nyc = nyc %&gt;% mutate(issue_date = mdy(issue_date, tz="America/New_York"))
+class(nyc$issue_date)
+## [1] "POSIXct" "POSIXt"
+
+range(nyc$issue_date)
+## [1] "1973-09-24 EDT" "2067-11-28 EST"
+```
+
+---
+
+
+```r
+nyc
+
+## # A tibble: 9,980,449 × 43
+##    summons_number plate_id registration_st… plate_type issue_date          violation_code vehicle_body_ty…
+##             &lt;dbl&gt; &lt;chr&gt;    &lt;chr&gt;            &lt;chr&gt;      &lt;dttm&gt;                       &lt;dbl&gt; &lt;chr&gt;           
+##  1     1457617912 JEB5683  NY               PAS        2021-06-25 00:00:00             40 VAN             
+##  2     1457617924 JAN2986  NY               PAS        2021-06-25 00:00:00             20 SUBN            
+##  3     1457622427 FJH6630  TX               PAS        2021-06-17 00:00:00             98 SDN             
+##  4     1457638629 RD1Y5N   MO               PAS        2021-06-16 00:00:00             98 SDN             
+##  5     1457639580 T503814C NY               OMT        2021-07-04 00:00:00             40 TAXI            
+##  6     1457643042 JLN5490  NY               PAS        2021-06-28 00:00:00             98 SDN             
+##  7     1457663909 UMB4505  VA               PAS        2021-07-02 00:00:00             98 SDN             
+##  8     1457670471 JPS7544  NY               PAS        2021-06-19 00:00:00             40 SDN             
+##  9     1457670537 UPS7544  NY               PAS        2021-06-19 00:00:00             70 SDN             
+## 10     1457677623 07027R5  TX               PAS        2021-07-03 00:00:00             74 SUBN            
+## # … with 9,980,439 more rows, and 36 more variables: vehicle_make &lt;chr&gt;, issuing_agency &lt;chr&gt;,
+## #   street_code1 &lt;dbl&gt;, street_code2 &lt;dbl&gt;, street_code3 &lt;dbl&gt;, vehicle_expiration_date &lt;dbl&gt;,
+## #   violation_location &lt;chr&gt;, violation_precinct &lt;dbl&gt;, issuer_precinct &lt;dbl&gt;, issuer_code &lt;dbl&gt;,
+## #   issuer_command &lt;chr&gt;, issuer_squad &lt;chr&gt;, violation_time &lt;chr&gt;, time_first_observed &lt;chr&gt;,
+## #   violation_county &lt;chr&gt;, violation_in_front_of_or_opposite &lt;chr&gt;, house_number &lt;chr&gt;,
+## #   street_name &lt;chr&gt;, intersecting_street &lt;chr&gt;, date_first_observed &lt;dbl&gt;, law_section &lt;dbl&gt;,
+## #   sub_division &lt;chr&gt;, violation_legal_code &lt;lgl&gt;, days_parking_in_effect &lt;chr&gt;, …
+```
+
+---
+
+## More date issues
+
+
+```r
+nyc$issue_date %&gt;% year() %&gt;% table()
+##   1973    2000    2001    2002    2005    2006    2007    2009    2010    2011    2012 
+##      2      51       5       4       1       2       2       2       9       9      25 
+##   2013    2014    2015    2016    2017    2018    2019    2020    2021    2022    2023 
+##      3       2       4       5       4       5      17     211 8062258 1917658     108 
+##   2024    2025    2026    2027    2028    2029    2030    2031    2032    2046    2061 
+##     10       9       2       7       1       3       8      17       1       1       2 
+##   2067 
+##      1 
+```
+]
+
+---
+
+
+```r
+filter(nyc, issue_date &gt;= mdy("1/1/2021"), issue_date &lt;= mdy("12/31/2022"))
+## # A tibble: 9,979,916 × 43
+##    summons_number plate_id registration_state plate_type issue_date          violation_code
+##             &lt;dbl&gt; &lt;chr&gt;    &lt;chr&gt;              &lt;chr&gt;      &lt;dttm&gt;                       &lt;dbl&gt;
+##  1     1457617912 JEB5683  NY                 PAS        2021-06-25 00:00:00             40
+##  2     1457617924 JAN2986  NY                 PAS        2021-06-25 00:00:00             20
+##  3     1457622427 FJH6630  TX                 PAS        2021-06-17 00:00:00             98
+##  4     1457638629 RD1Y5N   MO                 PAS        2021-06-16 00:00:00             98
+##  5     1457639580 T503814C NY                 OMT        2021-07-04 00:00:00             40
+##  6     1457643042 JLN5490  NY                 PAS        2021-06-28 00:00:00             98
+##  7     1457663909 UMB4505  VA                 PAS        2021-07-02 00:00:00             98
+##  8     1457670471 JPS7544  NY                 PAS        2021-06-19 00:00:00             40
+##  9     1457670537 UPS7544  NY                 PAS        2021-06-19 00:00:00             70
+## 10     1457677623 07027R5  TX                 PAS        2021-07-03 00:00:00             74
+## # … with 9,979,906 more rows, and 37 more variables: vehicle_body_type &lt;chr&gt;,
+## #   vehicle_make &lt;chr&gt;, issuing_agency &lt;chr&gt;, street_code1 &lt;dbl&gt;, street_code2 &lt;dbl&gt;,
+## #   street_code3 &lt;dbl&gt;, vehicle_expiration_date &lt;dbl&gt;, violation_location &lt;chr&gt;,
+## #   violation_precinct &lt;dbl&gt;, issuer_precinct &lt;dbl&gt;, issuer_code &lt;dbl&gt;, issuer_command ## &lt;chr&gt;,
+## #   issuer_squad &lt;chr&gt;, violation_time &lt;chr&gt;, time_first_observed &lt;chr&gt;,
+## #   violation_county &lt;chr&gt;, violation_in_front_of_or_opposite &lt;chr&gt;, house_number &lt;chr&gt;,
+## #   street_name &lt;chr&gt;, intersecting_street &lt;chr&gt;, date_first_observed &lt;dbl&gt;, …
+```
+]
+
+---
+
+## Performance?
+
+
+```r
+system.time(
+  filter(nyc, issue_date &gt;= mdy("1/1/2021"), issue_date &lt;= mdy("12/31/2022"))
+)
+  
+##   user  system elapsed 
+##  1.079   0.856   2.396 
+
+system.time(
+  filter(nyc, year(issue_date) %in% c(2013, 2014))
+)
+  
+##   user  system elapsed 
+##  1.007   0.085   1.090  
+```
+
+---
+
+## Putting it all together
+
+
+```r
+nyc = readr::read_csv("data/Parking_Violations_Issued_-_Fiscal_Year_2022.csv") %&gt;%
+  janitor::clean_names() %&gt;%
+  select(registration_state:issuing_agency, 
+       violation_location, violation_precinct, violation_time,
+       house_number:intersecting_street, vehicle_color) %&gt;%
+  mutate(issue_date = mdy(issue_date)) %&gt;% 
+  mutate(issue_day = day(issue_date),
+         issue_month = month(issue_date),
+         issue_year = year(issue_date),
+         issue_wday = wday(issue_date, label=TRUE)) %&gt;%
+  filter(issue_year %in% 2021:2022)
+
+nyc
+
+## # A tibble: 9,979,916 × 18
+##    registration_state plate_type issue_date violation_code vehicle_body_type vehicle_make
+##    &lt;chr&gt;              &lt;chr&gt;      &lt;date&gt;              &lt;dbl&gt; &lt;chr&gt;             &lt;chr&gt;       
+##  1 NY                 PAS        2021-06-25             40 VAN               FORD        
+##  2 NY                 PAS        2021-06-25             20 SUBN              DODGE       
+##  3 TX                 PAS        2021-06-17             98 SDN               AUDI        
+##  4 MO                 PAS        2021-06-16             98 SDN               TOYOT       
+##  5 NY                 OMT        2021-07-04             40 TAXI              HONDA       
+##  6 NY                 PAS        2021-06-28             98 SDN               HONDA       
+##  7 VA                 PAS        2021-07-02             98 SDN               SUBAR       
+##  8 NY                 PAS        2021-06-19             40 SDN               NISSA       
+##  9 NY                 PAS        2021-06-19             70 SDN               NISSA       
+## 10 TX                 PAS        2021-07-03             74 SUBN              LEXUS       
+## # … with 9,979,906 more rows, and 12 more variables: issuing_agency &lt;chr&gt;,
+## #   violation_location &lt;chr&gt;, violation_precinct &lt;dbl&gt;, violation_time &lt;chr&gt;,
+## #   house_number &lt;chr&gt;, street_name &lt;chr&gt;, intersecting_street &lt;chr&gt;, vehicle_color &lt;chr&gt;,
+## #   issue_day &lt;int&gt;, issue_month &lt;dbl&gt;, issue_year &lt;dbl&gt;, issue_wday &lt;ord&gt;
+```
+
+
+---
+
+## Ticket Frequency 
+
+
+```r
+nyc %&gt;% 
+  count(issue_date) %&gt;% 
+  ggplot(aes(x=issue_date, y=n)) + 
+    geom_line()+
+    xlim(mdy("7/1/2021"), mdy("2/28/2022"))
+```
+
+&lt;img src="imgs/nyc_date_freq.png" width="80%" style="display: block; margin: auto;" /&gt;
+
+---
+
+## Demos
+
+Some dplyr practice,
+
+1. Create a plot of the weekly pattern (tickets issued per day of the week) - When are you most likely to get a ticket and when are you least likely to get a ticket?
+
+2. Which precinct issued the most tickets to Toyotas?
+
+---
+class: center, middle
+
+## Arrow
+
+---
+
+## Apache Arrow
+
+&gt; Apache Arrow is a software development platform for building high performance applications that process and transport large data sets. It is designed to both improve the performance of analytical algorithms and the efficiency of moving data from one system or programming language to another.
+&gt;
+&gt; A critical component of Apache Arrow is its in-memory columnar format, a standardized, language-agnostic specification for representing structured, table-like datasets in-memory. This data format has a rich data type system (included nested and user-defined data types) designed to support the needs of analytic database systems, data frame libraries, and more.
+
+&lt;img src="imgs/arrow_cols.png" width="40%" style="display: block; margin: auto;" /&gt;
+
+---
+
+## Language support
+
+.pull-left-narrow[
+Core implementations in:
+
+* C
+* C++
+* C#
+* go
+* Java
+* JavaScript
+* Julia
+* Rust
+* MATLAB
+* Python
+* R
+* Ruby
+]
+
+.pull-right-wide[
+&lt;img src="imgs/arrow_memory.png" width="80%" style="display: block; margin: auto;" /&gt;
+]
+
+---
+
+## Arrow + CSV
+
+
+```r
+system.time({
+  nyc_arrow_df = arrow::read_csv_arrow(
+    "data/Parking_Violations_Issued_-_Fiscal_Year_2022.csv"
+  )
+})
+
+##   user  system elapsed 
+##  9.331  19.270  11.000 
+```
+
+--
+
+
+```r
+system.time({
+  nyc_arrow = arrow::read_csv_arrow(
+    "data/Parking_Violations_Issued_-_Fiscal_Year_2022.csv",
+    as_data_frame = FALSE
+  )
+})
+
+##   user  system elapsed 
+##  8.860  12.826   7.174 
+```
+
+---
+
+## Arrow tables
+
+
+```r
+nyc_arrow
+## Table
+## 9980449 rows x 43 columns
+## $Summons Number &lt;int64&gt;
+## $Plate ID &lt;string&gt;
+## $Registration State &lt;string&gt;
+## $Plate Type &lt;string&gt;
+## $Issue Date &lt;string&gt;
+## $Violation Code &lt;int64&gt;
+## $Vehicle Body Type &lt;string&gt;
+## $Vehicle Make &lt;string&gt;
+## $Issuing Agency &lt;string&gt;
+## $Street Code1 &lt;int64&gt;
+## $Street Code2 &lt;int64&gt;
+## $Street Code3 &lt;int64&gt;
+## $Vehicle Expiration Date &lt;int64&gt;
+## $Violation Location &lt;int64&gt;
+## $Violation Precinct &lt;int64&gt;
+## $Issuer Precinct &lt;int64&gt;
+## $Issuer Code &lt;int64&gt;
+## $Issuer Command &lt;string&gt;
+## $Issuer Squad &lt;string&gt;
+## $Violation Time &lt;string&gt;
+## $Time First Observed &lt;string&gt;
+## $Violation County &lt;string&gt;
+## $Violation In Front Of Or Opposite &lt;string&gt;
+## $House Number &lt;string&gt;
+## $Street Name &lt;string&gt;
+## $Intersecting Street &lt;string&gt;
+## $Date First Observed &lt;int64&gt;
+## $Law Section &lt;int64&gt;
+## $Sub Division &lt;string&gt;
+## $Violation Legal Code &lt;string&gt;
+## $Days Parking In Effect     &lt;string&gt;
+## $From Hours In Effect &lt;string&gt;
+## $To Hours In Effect &lt;string&gt;
+## $Vehicle Color &lt;string&gt;
+## $Unregistered Vehicle? &lt;int64&gt;
+## $Vehicle Year &lt;int64&gt;
+## $Meter Number &lt;string&gt;
+## $Feet From Curb &lt;int64&gt;
+## $Violation Post Code &lt;string&gt;
+## $Violation Description &lt;string&gt;
+## $No Standing or Stopping Violation &lt;null&gt;
+## $Hydrant Violation &lt;null&gt;
+## $Double Parking Violation &lt;null&gt;
+```
+
+---
+class: center, middle
+
+## An aside on tabular file formats
+
+---
+
+## Comma Separated Values
+
+This and other text &amp; delimiter based file formats are the most common and generally considered the most portable, however they have a number of significant draw backs
+
+* no explicit schema or other metadata
+
+* column types must be inferred from the data
+
+* numerical values stored as text (efficiency and precision issues)
+
+* limited compression options
+
+---
+
+## (Apache) Parquet
+
+&gt; ... provides a standardized open-source columnar storage format for use in data analysis systems. It was created originally for use in Apache Hadoop with systems like Apache Drill, Apache Hive, Apache Impala, and Apache Spark adopting it as a shared standard for high performance data IO.
+
+
+Core features:
+&gt; The values in each column are physically stored in contiguous memory locations and this columnar storage provides the following benefits:
+&gt;
+&gt; * Column-wise compression is efficient and saves storage space
+&gt; * Compression techniques specific to a type can be applied as the column values tend to be of the same type
+&gt; * Queries that fetch specific column values need not read the entire row data thus improving performance
+&gt; * Different encoding techniques can be applied to different columns
+
+
+---
+
+## Feather
+
+&gt; ... is a portable file format for storing Arrow tables or data frames (from languages like Python or R) that utilizes the Arrow IPC format internally. Feather was created early in the Arrow project as a proof of concept for fast, language-agnostic data frame storage for Python (pandas) and R.
+
+Core features:
+* Direct columnar serialization of Arrow tables
+
+* Supports all Arrow data types and compression
+
+* Language agnostic
+
+* Metadata makes it possible to read only the necessary columns for an operation
+
+---
+
+## File sizes
+
+
+```r
+fs::file_size(
+  "data/Parking_Violations_Issued_-_Fiscal_Year_2022.csv"
+)
+```
+
+```
+## 1.76G
+```
+
+```r
+fs::file_size(
+  "data/Parking_Violations_Issued_-_Fiscal_Year_2022.parquet"
+)
+```
+
+```
+## 295M
+```
+
+```r
+fs::file_size(
+  "data/Parking_Violations_Issued_-_Fiscal_Year_2022.feather"
+)
+```
+
+```
+## 1.04G
+```
+
+---
+
+## Read performance
+
+
+```r
+system.time(
+  arrow::read_csv_arrow(
+    "data/Parking_Violations_Issued_-_Fiscal_Year_2022.csv"
+  )
+)
+##   user  system elapsed 
+##  9.456  18.643  10.660 
+```
+
+--
+
+
+```r
+system.time(
+  arrow::read_parquet(
+    "data/Parking_Violations_Issued_-_Fiscal_Year_2022.parquet"
+  )
+)
+##   user  system elapsed 
+##  4.548   1.545   1.166 
+```
+
+--
+
+
+```r
+system.time(
+  arrow::read_feather(
+    "data/Parking_Violations_Issued_-_Fiscal_Year_2022.feather"
+  )
+)
+##   user  system elapsed 
+##  0.774   1.846   0.975 
+```
+
+---
+
+## Read performance - column subset
+
+
+```r
+system.time(
+  arrow::read_csv_arrow(
+    "data/Parking_Violations_Issued_-_Fiscal_Year_2022.csv",
+    col_select = "Violation Precinct"
+  )
+)
+##   user  system elapsed 
+##  9.457  18.202  10.182 
+```
+
+--
+
+
+```r
+system.time(
+  arrow::read_parquet(
+    "data/Parking_Violations_Issued_-_Fiscal_Year_2022.parquet",
+    col_select = "Violation Precinct"
+  )
+)
+##   user  system elapsed 
+##  0.066   0.011   0.080 
+```
+
+--
+
+
+```r
+system.time(
+  arrow::read_feather(
+    "data/Parking_Violations_Issued_-_Fiscal_Year_2022.feather",
+    col_select = "Violation Precinct"
+  )
+)
+##   user  system elapsed 
+##  0.047   0.044   0.090 
+```
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "solarized-light",
+"highlightLines": true,
+"countIncrementalSlides": false,
+"ratio": "16:9"
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
