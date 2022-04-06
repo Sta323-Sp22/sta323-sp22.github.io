@@ -554,8 +554,9 @@ summary(r)
 
 ---
 
-## Why no `top10_votes`?
+## `top10_votes`
 
+.small[
 ```{r}
 (r = recipe(imdb_rating ~ ., data = office_train) %>% 
   update_role(title, new_role = "ID") %>%
@@ -568,9 +569,11 @@ summary(r)
   step_num2factor(season, levels = as.character(1:9)) %>%
   step_dummy(all_nominal_predictors()) %>%
   step_percentile(total_votes) %>%
-  step_mutate(top10 = as.integer(total_votes >= 0.9))
+  step_mutate(top10 = as.integer(total_votes >= 0.9)) %>%
+  step_rm(total_votes)
 )
 ```
+]
 
 ---
 
@@ -615,6 +618,9 @@ r = recipe(imdb_rating ~ ., data = office_train) %>%
   ) %>%
   step_num2factor(season, levels = as.character(1:9)) %>%
   step_dummy(all_nominal_predictors()) %>%
+  step_percentile(total_votes) %>%
+  step_mutate(top10 = as.integer(total_votes >= 0.9)) %>%
+  step_rm(total_votes) %>%
   step_zv(all_predictors())
 
 prep(r) %>%

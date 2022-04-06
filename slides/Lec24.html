@@ -61,7 +61,7 @@ library(tidymodels)
 ## x rsample::populate() masks Rcpp::populate()
 ## x yardstick::spec()   masks readr::spec()
 ## x recipes::step()     masks stats::step()
-## • Dig deeper into tidy modeling with R at https://www.tmwr.org
+## • Learn how to get started at https://www.tidymodels.org/start/
 ```
 
 ---
@@ -1078,8 +1078,9 @@ summary(r)
 
 ---
 
-## Why no `top10_votes`?
+## `top10_votes`
 
+.small[
 
 ```r
 (r = recipe(imdb_rating ~ ., data = office_train) %&gt;% 
@@ -1093,7 +1094,8 @@ summary(r)
   step_num2factor(season, levels = as.character(1:9)) %&gt;%
   step_dummy(all_nominal_predictors()) %&gt;%
   step_percentile(total_votes) %&gt;%
-  step_mutate(top10 = as.integer(total_votes &gt;= 0.9))
+  step_mutate(top10 = as.integer(total_votes &gt;= 0.9)) %&gt;%
+  step_rm(total_votes)
 )
 ```
 
@@ -1115,7 +1117,9 @@ summary(r)
 ## Dummy variables from all_nominal_predictors()
 ## Percentile transformation on &lt;none&gt;
 ## Variable mutation for as.integer(total_votes &gt;= 0.9)
+## Variables removed total_votes
 ```
+]
 
 ---
 
@@ -1146,6 +1150,7 @@ prep(r)
 ## Dummy variables from season, air_date_dow, air_date_month [trained]
 ## Percentile transformation on ~total_votes [trained]
 ## Variable mutation for ~as.integer(total_votes &gt;= 0.9) [trained]
+## Variables removed total_votes [trained]
 ```
 
 ---
@@ -1159,26 +1164,26 @@ prep(r) %&gt;%
 ```
 
 ```
-## # A tibble: 150 × 34
-##    episode title          total_votes imdb_rating air_date_USThan… air_date_USChri… air_date_USNewY…
-##      &lt;dbl&gt; &lt;fct&gt;                &lt;dbl&gt;       &lt;dbl&gt;            &lt;dbl&gt;            &lt;dbl&gt;            &lt;dbl&gt;
-##  1      18 Last Day in F…      0.0380         7.8                0                0                0
-##  2      14 Vandalism           0.0151         7.6                0                0                0
-##  3       8 Performance R…      0.781          8.2                0                0                0
-##  4       5 Here Comes Tr…      0.128          7.1                0                0                0
-##  5      22 Beach Games         0.892          9.1                0                0                0
-##  6       1 Nepotism            0.470          8.4                0                0                0
-##  7      15 Phyllis' Wedd…      0.662          8.3                0                0                0
-##  8      21 Livin' the Dr…      0.560          8.9                0                0                0
-##  9      18 Promos              0.0603         8                  0                0                0
-## 10      12 Pool Party          0.22           8                  0                0                0
-## # … with 140 more rows, and 27 more variables: air_date_USIndependenceDay &lt;dbl&gt;, season_X2 &lt;dbl&gt;,
-## #   season_X3 &lt;dbl&gt;, season_X4 &lt;dbl&gt;, season_X5 &lt;dbl&gt;, season_X6 &lt;dbl&gt;, season_X7 &lt;dbl&gt;,
-## #   season_X8 &lt;dbl&gt;, season_X9 &lt;dbl&gt;, air_date_dow_Mon &lt;dbl&gt;, air_date_dow_Tue &lt;dbl&gt;,
-## #   air_date_dow_Wed &lt;dbl&gt;, air_date_dow_Thu &lt;dbl&gt;, air_date_dow_Fri &lt;dbl&gt;, air_date_dow_Sat &lt;dbl&gt;,
-## #   air_date_month_Feb &lt;dbl&gt;, air_date_month_Mar &lt;dbl&gt;, air_date_month_Apr &lt;dbl&gt;,
-## #   air_date_month_May &lt;dbl&gt;, air_date_month_Jun &lt;dbl&gt;, air_date_month_Jul &lt;dbl&gt;,
-## #   air_date_month_Aug &lt;dbl&gt;, air_date_month_Sep &lt;dbl&gt;, air_date_month_Oct &lt;dbl&gt;, …
+## # A tibble: 150 × 33
+##    episode title     imdb_rating air_date_USThan… air_date_USChri… air_date_USNewY… air_date_USInde…
+##      &lt;dbl&gt; &lt;fct&gt;           &lt;dbl&gt;            &lt;dbl&gt;            &lt;dbl&gt;            &lt;dbl&gt;            &lt;dbl&gt;
+##  1      18 Last Day…         7.8                0                0                0                0
+##  2      14 Vandalism         7.6                0                0                0                0
+##  3       8 Performa…         8.2                0                0                0                0
+##  4       5 Here Com…         7.1                0                0                0                0
+##  5      22 Beach Ga…         9.1                0                0                0                0
+##  6       1 Nepotism          8.4                0                0                0                0
+##  7      15 Phyllis'…         8.3                0                0                0                0
+##  8      21 Livin' t…         8.9                0                0                0                0
+##  9      18 Promos            8                  0                0                0                0
+## 10      12 Pool Par…         8                  0                0                0                0
+## # … with 140 more rows, and 26 more variables: season_X2 &lt;dbl&gt;, season_X3 &lt;dbl&gt;, season_X4 &lt;dbl&gt;,
+## #   season_X5 &lt;dbl&gt;, season_X6 &lt;dbl&gt;, season_X7 &lt;dbl&gt;, season_X8 &lt;dbl&gt;, season_X9 &lt;dbl&gt;,
+## #   air_date_dow_Mon &lt;dbl&gt;, air_date_dow_Tue &lt;dbl&gt;, air_date_dow_Wed &lt;dbl&gt;, air_date_dow_Thu &lt;dbl&gt;,
+## #   air_date_dow_Fri &lt;dbl&gt;, air_date_dow_Sat &lt;dbl&gt;, air_date_month_Feb &lt;dbl&gt;,
+## #   air_date_month_Mar &lt;dbl&gt;, air_date_month_Apr &lt;dbl&gt;, air_date_month_May &lt;dbl&gt;,
+## #   air_date_month_Jun &lt;dbl&gt;, air_date_month_Jul &lt;dbl&gt;, air_date_month_Aug &lt;dbl&gt;,
+## #   air_date_month_Sep &lt;dbl&gt;, air_date_month_Oct &lt;dbl&gt;, air_date_month_Nov &lt;dbl&gt;, …
 ```
 
 ---
@@ -1193,30 +1198,28 @@ prep(r) %&gt;%
 ```
 
 ```
-##                    episode                      title                total_votes 
-##                         26                        150                        142 
-##                imdb_rating air_date_USThanksgivingDay    air_date_USChristmasDay 
-##                         26                          1                          1 
-##     air_date_USNewYearsDay air_date_USIndependenceDay                  season_X2 
-##                          1                          1                          2 
-##                  season_X3                  season_X4                  season_X5 
-##                          2                          2                          2 
-##                  season_X6                  season_X7                  season_X8 
-##                          2                          2                          2 
-##                  season_X9           air_date_dow_Mon           air_date_dow_Tue 
-##                          2                          1                          2 
-##           air_date_dow_Wed           air_date_dow_Thu           air_date_dow_Fri 
-##                          1                          2                          1 
-##           air_date_dow_Sat         air_date_month_Feb         air_date_month_Mar 
+##                    episode                      title                imdb_rating 
+##                         26                        150                         26 
+## air_date_USThanksgivingDay    air_date_USChristmasDay     air_date_USNewYearsDay 
+##                          1                          1                          1 
+## air_date_USIndependenceDay                  season_X2                  season_X3 
 ##                          1                          2                          2 
-##         air_date_month_Apr         air_date_month_May         air_date_month_Jun 
-##                          2                          2                          1 
-##         air_date_month_Jul         air_date_month_Aug         air_date_month_Sep 
-##                          1                          1                          2 
-##         air_date_month_Oct         air_date_month_Nov         air_date_month_Dec 
+##                  season_X4                  season_X5                  season_X6 
 ##                          2                          2                          2 
-##                      top10 
-##                          2
+##                  season_X7                  season_X8                  season_X9 
+##                          2                          2                          2 
+##           air_date_dow_Mon           air_date_dow_Tue           air_date_dow_Wed 
+##                          1                          2                          1 
+##           air_date_dow_Thu           air_date_dow_Fri           air_date_dow_Sat 
+##                          2                          1                          1 
+##         air_date_month_Feb         air_date_month_Mar         air_date_month_Apr 
+##                          2                          2                          2 
+##         air_date_month_May         air_date_month_Jun         air_date_month_Jul 
+##                          2                          1                          1 
+##         air_date_month_Aug         air_date_month_Sep         air_date_month_Oct 
+##                          1                          2                          2 
+##         air_date_month_Nov         air_date_month_Dec                      top10 
+##                          2                          2                          2
 ```
 
 ---
@@ -1236,6 +1239,9 @@ r = recipe(imdb_rating ~ ., data = office_train) %&gt;%
   ) %&gt;%
   step_num2factor(season, levels = as.character(1:9)) %&gt;%
   step_dummy(all_nominal_predictors()) %&gt;%
+  step_percentile(total_votes) %&gt;%
+  step_mutate(top10 = as.integer(total_votes &gt;= 0.9)) %&gt;%
+  step_rm(total_votes) %&gt;%
   step_zv(all_predictors())
 
 prep(r) %&gt;%
@@ -1244,23 +1250,22 @@ prep(r) %&gt;%
 
 ```
 ## # A tibble: 150 × 22
-##    episode title total_votes imdb_rating season_X2 season_X3 season_X4 season_X5 season_X6 season_X7
-##      &lt;dbl&gt; &lt;fct&gt;       &lt;dbl&gt;       &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;
-##  1      18 Last…        1429         7.8         0         0         0         0         0         0
-##  2      14 Vand…        1402         7.6         0         0         0         0         0         0
-##  3       8 Perf…        2416         8.2         1         0         0         0         0         0
-##  4       5 Here…        1515         7.1         0         0         0         0         0         0
-##  5      22 Beac…        2783         9.1         0         1         0         0         0         0
-##  6       1 Nepo…        1897         8.4         0         0         0         0         0         1
-##  7      15 Phyl…        2283         8.3         0         1         0         0         0         0
-##  8      21 Livi…        2041         8.9         0         0         0         0         0         0
-##  9      18 Prom…        1445         8           0         0         0         0         0         0
-## 10      12 Pool…        1612         8           0         0         0         0         0         0
-## # … with 140 more rows, and 12 more variables: season_X8 &lt;dbl&gt;, season_X9 &lt;dbl&gt;,
-## #   air_date_dow_Tue &lt;dbl&gt;, air_date_dow_Thu &lt;dbl&gt;, air_date_month_Feb &lt;dbl&gt;,
-## #   air_date_month_Mar &lt;dbl&gt;, air_date_month_Apr &lt;dbl&gt;, air_date_month_May &lt;dbl&gt;,
-## #   air_date_month_Sep &lt;dbl&gt;, air_date_month_Oct &lt;dbl&gt;, air_date_month_Nov &lt;dbl&gt;,
-## #   air_date_month_Dec &lt;dbl&gt;
+##    episode title   imdb_rating season_X2 season_X3 season_X4 season_X5 season_X6 season_X7 season_X8
+##      &lt;dbl&gt; &lt;fct&gt;         &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;
+##  1      18 Last D…         7.8         0         0         0         0         0         0         1
+##  2      14 Vandal…         7.6         0         0         0         0         0         0         0
+##  3       8 Perfor…         8.2         1         0         0         0         0         0         0
+##  4       5 Here C…         7.1         0         0         0         0         0         0         0
+##  5      22 Beach …         9.1         0         1         0         0         0         0         0
+##  6       1 Nepoti…         8.4         0         0         0         0         0         1         0
+##  7      15 Phylli…         8.3         0         1         0         0         0         0         0
+##  8      21 Livin'…         8.9         0         0         0         0         0         0         0
+##  9      18 Promos          8           0         0         0         0         0         0         0
+## 10      12 Pool P…         8           0         0         0         0         0         0         1
+## # … with 140 more rows, and 12 more variables: season_X9 &lt;dbl&gt;, air_date_dow_Tue &lt;dbl&gt;,
+## #   air_date_dow_Thu &lt;dbl&gt;, air_date_month_Feb &lt;dbl&gt;, air_date_month_Mar &lt;dbl&gt;,
+## #   air_date_month_Apr &lt;dbl&gt;, air_date_month_May &lt;dbl&gt;, air_date_month_Sep &lt;dbl&gt;,
+## #   air_date_month_Oct &lt;dbl&gt;, air_date_month_Nov &lt;dbl&gt;, air_date_month_Dec &lt;dbl&gt;, top10 &lt;int&gt;
 ```
 ]
 
@@ -1289,12 +1294,15 @@ background-size: 15%
 ## Model: linear_reg()
 ## 
 ## ── Preprocessor ────────────────────────────────────────────────────────────────────────────────────
-## 5 Recipe Steps
+## 8 Recipe Steps
 ## 
 ## • step_date()
 ## • step_holiday()
 ## • step_num2factor()
 ## • step_dummy()
+## • step_percentile()
+## • step_mutate()
+## • step_rm()
 ## • step_zv()
 ## 
 ## ── Model ───────────────────────────────────────────────────────────────────────────────────────────
@@ -1325,12 +1333,15 @@ background-size: 15%
 ## Model: linear_reg()
 ## 
 ## ── Preprocessor ────────────────────────────────────────────────────────────────────────────────────
-## 5 Recipe Steps
+## 8 Recipe Steps
 ## 
 ## • step_date()
 ## • step_holiday()
 ## • step_num2factor()
 ## • step_dummy()
+## • step_percentile()
+## • step_mutate()
+## • step_rm()
 ## • step_zv()
 ## 
 ## ── Model ───────────────────────────────────────────────────────────────────────────────────────────
@@ -1339,16 +1350,16 @@ background-size: 15%
 ## stats::lm(formula = ..y ~ ., data = data)
 ## 
 ## Coefficients:
-##        (Intercept)             episode         total_votes           season_X2           season_X3  
-##          6.2557856          -0.0081872           0.0003838           0.8389817           1.1277917  
-##          season_X4           season_X5           season_X6           season_X7           season_X8  
-##          1.1519446           1.1767757           1.0899544           1.0671645           0.5024513  
-##          season_X9    air_date_dow_Tue    air_date_dow_Thu  air_date_month_Feb  air_date_month_Mar  
-##          0.6981099           0.4945405           0.3699592          -0.0089843          -0.0194673  
-## air_date_month_Apr  air_date_month_May  air_date_month_Sep  air_date_month_Oct  air_date_month_Nov  
-##          0.0895888           0.2105803          -0.0776988          -0.2059183          -0.1895729  
-## air_date_month_Dec  
-##          0.1941478
+##        (Intercept)             episode           season_X2           season_X3           season_X4  
+##           7.342550            0.007041            1.216204            1.411946            1.433737  
+##          season_X5           season_X6           season_X7           season_X8           season_X9  
+##           1.353140            1.150998            1.218278            0.526168            0.789066  
+##   air_date_dow_Tue    air_date_dow_Thu  air_date_month_Feb  air_date_month_Mar  air_date_month_Apr  
+##          -0.286676           -0.362900           -0.077280           -0.048725            0.015377  
+## air_date_month_May  air_date_month_Sep  air_date_month_Oct  air_date_month_Nov  air_date_month_Dec  
+##           0.144080            0.092809           -0.047704           -0.077198            0.306999  
+##              top10  
+##           0.890058
 ```
 ]
 
@@ -1369,7 +1380,7 @@ office_fit %&gt;%
 ## # A tibble: 1 × 3
 ##   .metric .estimator .estimate
 ##   &lt;chr&gt;   &lt;chr&gt;          &lt;dbl&gt;
-## 1 rmse    standard       0.305
+## 1 rmse    standard       0.342
 ```
 ]
 
@@ -1385,7 +1396,7 @@ office_fit %&gt;%
 ## # A tibble: 1 × 3
 ##   .metric .estimator .estimate
 ##   &lt;chr&gt;   &lt;chr&gt;          &lt;dbl&gt;
-## 1 rmse    standard       0.423
+## 1 rmse    standard       0.399
 ```
 ]
 
@@ -1462,8 +1473,8 @@ tune::collect_metrics(office_fit_folds)
 ## # A tibble: 2 × 6
 ##   .metric .estimator  mean     n std_err .config             
 ##   &lt;chr&gt;   &lt;chr&gt;      &lt;dbl&gt; &lt;int&gt;   &lt;dbl&gt; &lt;chr&gt;               
-## 1 rmse    standard   0.421     5  0.0511 Preprocessor1_Model1
-## 2 rsq     standard   0.550     5  0.0663 Preprocessor1_Model1
+## 1 rmse    standard   0.420     5  0.0182 Preprocessor1_Model1
+## 2 rsq     standard   0.429     5  0.0597 Preprocessor1_Model1
 ```
 
 --
@@ -1478,11 +1489,11 @@ tune::collect_metrics(office_fit_folds, summarize = FALSE) %&gt;%
 ## # A tibble: 5 × 5
 ##   id    .metric .estimator .estimate .config             
 ##   &lt;chr&gt; &lt;chr&gt;   &lt;chr&gt;          &lt;dbl&gt; &lt;chr&gt;               
-## 1 Fold1 rmse    standard       0.618 Preprocessor1_Model1
-## 2 Fold2 rmse    standard       0.382 Preprocessor1_Model1
-## 3 Fold3 rmse    standard       0.321 Preprocessor1_Model1
-## 4 Fold4 rmse    standard       0.410 Preprocessor1_Model1
-## 5 Fold5 rmse    standard       0.377 Preprocessor1_Model1
+## 1 Fold1 rmse    standard       0.467 Preprocessor1_Model1
+## 2 Fold2 rmse    standard       0.403 Preprocessor1_Model1
+## 3 Fold3 rmse    standard       0.405 Preprocessor1_Model1
+## 4 Fold4 rmse    standard       0.454 Preprocessor1_Model1
+## 5 Fold5 rmse    standard       0.368 Preprocessor1_Model1
 ```
 .footnote[
 More on the `tune` package next time
