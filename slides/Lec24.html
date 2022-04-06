@@ -1,0 +1,1614 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Lec 24 - Tidymodels</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Sta 323 | Spring 2022" />
+    <script src="libs/header-attrs/header-attrs.js"></script>
+    <link href="libs/font-awesome/css/all.css" rel="stylesheet" />
+    <link href="libs/font-awesome/css/v4-shims.css" rel="stylesheet" />
+    <link rel="stylesheet" href="slides.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Lec 24 - Tidymodels
+## <br/> Statistical Programming
+### Sta 323 | Spring 2022
+### <br/> Dr. Colin Rundel
+
+---
+
+exclude: true
+
+
+
+
+---
+background-image: url(imgs/hex_tidymodels.png)
+background-position: center
+background-size: contain
+
+---
+
+## Tidymodels
+
+
+```r
+library(tidymodels)
+```
+
+```
+## ── Attaching packages ────────────────── tidymodels 0.2.0 ──
+```
+
+```
+## ✓ broom        0.7.12     ✓ rsample      0.1.1 
+## ✓ dials        0.1.0      ✓ tune         0.2.0 
+## ✓ infer        1.0.0      ✓ workflows    0.2.6 
+## ✓ modeldata    0.1.1      ✓ workflowsets 0.2.1 
+## ✓ parsnip      0.2.1      ✓ yardstick    0.0.9 
+## ✓ recipes      0.2.0
+```
+
+```
+## ── Conflicts ───────────────────── tidymodels_conflicts() ──
+## x scales::discard()   masks purrr::discard()
+## x dplyr::filter()     masks stats::filter()
+## x recipes::fixed()    masks stringr::fixed()
+## x dplyr::lag()        masks stats::lag()
+## x rsample::populate() masks Rcpp::populate()
+## x yardstick::spec()   masks readr::spec()
+## x recipes::step()     masks stats::step()
+## • Dig deeper into tidy modeling with R at https://www.tmwr.org
+```
+
+---
+
+## Book data
+
+.pull-left[
+
+```r
+(books = DAAG::allbacks %&gt;%
+  as_tibble() %&gt;%
+  select(-area) %&gt;%
+  mutate(
+    cover = forcats::fct_recode(
+      cover, 
+      "hardback" = "hb", 
+      "paperback" = "pb"
+    )
+  )
+)
+```
+
+```
+## # A tibble: 15 × 3
+##    volume weight cover    
+##     &lt;dbl&gt;  &lt;dbl&gt; &lt;fct&gt;    
+##  1    885    800 hardback 
+##  2   1016    950 hardback 
+##  3   1125   1050 hardback 
+##  4    239    350 hardback 
+##  5    701    750 hardback 
+##  6    641    600 hardback 
+##  7   1228   1075 hardback 
+##  8    412    250 paperback
+##  9    953    700 paperback
+## 10    929    650 paperback
+## 11   1492    975 paperback
+## 12    419    350 paperback
+## 13   1010    950 paperback
+## 14    595    425 paperback
+## 15   1034    725 paperback
+```
+]
+
+--
+
+.pull-right[
+
+```r
+ggplot(books, aes(x=volume, y=weight, color = cover)) +
+  geom_point(size=2)
+```
+
+&lt;img src="Lec24_files/figure-html/unnamed-chunk-4-1.png" width="100%" style="display: block; margin: auto;" /&gt;
+]
+
+---
+
+## Building a tidymodel
+
+
+```r
+linear_reg()
+```
+
+```
+## Linear Regression Model Specification (regression)
+## 
+## Computational engine: lm
+```
+
+---
+
+## Building a tidymodel
+
+
+```r
+linear_reg() %&gt;%
+  set_engine("lm")
+```
+
+```
+## Linear Regression Model Specification (regression)
+## 
+## Computational engine: lm
+```
+
+---
+
+## Building a tidymodel
+
+.pull-left[
+
+```r
+linear_reg() %&gt;%
+  set_engine("lm") %&gt;%
+  fit(weight ~ volume * cover, data = books)
+```
+
+```
+## parsnip model object
+## 
+## 
+## Call:
+## stats::lm(formula = weight ~ volume * cover, data = data)
+## 
+## Coefficients:
+##           (Intercept)                 volume  
+##             161.58654                0.76159  
+##        coverpaperback  volume:coverpaperback  
+##            -120.21407               -0.07573
+```
+]
+
+--
+
+.pull-right[
+
+```r
+lm(weight ~ volume * cover, data = books)
+```
+
+```
+## 
+## Call:
+## lm(formula = weight ~ volume * cover, data = books)
+## 
+## Coefficients:
+##           (Intercept)                 volume  
+##             161.58654                0.76159  
+##        coverpaperback  volume:coverpaperback  
+##            -120.21407               -0.07573
+```
+]
+
+---
+background-image: url("imgs/hex_broom.png")
+background-position: 98% 2%
+background-size: 15%
+
+## Tidy model objects
+
+.pull-left[ .small[
+
+```r
+summary(lm(weight ~ volume * cover, data = books))
+```
+
+```
+## 
+## Call:
+## lm(formula = weight ~ volume * cover, data = books)
+## 
+## Residuals:
+##    Min     1Q Median     3Q    Max 
+## -89.67 -32.07 -21.82  17.94 215.91 
+## 
+## Coefficients:
+##                         Estimate Std. Error t value
+## (Intercept)            161.58654   86.51918   1.868
+## volume                   0.76159    0.09718   7.837
+## coverpaperback        -120.21407  115.65899  -1.039
+## volume:coverpaperback   -0.07573    0.12802  -0.592
+##                       Pr(&gt;|t|)    
+## (Intercept)             0.0887 .  
+## volume                7.94e-06 ***
+## coverpaperback          0.3209    
+## volume:coverpaperback   0.5661    
+## ---
+## Signif. codes:  
+## 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 80.41 on 11 degrees of freedom
+## Multiple R-squared:  0.9297,	Adjusted R-squared:  0.9105 
+## F-statistic:  48.5 on 3 and 11 DF,  p-value: 1.245e-06
+```
+] ]
+
+--
+
+.pull-right[
+&lt;br/&gt;
+&lt;br/&gt;
+&lt;br/&gt;
+&lt;br/&gt;
+
+.small[
+
+
+```r
+lm_tm = linear_reg() %&gt;%
+  set_engine("lm") %&gt;%
+  fit(weight ~ volume * cover, data = books)
+```
+
+
+```r
+summary(lm_tm)
+```
+
+```
+##         Length Class      Mode
+## lvl      0     -none-     NULL
+## spec     5     linear_reg list
+## fit     13     lm         list
+## preproc  1     -none-     list
+## elapsed  1     -none-     list
+```
+
+
+```r
+broom::tidy(lm_tm)
+```
+
+```
+## # A tibble: 4 × 5
+##   term                  estimate std.error statistic p.value
+##   &lt;chr&gt;                    &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;   &lt;dbl&gt;
+## 1 (Intercept)            1.62e+2   86.5        1.87  8.87e-2
+## 2 volume                 7.62e-1    0.0972     7.84  7.94e-6
+## 3 coverpaperback        -1.20e+2  116.        -1.04  3.21e-1
+## 4 volume:coverpaperback -7.57e-2    0.128     -0.592 5.66e-1
+```
+]
+]
+
+---
+
+## Tidy model statistics
+
+
+```r
+broom::glance(lm(weight ~ volume * cover, data = books))
+```
+
+```
+## # A tibble: 1 × 12
+##   r.squared adj.r.squared sigma statistic    p.value    df
+##       &lt;dbl&gt;         &lt;dbl&gt; &lt;dbl&gt;     &lt;dbl&gt;      &lt;dbl&gt; &lt;dbl&gt;
+## 1     0.930         0.911  80.4      48.5 0.00000124     3
+## # … with 6 more variables: logLik &lt;dbl&gt;, AIC &lt;dbl&gt;,
+## #   BIC &lt;dbl&gt;, deviance &lt;dbl&gt;, df.residual &lt;int&gt;,
+## #   nobs &lt;int&gt;
+```
+
+
+```r
+broom::glance(lm_tm)
+```
+
+```
+## # A tibble: 1 × 12
+##   r.squared adj.r.squared sigma statistic    p.value    df
+##       &lt;dbl&gt;         &lt;dbl&gt; &lt;dbl&gt;     &lt;dbl&gt;      &lt;dbl&gt; &lt;dbl&gt;
+## 1     0.930         0.911  80.4      48.5 0.00000124     3
+## # … with 6 more variables: logLik &lt;dbl&gt;, AIC &lt;dbl&gt;,
+## #   BIC &lt;dbl&gt;, deviance &lt;dbl&gt;, df.residual &lt;int&gt;,
+## #   nobs &lt;int&gt;
+```
+
+---
+
+## Tidy model prediction
+
+
+```r
+broom::augment(lm_tm, new_data = books)
+```
+
+```
+## # A tibble: 15 × 5
+##    volume weight cover     .pred .resid
+##     &lt;dbl&gt;  &lt;dbl&gt; &lt;fct&gt;     &lt;dbl&gt;  &lt;dbl&gt;
+##  1    885    800 hardback   836. -35.6 
+##  2   1016    950 hardback   935.  14.6 
+##  3   1125   1050 hardback  1018.  31.6 
+##  4    239    350 hardback   344.   6.39
+##  5    701    750 hardback   695.  54.5 
+##  6    641    600 hardback   650. -49.8 
+##  7   1228   1075 hardback  1097. -21.8 
+##  8    412    250 paperback  324. -73.9 
+##  9    953    700 paperback  695.   5.00
+## 10    929    650 paperback  679. -28.5 
+## 11   1492    975 paperback 1065. -89.7 
+## 12    419    350 paperback  329.  21.3 
+## 13   1010    950 paperback  734. 216.  
+## 14    595    425 paperback  449. -24.5 
+## 15   1034    725 paperback  751. -25.6
+```
+
+---
+
+## Putting it together
+
+.small[
+
+```r
+lm_tm %&gt;%
+  augment(
+    new_data = tidyr::expand_grid(
+      volume = seq(0, 1500, by=5),
+      cover = c("hardback", "paperback") %&gt;% as.factor()
+    )
+  ) %&gt;%
+  rename(weight = .pred) %&gt;%
+  ggplot(aes(x = volume, y = weight, color = cover, group = cover)) +
+    geom_line() +
+    geom_point(data = books)
+```
+
+&lt;img src="Lec24_files/figure-html/unnamed-chunk-16-1.png" width="80%" style="display: block; margin: auto;" /&gt;
+]
+---
+background-image: url("imgs/hex_parsnip.png")
+background-position: 98% 2%
+background-size: 15%
+
+
+## Why do we care?
+
+.pull-left[ .small[
+
+```r
+show_engines("linear_reg")
+```
+
+```
+## # A tibble: 7 × 2
+##   engine mode      
+##   &lt;chr&gt;  &lt;chr&gt;     
+## 1 lm     regression
+## 2 glm    regression
+## 3 glmnet regression
+## 4 stan   regression
+## 5 spark  regression
+## 6 keras  regression
+## 7 brulee regression
+```
+] ]
+
+.pull-right[
+ 
+]
+
+--
+
+.small[
+
+```r
+(bayes_tm = linear_reg() %&gt;% 
+  set_engine(
+    "stan", 
+    prior_intercept = rstanarm::student_t(df = 1), 
+    prior = rstanarm::student_t(df = 1),
+    seed = 1234
+  ) 
+)
+```
+
+```
+## Linear Regression Model Specification (regression)
+## 
+## Engine-Specific Arguments:
+##   prior_intercept = rstanarm::student_t(df = 1)
+##   prior = rstanarm::student_t(df = 1)
+##   seed = 1234
+## 
+## Computational engine: stan
+```
+]
+
+
+---
+
+## Fitting with `rstanarm`
+
+.small[
+
+```r
+(bayes_tm = bayes_tm %&gt;%
+  fit(weight ~ volume * cover, data = books)
+)
+```
+
+```
+## Warning: There were 32 divergent transitions after warmup. See
+## https://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup
+## to find out why this is a problem and how to eliminate them.
+```
+
+```
+## Warning: Examine the pairs() plot to diagnose sampling problems
+```
+
+```
+## parsnip model object
+## 
+## stan_glm
+##  family:       gaussian [identity]
+##  formula:      weight ~ volume * cover
+##  observations: 15
+##  predictors:   4
+## ------
+##                       Median MAD_SD
+## (Intercept)           98.9   63.5  
+## volume                 0.8    0.1  
+## coverpaperback        -0.3    3.8  
+## volume:coverpaperback -0.2    0.1  
+## 
+## Auxiliary parameter(s):
+##       Median MAD_SD
+## sigma 85.3   18.3  
+## 
+## ------
+## * For help interpreting the printed output see ?print.stanreg
+## * For info on the priors used see ?prior_summary.stanreg
+```
+]
+
+
+.footnote[
+See `?details_linear_reg_stan` for details within `parsnip`
+]
+
+---
+
+## What was actually run?
+
+.small[
+
+```r
+linear_reg() %&gt;% 
+  set_engine(
+    "stan", 
+    prior_intercept = rstanarm::student_t(df = 1), 
+    prior = rstanarm::student_t(df = 1),
+    seed = 1234
+  ) %&gt;%
+  translate()
+```
+
+```
+## Linear Regression Model Specification (regression)
+## 
+## Engine-Specific Arguments:
+##   prior_intercept = rstanarm::student_t(df = 1)
+##   prior = rstanarm::student_t(df = 1)
+##   seed = 1234
+## 
+## Computational engine: stan 
+## 
+## Model fit template:
+## rstanarm::stan_glm(formula = missing_arg(), data = missing_arg(), 
+##     weights = missing_arg(), prior_intercept = rstanarm::student_t(df = 1), 
+##     prior = rstanarm::student_t(df = 1), seed = 1234, family = stats::gaussian, 
+##     refresh = 0)
+```
+]
+
+---
+
+## Back to broom
+
+
+```r
+broom::tidy(bayes_tm)
+```
+
+```
+## Error in warn_on_stanreg(x): The supplied model object seems to be outputted from the rstanarm package. Tidiers for mixed model output now live in the broom.mixed package.
+```
+
+--
+
+
+```r
+broom.mixed::tidy(bayes_tm)
+```
+
+```
+## # A tibble: 4 × 3
+##   term                  estimate std.error
+##   &lt;chr&gt;                    &lt;dbl&gt;     &lt;dbl&gt;
+## 1 (Intercept)             98.9     63.5   
+## 2 volume                   0.824    0.0762
+## 3 coverpaperback          -0.285    3.84  
+## 4 volume:coverpaperback   -0.195    0.0523
+```
+
+
+```r
+broom.mixed::glance(bayes_tm)
+```
+
+```
+## # A tibble: 1 × 4
+##   algorithm   pss  nobs sigma
+##   &lt;chr&gt;     &lt;dbl&gt; &lt;int&gt; &lt;dbl&gt;
+## 1 sampling   4000    15  85.3
+```
+
+---
+
+## Augment
+
+
+```r
+augment(bayes_tm, new_data=books)
+```
+
+```
+## # A tibble: 15 × 5
+##    volume weight cover     .pred  .resid
+##     &lt;dbl&gt;  &lt;dbl&gt; &lt;fct&gt;     &lt;dbl&gt;   &lt;dbl&gt;
+##  1    885    800 hardback   828.  -28.4 
+##  2   1016    950 hardback   937.   13.3 
+##  3   1125   1050 hardback  1027.   23.2 
+##  4    239    350 hardback   295.   55.5 
+##  5    701    750 hardback   676.   73.7 
+##  6    641    600 hardback   627.  -26.7 
+##  7   1228   1075 hardback  1112.  -36.9 
+##  8    412    250 paperback  355. -105.  
+##  9    953    700 paperback  697.    3.39
+## 10    929    650 paperback  681.  -31.4 
+## 11   1492    975 paperback 1037.  -62.4 
+## 12    419    350 paperback  359.   -8.99
+## 13   1010    950 paperback  733.  217.  
+## 14    595    425 paperback  470.  -45.3 
+## 15   1034    725 paperback  748.  -22.8
+```
+
+---
+
+## Predictions
+
+.small[
+
+```r
+bayes_tm %&gt;%
+  augment(
+    new_data = tidyr::expand_grid(
+      volume = seq(0, 1500, by=5),
+      cover = c("hardback", "paperback") %&gt;% as.factor()
+    )
+  ) %&gt;%
+  rename(weight = .pred) %&gt;%
+  ggplot(aes(x = volume, y = weight, color = cover, group = cover)) +
+    geom_line() +
+    geom_point(data = books)
+```
+
+&lt;img src="Lec24_files/figure-html/unnamed-chunk-25-1.png" width="80%" style="display: block; margin: auto;" /&gt;
+]
+
+---
+background-image: url("imgs/hex_yardstick.png")
+background-position: 98% 2%
+background-size: 15%
+
+## Performance
+
+.pull-left[
+
+```r
+lm_tm %&gt;%
+  augment(new_data = books) %&gt;%
+  yardstick::rmse(weight, .pred)
+```
+
+```
+## # A tibble: 1 × 3
+##   .metric .estimator .estimate
+##   &lt;chr&gt;   &lt;chr&gt;          &lt;dbl&gt;
+## 1 rmse    standard        68.9
+```
+
+```r
+bayes_tm %&gt;%
+  augment(new_data = books) %&gt;%
+  yardstick::rmse(weight, .pred)
+```
+
+```
+## # A tibble: 1 × 3
+##   .metric .estimator .estimate
+##   &lt;chr&gt;   &lt;chr&gt;          &lt;dbl&gt;
+## 1 rmse    standard        72.0
+```
+]
+
+.pull-right[
+
+]
+
+.footnote[
+More on combining these type of results later, see [`workflows`](https://workflows.tidymodels.org/)
+]
+
+---
+class: middle, center
+
+
+# Cross validation and Feature engineering
+
+---
+
+## The Office &amp; IMDB
+
+
+```r
+(office_ratings = read_csv("data/office_ratings.csv"))
+```
+
+```
+## # A tibble: 188 × 6
+##    season episode title   imdb_rating total_votes air_date  
+##     &lt;dbl&gt;   &lt;dbl&gt; &lt;chr&gt;         &lt;dbl&gt;       &lt;dbl&gt; &lt;date&gt;    
+##  1      1       1 Pilot           7.6        3706 2005-03-24
+##  2      1       2 Divers…         8.3        3566 2005-03-29
+##  3      1       3 Health…         7.9        2983 2005-04-05
+##  4      1       4 The Al…         8.1        2886 2005-04-12
+##  5      1       5 Basket…         8.4        3179 2005-04-19
+##  6      1       6 Hot Gi…         7.8        2852 2005-04-26
+##  7      2       1 The Du…         8.7        3213 2005-09-20
+##  8      2       2 Sexual…         8.2        2736 2005-09-27
+##  9      2       3 Office…         8.4        2742 2005-10-04
+## 10      2       4 The Fi…         8.4        2713 2005-10-11
+## # … with 178 more rows
+```
+
+.footnote[
+These data are from [data.world](https://data.world/anujjain7/the-office-imdb-ratings-dataset), by way of [TidyTuesday](https://github.com/rfordatascience/tidytuesday/blob/master/data/2020/2020-03-17/readme.md).
+]
+
+---
+
+## Rating vs Air Date
+
+&lt;img src="Lec24_files/figure-html/unnamed-chunk-28-1.png" width="80%" style="display: block; margin: auto;" /&gt;
+
+---
+background-image: url("imgs/hex_rsample.png")
+background-position: 98% 2%
+background-size: 15%
+
+## Test-train split
+
+.pull-left[
+
+```r
+set.seed(123)
+(office_split = initial_split(office_ratings, prop = 0.8))
+```
+
+```
+## &lt;Analysis/Assess/Total&gt;
+## &lt;150/38/188&gt;
+```
+]
+
+.pull-right[
+
+]
+
+--
+
+&lt;br/&gt;
+
+&lt;div&gt;
+
+.pull-left[
+
+```r
+(office_train = training(office_split))
+```
+
+```
+## # A tibble: 150 × 6
+##    season episode title   imdb_rating total_votes air_date  
+##     &lt;dbl&gt;   &lt;dbl&gt; &lt;chr&gt;         &lt;dbl&gt;       &lt;dbl&gt; &lt;date&gt;    
+##  1      8      18 Last D…         7.8        1429 2012-03-08
+##  2      9      14 Vandal…         7.6        1402 2013-01-31
+##  3      2       8 Perfor…         8.2        2416 2005-11-15
+##  4      9       5 Here C…         7.1        1515 2012-10-25
+##  5      3      22 Beach …         9.1        2783 2007-05-10
+##  6      7       1 Nepoti…         8.4        1897 2010-09-23
+##  7      3      15 Phylli…         8.3        2283 2007-02-08
+##  8      9      21 Livin'…         8.9        2041 2013-05-02
+##  9      9      18 Promos          8          1445 2013-04-04
+## 10      8      12 Pool P…         8          1612 2012-01-19
+## # … with 140 more rows
+```
+]
+
+.pull-right[
+
+```r
+(office_test = testing(office_split))
+```
+
+```
+## # A tibble: 38 × 6
+##    season episode title   imdb_rating total_votes air_date  
+##     &lt;dbl&gt;   &lt;dbl&gt; &lt;chr&gt;         &lt;dbl&gt;       &lt;dbl&gt; &lt;date&gt;    
+##  1      1       2 Divers…         8.3        3566 2005-03-29
+##  2      2       4 The Fi…         8.4        2713 2005-10-11
+##  3      2       9 E-Mail…         8.4        2527 2005-11-22
+##  4      2      12 The In…         9          3282 2006-01-12
+##  5      2      22 Casino…         9.3        3644 2006-05-11
+##  6      3       5 Initia…         8.2        2254 2006-10-19
+##  7      3      16 Busine…         8.8        2622 2007-02-15
+##  8      3      17 Cockta…         8.5        2264 2007-02-22
+##  9      4       6 Branch…         8.5        2185 2007-11-01
+## 10      4       7 Surviv…         8.3        2110 2007-11-08
+## # … with 28 more rows
+```
+]
+
+&lt;/div&gt;
+
+---
+
+## Feature engineering with dplyr
+
+
+
+
+```r
+office_train %&gt;%
+  mutate(
+    season = as_factor(season),
+    month = lubridate::month(air_date),
+    wday = lubridate::wday(air_date),
+    top10_votes = as.integer(total_votes &gt; quantile(total_votes, 0.9))
+  )
+```
+
+```
+## # A tibble: 150 × 9
+##    season episode title               imdb_rating total_votes air_date   month  wday top10_votes
+##    &lt;fct&gt;    &lt;dbl&gt; &lt;chr&gt;                     &lt;dbl&gt;       &lt;dbl&gt; &lt;date&gt;     &lt;dbl&gt; &lt;dbl&gt;       &lt;int&gt;
+##  1 8           18 Last Day in Florida         7.8        1429 2012-03-08     3     5           0
+##  2 9           14 Vandalism                   7.6        1402 2013-01-31     1     5           0
+##  3 2            8 Performance Review          8.2        2416 2005-11-15    11     3           0
+##  4 9            5 Here Comes Treble           7.1        1515 2012-10-25    10     5           0
+##  5 3           22 Beach Games                 9.1        2783 2007-05-10     5     5           0
+##  6 7            1 Nepotism                    8.4        1897 2010-09-23     9     5           0
+##  7 3           15 Phyllis' Wedding            8.3        2283 2007-02-08     2     5           0
+##  8 9           21 Livin' the Dream            8.9        2041 2013-05-02     5     5           0
+##  9 9           18 Promos                      8          1445 2013-04-04     4     5           0
+## 10 8           12 Pool Party                  8          1612 2012-01-19     1     5           0
+## # … with 140 more rows
+```
+
+--
+
+&lt;br/&gt;
+&lt;br/&gt;
+
+.center[
+Anyone see a potential problem with the code above?
+]
+
+---
+background-image: url("imgs/hex_recipes.png")
+background-position: 98% 2%
+background-size: 15%
+
+## Better living through recipes
+
+.pull-left[
+
+```r
+(r = recipe(imdb_rating ~ ., data = office_train))
+```
+
+```
+## Recipe
+## 
+## Inputs:
+## 
+##       role #variables
+##    outcome          1
+##  predictor          5
+```
+]
+
+.pull-right[
+
+]
+
+--
+
+&lt;div&gt;
+
+.pull-left[
+
+```r
+summary(r)
+```
+
+```
+## # A tibble: 6 × 4
+##   variable    type    role      source  
+##   &lt;chr&gt;       &lt;chr&gt;   &lt;chr&gt;     &lt;chr&gt;   
+## 1 season      numeric predictor original
+## 2 episode     numeric predictor original
+## 3 title       nominal predictor original
+## 4 total_votes numeric predictor original
+## 5 air_date    date    predictor original
+## 6 imdb_rating numeric outcome   original
+```
+]
+
+.pull-right[]
+
+&lt;/div&gt;
+
+---
+
+## Recipe roles
+
+.pull-left[
+
+```r
+(r = recipe(imdb_rating ~ ., data = office_train) %&gt;% 
+  update_role(title, new_role = "ID")
+)
+```
+
+```
+## Recipe
+## 
+## Inputs:
+## 
+##       role #variables
+##         ID          1
+##    outcome          1
+##  predictor          4
+```
+]
+
+.pull-right[
+
+```r
+summary(r)
+```
+
+```
+## # A tibble: 6 × 4
+##   variable    type    role      source  
+##   &lt;chr&gt;       &lt;chr&gt;   &lt;chr&gt;     &lt;chr&gt;   
+## 1 season      numeric predictor original
+## 2 episode     numeric predictor original
+## 3 title       nominal ID        original
+## 4 total_votes numeric predictor original
+## 5 air_date    date    predictor original
+## 6 imdb_rating numeric outcome   original
+```
+]
+
+---
+
+## Adding features (month &amp; day of week)
+
+.pull-left[
+
+```r
+(r = recipe(imdb_rating ~ ., data = office_train) %&gt;% 
+  update_role(title, new_role = "ID") %&gt;%
+  step_date(air_date, features = c("dow", "month"))
+)
+```
+
+```
+## Recipe
+## 
+## Inputs:
+## 
+##       role #variables
+##         ID          1
+##    outcome          1
+##  predictor          4
+## 
+## Operations:
+## 
+## Date features from air_date
+```
+]
+
+.pull-right[
+
+```r
+summary(r)
+```
+
+```
+## # A tibble: 6 × 4
+##   variable    type    role      source  
+##   &lt;chr&gt;       &lt;chr&gt;   &lt;chr&gt;     &lt;chr&gt;   
+## 1 season      numeric predictor original
+## 2 episode     numeric predictor original
+## 3 title       nominal ID        original
+## 4 total_votes numeric predictor original
+## 5 air_date    date    predictor original
+## 6 imdb_rating numeric outcome   original
+```
+]
+
+---
+
+## Adding Holidays
+
+
+```r
+(r = recipe(imdb_rating ~ ., data = office_train) %&gt;% 
+  update_role(title, new_role = "ID") %&gt;%
+  step_date(air_date, features = c("dow", "month")) %&gt;%
+  step_holiday(
+    air_date, 
+    holidays = c("USThanksgivingDay", "USChristmasDay", "USNewYearsDay", "USIndependenceDay"), 
+    keep_original_cols = FALSE
+  )
+)
+```
+
+```
+## Recipe
+## 
+## Inputs:
+## 
+##       role #variables
+##         ID          1
+##    outcome          1
+##  predictor          4
+## 
+## Operations:
+## 
+## Date features from air_date
+## Holiday features from air_date
+```
+
+---
+
+## Seasons as factors
+
+
+```r
+(r = recipe(imdb_rating ~ ., data = office_train) %&gt;% 
+  update_role(title, new_role = "ID") %&gt;%
+  step_date(air_date, features = c("dow", "month")) %&gt;%
+  step_holiday(
+    air_date, 
+    holidays = c("USThanksgivingDay", "USChristmasDay", "USNewYearsDay", "USIndependenceDay"), 
+    keep_original_cols = FALSE
+  ) %&gt;%
+  step_num2factor(season, levels = as.character(1:9))
+)
+```
+
+```
+## Recipe
+## 
+## Inputs:
+## 
+##       role #variables
+##         ID          1
+##    outcome          1
+##  predictor          4
+## 
+## Operations:
+## 
+## Date features from air_date
+## Holiday features from air_date
+## Factor variables from season
+```
+
+---
+
+## Dummy coding
+
+
+```r
+(r = recipe(imdb_rating ~ ., data = office_train) %&gt;% 
+  update_role(title, new_role = "ID") %&gt;%
+  step_date(air_date, features = c("dow", "month")) %&gt;%
+  step_holiday(
+    air_date, 
+    holidays = c("USThanksgivingDay", "USChristmasDay", "USNewYearsDay", "USIndependenceDay"), 
+    keep_original_cols = FALSE
+  ) %&gt;%
+  step_num2factor(season, levels = as.character(1:9)) %&gt;%
+  step_dummy(all_nominal_predictors())
+)
+```
+
+```
+## Recipe
+## 
+## Inputs:
+## 
+##       role #variables
+##         ID          1
+##    outcome          1
+##  predictor          4
+## 
+## Operations:
+## 
+## Date features from air_date
+## Holiday features from air_date
+## Factor variables from season
+## Dummy variables from all_nominal_predictors()
+```
+
+---
+
+## Why no `top10_votes`?
+
+
+```r
+(r = recipe(imdb_rating ~ ., data = office_train) %&gt;% 
+  update_role(title, new_role = "ID") %&gt;%
+  step_date(air_date, features = c("dow", "month")) %&gt;%
+  step_holiday(
+    air_date, 
+    holidays = c("USThanksgivingDay", "USChristmasDay", "USNewYearsDay", "USIndependenceDay"), 
+    keep_original_cols = FALSE
+  ) %&gt;%
+  step_num2factor(season, levels = as.character(1:9)) %&gt;%
+  step_dummy(all_nominal_predictors()) %&gt;%
+  step_percentile(total_votes) %&gt;%
+  step_mutate(top10 = as.integer(total_votes &gt;= 0.9))
+)
+```
+
+```
+## Recipe
+## 
+## Inputs:
+## 
+##       role #variables
+##         ID          1
+##    outcome          1
+##  predictor          4
+## 
+## Operations:
+## 
+## Date features from air_date
+## Holiday features from air_date
+## Factor variables from season
+## Dummy variables from all_nominal_predictors()
+## Percentile transformation on &lt;none&gt;
+## Variable mutation for as.integer(total_votes &gt;= 0.9)
+```
+
+---
+
+## Preparing a recipe
+
+
+```r
+prep(r)
+```
+
+```
+## Recipe
+## 
+## Inputs:
+## 
+##       role #variables
+##         ID          1
+##    outcome          1
+##  predictor          4
+## 
+## Training data contained 150 data points and no missing data.
+## 
+## Operations:
+## 
+## Date features from air_date [trained]
+## Holiday features from air_date [trained]
+## Factor variables from season [trained]
+## Dummy variables from season, air_date_dow, air_date_month [trained]
+## Percentile transformation on ~total_votes [trained]
+## Variable mutation for ~as.integer(total_votes &gt;= 0.9) [trained]
+```
+
+---
+
+## Baking a recipe
+
+
+```r
+prep(r) %&gt;%
+  bake(new_data = office_train)
+```
+
+```
+## # A tibble: 150 × 34
+##    episode title          total_votes imdb_rating air_date_USThan… air_date_USChri… air_date_USNewY…
+##      &lt;dbl&gt; &lt;fct&gt;                &lt;dbl&gt;       &lt;dbl&gt;            &lt;dbl&gt;            &lt;dbl&gt;            &lt;dbl&gt;
+##  1      18 Last Day in F…      0.0380         7.8                0                0                0
+##  2      14 Vandalism           0.0151         7.6                0                0                0
+##  3       8 Performance R…      0.781          8.2                0                0                0
+##  4       5 Here Comes Tr…      0.128          7.1                0                0                0
+##  5      22 Beach Games         0.892          9.1                0                0                0
+##  6       1 Nepotism            0.470          8.4                0                0                0
+##  7      15 Phyllis' Wedd…      0.662          8.3                0                0                0
+##  8      21 Livin' the Dr…      0.560          8.9                0                0                0
+##  9      18 Promos              0.0603         8                  0                0                0
+## 10      12 Pool Party          0.22           8                  0                0                0
+## # … with 140 more rows, and 27 more variables: air_date_USIndependenceDay &lt;dbl&gt;, season_X2 &lt;dbl&gt;,
+## #   season_X3 &lt;dbl&gt;, season_X4 &lt;dbl&gt;, season_X5 &lt;dbl&gt;, season_X6 &lt;dbl&gt;, season_X7 &lt;dbl&gt;,
+## #   season_X8 &lt;dbl&gt;, season_X9 &lt;dbl&gt;, air_date_dow_Mon &lt;dbl&gt;, air_date_dow_Tue &lt;dbl&gt;,
+## #   air_date_dow_Wed &lt;dbl&gt;, air_date_dow_Thu &lt;dbl&gt;, air_date_dow_Fri &lt;dbl&gt;, air_date_dow_Sat &lt;dbl&gt;,
+## #   air_date_month_Feb &lt;dbl&gt;, air_date_month_Mar &lt;dbl&gt;, air_date_month_Apr &lt;dbl&gt;,
+## #   air_date_month_May &lt;dbl&gt;, air_date_month_Jun &lt;dbl&gt;, air_date_month_Jul &lt;dbl&gt;,
+## #   air_date_month_Aug &lt;dbl&gt;, air_date_month_Sep &lt;dbl&gt;, air_date_month_Oct &lt;dbl&gt;, …
+```
+
+---
+
+## Informative features?
+
+
+```r
+prep(r) %&gt;%
+  bake(new_data = office_train) %&gt;%
+  map_int(~ length(unique(.x)))
+```
+
+```
+##                    episode                      title                total_votes 
+##                         26                        150                        142 
+##                imdb_rating air_date_USThanksgivingDay    air_date_USChristmasDay 
+##                         26                          1                          1 
+##     air_date_USNewYearsDay air_date_USIndependenceDay                  season_X2 
+##                          1                          1                          2 
+##                  season_X3                  season_X4                  season_X5 
+##                          2                          2                          2 
+##                  season_X6                  season_X7                  season_X8 
+##                          2                          2                          2 
+##                  season_X9           air_date_dow_Mon           air_date_dow_Tue 
+##                          2                          1                          2 
+##           air_date_dow_Wed           air_date_dow_Thu           air_date_dow_Fri 
+##                          1                          2                          1 
+##           air_date_dow_Sat         air_date_month_Feb         air_date_month_Mar 
+##                          1                          2                          2 
+##         air_date_month_Apr         air_date_month_May         air_date_month_Jun 
+##                          2                          2                          1 
+##         air_date_month_Jul         air_date_month_Aug         air_date_month_Sep 
+##                          1                          1                          2 
+##         air_date_month_Oct         air_date_month_Nov         air_date_month_Dec 
+##                          2                          2                          2 
+##                      top10 
+##                          2
+```
+
+---
+
+## Removing zero variance predictors
+
+.small[
+
+```r
+r = recipe(imdb_rating ~ ., data = office_train) %&gt;% 
+  update_role(title, new_role = "ID") %&gt;%
+  step_date(air_date, features = c("dow", "month")) %&gt;%
+  step_holiday(
+    air_date, 
+    holidays = c("USThanksgivingDay", "USChristmasDay", "USNewYearsDay", "USIndependenceDay"), 
+    keep_original_cols = FALSE
+  ) %&gt;%
+  step_num2factor(season, levels = as.character(1:9)) %&gt;%
+  step_dummy(all_nominal_predictors()) %&gt;%
+  step_zv(all_predictors())
+
+prep(r) %&gt;%
+  bake(new_data = office_train)
+```
+
+```
+## # A tibble: 150 × 22
+##    episode title total_votes imdb_rating season_X2 season_X3 season_X4 season_X5 season_X6 season_X7
+##      &lt;dbl&gt; &lt;fct&gt;       &lt;dbl&gt;       &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;
+##  1      18 Last…        1429         7.8         0         0         0         0         0         0
+##  2      14 Vand…        1402         7.6         0         0         0         0         0         0
+##  3       8 Perf…        2416         8.2         1         0         0         0         0         0
+##  4       5 Here…        1515         7.1         0         0         0         0         0         0
+##  5      22 Beac…        2783         9.1         0         1         0         0         0         0
+##  6       1 Nepo…        1897         8.4         0         0         0         0         0         1
+##  7      15 Phyl…        2283         8.3         0         1         0         0         0         0
+##  8      21 Livi…        2041         8.9         0         0         0         0         0         0
+##  9      18 Prom…        1445         8           0         0         0         0         0         0
+## 10      12 Pool…        1612         8           0         0         0         0         0         0
+## # … with 140 more rows, and 12 more variables: season_X8 &lt;dbl&gt;, season_X9 &lt;dbl&gt;,
+## #   air_date_dow_Tue &lt;dbl&gt;, air_date_dow_Thu &lt;dbl&gt;, air_date_month_Feb &lt;dbl&gt;,
+## #   air_date_month_Mar &lt;dbl&gt;, air_date_month_Apr &lt;dbl&gt;, air_date_month_May &lt;dbl&gt;,
+## #   air_date_month_Sep &lt;dbl&gt;, air_date_month_Oct &lt;dbl&gt;, air_date_month_Nov &lt;dbl&gt;,
+## #   air_date_month_Dec &lt;dbl&gt;
+```
+]
+
+---
+background-image: url("imgs/hex_workflows.png")
+background-position: 98% 2%
+background-size: 15%
+
+## Really putting it all together
+
+.pull-left[
+
+```r
+(office_work = workflow() %&gt;%
+  add_recipe(r) %&gt;%
+  add_model(
+    linear_reg() %&gt;%
+    set_engine("lm")
+  )
+)
+```
+
+```
+## ══ Workflow ════════════════════════════════════════════════════════════════════════════════════════
+## Preprocessor: Recipe
+## Model: linear_reg()
+## 
+## ── Preprocessor ────────────────────────────────────────────────────────────────────────────────────
+## 5 Recipe Steps
+## 
+## • step_date()
+## • step_holiday()
+## • step_num2factor()
+## • step_dummy()
+## • step_zv()
+## 
+## ── Model ───────────────────────────────────────────────────────────────────────────────────────────
+## Linear Regression Model Specification (regression)
+## 
+## Computational engine: lm
+```
+]
+
+.pull-right[
+
+]
+
+---
+
+## Workflow fit
+
+.small[
+
+```r
+(office_fit = office_work %&gt;%
+  fit(data = office_train))
+```
+
+```
+## ══ Workflow [trained] ══════════════════════════════════════════════════════════════════════════════
+## Preprocessor: Recipe
+## Model: linear_reg()
+## 
+## ── Preprocessor ────────────────────────────────────────────────────────────────────────────────────
+## 5 Recipe Steps
+## 
+## • step_date()
+## • step_holiday()
+## • step_num2factor()
+## • step_dummy()
+## • step_zv()
+## 
+## ── Model ───────────────────────────────────────────────────────────────────────────────────────────
+## 
+## Call:
+## stats::lm(formula = ..y ~ ., data = data)
+## 
+## Coefficients:
+##        (Intercept)             episode         total_votes           season_X2           season_X3  
+##          6.2557856          -0.0081872           0.0003838           0.8389817           1.1277917  
+##          season_X4           season_X5           season_X6           season_X7           season_X8  
+##          1.1519446           1.1767757           1.0899544           1.0671645           0.5024513  
+##          season_X9    air_date_dow_Tue    air_date_dow_Thu  air_date_month_Feb  air_date_month_Mar  
+##          0.6981099           0.4945405           0.3699592          -0.0089843          -0.0194673  
+## air_date_month_Apr  air_date_month_May  air_date_month_Sep  air_date_month_Oct  air_date_month_Nov  
+##          0.0895888           0.2105803          -0.0776988          -0.2059183          -0.1895729  
+## air_date_month_Dec  
+##          0.1941478
+```
+]
+
+
+---
+
+## Performance
+
+.pull-left[
+
+```r
+office_fit %&gt;%
+  augment(office_train) %&gt;%
+  rmse(imdb_rating, .pred)
+```
+
+```
+## # A tibble: 1 × 3
+##   .metric .estimator .estimate
+##   &lt;chr&gt;   &lt;chr&gt;          &lt;dbl&gt;
+## 1 rmse    standard       0.305
+```
+]
+
+.pull-right[
+
+```r
+office_fit %&gt;%
+  augment(office_test) %&gt;%
+  rmse(imdb_rating, .pred)
+```
+
+```
+## # A tibble: 1 × 3
+##   .metric .estimator .estimate
+##   &lt;chr&gt;   &lt;chr&gt;          &lt;dbl&gt;
+## 1 rmse    standard       0.423
+```
+]
+
+---
+
+## k-fold cross validation
+
+&lt;img src="imgs/kfold-cv.png" width="80%" style="display: block; margin: auto;" /&gt;
+
+---
+
+## Creating folds
+
+
+```r
+set.seed(123)
+(folds = vfold_cv(office_train, v=5))
+```
+
+```
+## #  5-fold cross-validation 
+## # A tibble: 5 × 2
+##   splits           id   
+##   &lt;list&gt;           &lt;chr&gt;
+## 1 &lt;split [120/30]&gt; Fold1
+## 2 &lt;split [120/30]&gt; Fold2
+## 3 &lt;split [120/30]&gt; Fold3
+## 4 &lt;split [120/30]&gt; Fold4
+## 5 &lt;split [120/30]&gt; Fold5
+```
+
+--
+
+
+```r
+(office_fit_folds = office_work %&gt;%
+  fit_resamples(folds)
+)
+```
+
+```
+## ! Fold2: preprocessor 1/1, model 1/1 (predictions): prediction from a rank-deficient fit may be misle...
+```
+
+```
+## # Resampling results
+## # 5-fold cross-validation 
+## # A tibble: 5 × 4
+##   splits           id    .metrics         .notes          
+##   &lt;list&gt;           &lt;chr&gt; &lt;list&gt;           &lt;list&gt;          
+## 1 &lt;split [120/30]&gt; Fold1 &lt;tibble [2 × 4]&gt; &lt;tibble [0 × 3]&gt;
+## 2 &lt;split [120/30]&gt; Fold2 &lt;tibble [2 × 4]&gt; &lt;tibble [1 × 3]&gt;
+## 3 &lt;split [120/30]&gt; Fold3 &lt;tibble [2 × 4]&gt; &lt;tibble [0 × 3]&gt;
+## 4 &lt;split [120/30]&gt; Fold4 &lt;tibble [2 × 4]&gt; &lt;tibble [0 × 3]&gt;
+## 5 &lt;split [120/30]&gt; Fold5 &lt;tibble [2 × 4]&gt; &lt;tibble [0 × 3]&gt;
+## 
+## There were issues with some computations:
+## 
+##   - Warning(s) x1: prediction from a rank-deficient fit may be misleading
+## 
+## Use `collect_notes(object)` for more information.
+```
+
+---
+
+## Fold performance
+
+
+```r
+tune::collect_metrics(office_fit_folds)
+```
+
+```
+## # A tibble: 2 × 6
+##   .metric .estimator  mean     n std_err .config             
+##   &lt;chr&gt;   &lt;chr&gt;      &lt;dbl&gt; &lt;int&gt;   &lt;dbl&gt; &lt;chr&gt;               
+## 1 rmse    standard   0.421     5  0.0511 Preprocessor1_Model1
+## 2 rsq     standard   0.550     5  0.0663 Preprocessor1_Model1
+```
+
+--
+
+
+```r
+tune::collect_metrics(office_fit_folds, summarize = FALSE) %&gt;%
+  filter(.metric == "rmse")
+```
+
+```
+## # A tibble: 5 × 5
+##   id    .metric .estimator .estimate .config             
+##   &lt;chr&gt; &lt;chr&gt;   &lt;chr&gt;          &lt;dbl&gt; &lt;chr&gt;               
+## 1 Fold1 rmse    standard       0.618 Preprocessor1_Model1
+## 2 Fold2 rmse    standard       0.382 Preprocessor1_Model1
+## 3 Fold3 rmse    standard       0.321 Preprocessor1_Model1
+## 4 Fold4 rmse    standard       0.410 Preprocessor1_Model1
+## 5 Fold5 rmse    standard       0.377 Preprocessor1_Model1
+```
+.footnote[
+More on the `tune` package next time
+]
+
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "solarized-light",
+"highlightLines": true,
+"countIncrementalSlides": false,
+"ratio": "16:9"
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

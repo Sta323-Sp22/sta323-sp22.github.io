@@ -24,13 +24,6 @@ exclude: true
 
 
 
-
----
-class: middle
-
-
-# Background
-
 ---
 
 ## Big vs Bigish data
@@ -307,6 +300,23 @@ There is a lot of variables we won't care about for the time being, so lets make
 ## #   violation_time &lt;chr&gt;, house_number &lt;chr&gt;, street_name &lt;chr&gt;, intersecting_street &lt;chr&gt;,
 ## #   vehicle_color &lt;chr&gt;
 ```
+
+---
+
+## Size of objects
+
+
+```r
+pryr::object_size(nyc)
+## 3,461,255,280 B
+
+pryr::object_size(nyc_fread)
+## 2,942,262,600 B
+
+pryr::object_size(nyc_trim)
+## 1,137,418,720 B
+```
+
 
 ---
 
