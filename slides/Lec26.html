@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Lec 26 - R Packages</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Sta 323 | Spring 2022" />
+    <script src="libs/header-attrs/header-attrs.js"></script>
+    <link href="libs/font-awesome/css/all.css" rel="stylesheet" />
+    <link href="libs/font-awesome/css/v4-shims.css" rel="stylesheet" />
+    <link rel="stylesheet" href="slides.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Lec 26 - R Packages
+## <br/> Statistical Programming
+### Sta 323 | Spring 2022
+### <br/> Dr. Colin Rundel
+
+---
+
+exclude: true
+
+
+
+---
+
+## What are R packages?
+
+R packages are just a collection of files (R code, compiled code, data, documentation, etc.) that live in your library path.
+
+--
+
+
+```r
+.libPaths()
+```
+
+```
+## [1] "/opt/homebrew/lib/R/4.1/site-library"       "/opt/homebrew/Cellar/r/4.1.3/lib/R/library"
+```
+
+--
+
+When you run `library(pkg)` the functions (and objects) in the package's namespace are attached to the global search path.
+
+
+
+```r
+dir(.libPaths())
+```
+
+```
+##   [1] "abind"             "airports"          "archive"           "arrayhelpers"      "arrow"            
+##   [6] "ash"               "AsioHeaders"       "askpass"           "assertthat"        "av"               
+##  [11] "available"         "babynames"         "backports"         "base"              "base64enc"        
+##  [16] "BayesFactor"       "bayesplot"         "beeswarm"          "bench"             "benchmarkme"      
+##  [21] "benchmarkmeData"   "BH"                "bit"               "bit64"             "bitops"           
+##  [26] "blob"              "bookdown"          "boot"              "boot"              "brew"             
+##  [31] "brio"              "broom"             "broom.mixed"       "bslib"             "cachem"           
+##  [36] "callr"             "car"               "carData"           "caret"             "caTools"          
+##  [41] "cellranger"        "checklist"         "checkmate"         "cherryblossom"     "chromote"         
+##  [46] "chron"             "class"             "class"             "classInt"          "cli"              
+##  [51] "clipr"             "clisymbols"        "cluster"           "coda"              "codetools"        
+##  [56] "codetools"         "collections"       "colorblindr"       "colorspace"        "colourpicker"     
+##  [61] "commonmark"        "compiler"          "config"            "conflicted"        "conquer"          
+##  [66] "contfrac"          "coronavirus"       "corrplot"          "countdown"         "cowplot"          
+##  [71] "cpp11"             "crayon"            "credentials"       "crosstalk"         "cubature"         
+##  [76] "curl"              "cyclocomp"         "DAAG"              "data.table"        "datasauRus"       
+##  [81] "datasets"          "DBI"               "dbplyr"            "dcurver"           "Deriv"            
+##  [86] "desc"              "deSolve"           "devtools"          "dials"             "DiceDesign"       
+##  [91] "diffmatchpatch"    "diffobj"           "digest"            "directlabels"      "distributional"   
+##  [96] "dlstats"           "doMC"              "doParallel"        "dotCall64"         "downlit"          
+## [101] "dplyr"             "DT"                "dtplyr"            "dygraphs"          "e1071"            
+## [106] "ECharts2Shiny"     "ellipsis"          "elliptic"          "emo"               "eRm"              
+## [111] "evaluate"          "extrafont"         "extrafontdb"       "fansi"             "farver"           
+## [116] "fastmap"           "fields"            "FNN"               "fontawesome"       "forcats"          
+## [121] "foreach"           "foreign"           "foreign"           "formattable"       "Formula"          
+## [126] "fs"                "furrr"             "future"            "future.apply"      "gargle"           
+## [131] "gdistance"         "generics"          "geojsonsf"         "geometries"        "geosphere"        
+## [136] "gert"              "GGally"            "ggalt"             "gganimate"         "ggbeeswarm"       
+## [141] "ggdist"            "gghighlight"       "ggplot2"           "ggpubr"            "ggrepel"          
+## [146] "ggridges"          "ggsci"             "ggsignif"          "ggthemes"          "gh"               
+## [151] "ghclass"           "gifski"            "gitcreds"          "glmnet"            "globals"          
+## [156] "glue"              "googledrive"       "googlesheets4"     "gower"             "GPArotation"      
+## [161] "GPfit"             "gplots"            "graphics"          "grDevices"         "grid"             
+## [166] "gridExtra"         "gsubfn"            "gt"                "gtable"            "gtools"           
+## [171] "hardhat"           "hash"              "haven"             "hayalbaz"          "HDInterval"       
+## [176] "here"              "highr"             "Hmisc"             "hms"               "htmlTable"        
+## [181] "htmltools"         "htmlwidgets"       "httpuv"            "httr"              "httr2"            
+## [186] "hunspell"          "hypergeo"          "icons"             "ids"               "igraph"           
+## [191] "infer"             "ini"               "inline"            "insight"           "ipred"            
+## [196] "isoband"           "iterators"         "janeaustenr"       "janitor"           "jpeg"             
+## [201] "jquerylib"         "jsonify"           "jsonlite"          "kableExtra"        "katex"            
+## [206] "keras"             "kernlab"           "KernSmooth"        "knitr"             "ks"               
+## [211] "labeling"          "languageserver"    "later"             "lattice"           "lattice"          
+## [216] "latticeExtra"      "lava"              "lazyeval"          "leafem"            "leaflet"          
+## [221] "leaflet.providers" "leafpop"           "learnr"            "learnrhash"        "lhs"              
+## [226] "lifecycle"         "lintr"             "listenv"           "lme4"              "lobstr"           
+## [231] "loo"               "lookup"            "lubridate"         "lwgeom"            "magick"           
+## [236] "magrittr"          "mapproj"           "maps"              "maptools"          "mapview"          
+## [241] "markdown"          "MASS"              "MASS"              "Matrix"            "Matrix"           
+## [246] "MatrixModels"      "matrixStats"       "mclust"            "memoise"           "methods"          
+## [251] "mgcv"              "mime"              "miniUI"            "minqa"             "mirt"             
+## [256] "misc3d"            "mnormt"            "modeldata"         "ModelMetrics"      "modelr"           
+## [261] "multicool"         "munsell"           "mvtnorm"           "nlme"              "nloptr"           
+## [266] "nnet"              "nnet"              "numDeriv"          "nycflights13"      "openintro"        
+## [271] "openssl"           "oskeyring"         "packrat"           "pacman"            "pagedown"         
+## [276] "palmerpenguins"    "parallel"          "parallelly"        "parsedate"         "parsermd"         
+## [281] "parsnip"           "patchwork"         "pbapply"           "pbkrtest"          "permute"          
+## [286] "pillar"            "pivottabler"       "pkgbuild"          "pkgconfig"         "pkgdown"          
+## [291] "pkgload"           "plogr"             "plot3D"            "plotly"            "plotrix"          
+## [296] "plyr"              "png"               "polite"            "polynom"           "posterior"        
+## [301] "pracma"            "praise"            "prettyunits"       "pROC"              "processx"         
+## [306] "prodlim"           "profmem"           "profvis"           "progress"          "progressr"        
+## [311] "proj4"             "promises"          "proto"             "proxy"             "pryr"             
+## [316] "ps"                "psych"             "purrr"             "quadprog"          "quantreg"         
+## [321] "quarto"            "queryparser"       "R.cache"           "R.methodsS3"       "R.oo"             
+## [326] "R.utils"           "R6"                "ragg"              "randomNames"       "ranger"           
+## [331] "RANN"              "rapidjsonr"        "rappdirs"          "raster"            "ratelimitr"       
+## [336] "rcmdcheck"         "RColorBrewer"      "Rcompression"      "Rcpp"              "RcppArmadillo"    
+## [341] "RcppEigen"         "RcppParallel"      "RcppTOML"          "reactable"         "reactR"           
+## [346] "readr"             "readxl"            "recipes"           "REdaS"             "rematch"          
+## [351] "rematch2"          "remotes"           "renv"              "repr"              "reprex"           
+## [356] "repurrrsive"       "reshape"           "reshape2"          "reticulate"        "rex"              
+## [361] "rgdal"             "rgeos"             "RhpcBLASctl"       "rhub"              "rjags"            
+## [366] "rlang"             "rmarkdown"         "RMySQL"            "rnaturalearth"     "robotstxt"        
+## [371] "ROCit"             "roxygen2"          "rpart"             "rpart"             "rprojroot"        
+## [376] "rsample"           "rsconnect"         "RSQLite"           "rstan"             "rstanarm"         
+## [381] "rstantools"        "rstatix"           "rstudioapi"        "rticles"           "Rttf2pt1"         
+## [386] "RUnit"             "rversions"         "rvest"             "s2"                "sass"             
+## [391] "satellite"         "scales"            "selectr"           "servr"             "sessioninfo"      
+## [396] "sf"                "sfheaders"         "shape"             "shiny"             "shinycssloaders"  
+## [401] "shinyFiles"        "shinyjs"           "shinystan"         "shinythemes"       "showimage"        
+## [406] "signal"            "sjlabelled"        "sjmisc"            "skimr"             "slider"           
+## [411] "sloop"             "snakecase"         "SnowballC"         "sodium"            "sourcetools"      
+## [416] "sp"                "spam"              "SparseM"           "spatial"           "spatial"          
+## [421] "spelling"          "spiderbar"         "splines"           "splitstackshape"   "sqldf"            
+## [426] "SQUAREM"           "StanHeaders"       "stats"             "stats4"            "statsr"           
+## [431] "stringdist"        "stringi"           "stringr"           "styler"            "survival"         
+## [436] "survival"          "svglite"           "svUnit"            "sys"               "systemfonts"      
+## [441] "taRifx"            "tcltk"             "tensorA"           "tensorflow"        "terra"            
+## [446] "testthat"          "textshaping"       "textutils"         "tfautograph"       "tfruns"           
+## [451] "threejs"           "tibble"            "tidybayes"         "tidymodels"        "tidyquery"        
+## [456] "tidyr"             "tidyselect"        "tidytext"          "tidyverse"         "timeDate"         
+## [461] "tinytex"           "tmvnsim"           "tokenizers"        "tools"             "toOrdinal"        
+## [466] "trajr"             "translations"      "truncnorm"         "tune"              "tweenr"           
+## [471] "tzdb"              "udapi"             "units"             "unvotes"           "usdata"           
+## [476] "usethis"           "usmap"             "usmapdata"         "utf8"              "utils"            
+## [481] "uuid"              "V8"                "vctrs"             "vegan"             "vipor"            
+## [486] "viridis"           "viridisLite"       "vroom"             "waldo"             "warp"             
+## [491] "webshot"           "websocket"         "whisker"           "whoami"            "withr"            
+## [496] "wk"                "workflows"         "workflowsets"      "xaringan"          "xaringanExtra"    
+## [501] "xaringanthemer"    "xfun"              "xml2"              "xmlparsedata"      "xopen"            
+## [506] "xtable"            "xts"               "yaml"              "yardstick"         "yesno"            
+## [511] "zeallot"           "zip"               "zoo"
+```
+
+---
+
+## Search path
+
+
+```r
+search()
+```
+
+```
+## [1] ".GlobalEnv"        "package:stats"     "package:graphics"  "package:grDevices" "package:utils"    
+## [6] "package:datasets"  "package:methods"   "Autoloads"         "package:base"
+```
+
+--
+
+
+```r
+library(diffmatchpatch)
+```
+
+--
+
+
+```r
+search()
+```
+
+```
+##  [1] ".GlobalEnv"             "package:diffmatchpatch" "package:stats"          "package:graphics"      
+##  [5] "package:grDevices"      "package:utils"          "package:datasets"       "package:methods"       
+##  [9] "Autoloads"              "package:base"
+```
+
+---
+
+## Loading vs attaching
+
+If you do not want to attach a package you can directly use functions via `::` or load it with `requireNamespace()`. 
+
+.small[
+
+```r
+loadedNamespaces()
+```
+
+```
+##  [1] "Rcpp"           "grDevices"      "digest"         "diffmatchpatch" "R6"             "jsonlite"      
+##  [7] "magrittr"       "evaluate"       "datasets"       "xaringan"       "stringi"        "rlang"         
+## [13] "utils"          "cli"            "rstudioapi"     "jquerylib"      "bslib"          "graphics"      
+## [19] "rmarkdown"      "base"           "tools"          "stringr"        "xfun"           "yaml"          
+## [25] "fastmap"        "compiler"       "stats"          "htmltools"      "knitr"          "methods"       
+## [31] "sass"
+```
+]
+
+--
+
+.small[
+
+```r
+requireNamespace("forcats")
+```
+
+```
+## Loading required namespace: forcats
+```
+]
+
+--
+
+.small[
+
+```r
+loadedNamespaces()
+```
+
+```
+##  [1] "Rcpp"           "grDevices"      "digest"         "diffmatchpatch" "R6"             "jsonlite"      
+##  [7] "magrittr"       "evaluate"       "datasets"       "xaringan"       "stringi"        "rlang"         
+## [13] "utils"          "cli"            "rstudioapi"     "jquerylib"      "bslib"          "graphics"      
+## [19] "rmarkdown"      "base"           "forcats"        "tools"          "stringr"        "xfun"          
+## [25] "yaml"           "fastmap"        "compiler"       "stats"          "htmltools"      "knitr"         
+## [31] "methods"        "sass"
+```
+
+```r
+search()
+```
+
+```
+##  [1] ".GlobalEnv"             "package:diffmatchpatch" "package:stats"          "package:graphics"      
+##  [5] "package:grDevices"      "package:utils"          "package:datasets"       "package:methods"       
+##  [9] "Autoloads"              "package:base"
+```
+]
+
+---
+
+## Where to R packages come from
+
+We've already seen the two primary sources of R packages:
+
+CRAN:
+
+```r
+install.packages("diffmatchpatch")
+```
+
+GitHub:
+
+```r
+remotes::install_github("rundel/diffmatchpatch")
+```
+
+there is one other method that comes up (particularly around package development), which is to install a package from local files.
+
+Local install:
+
+
+```bash
+R CMD install diffmatchpatch_0.1.0.tar.gz
+```
+
+
+```r
+devtools::install("diffmatchpatch_0.1.0.tar.gz")
+```
+
+---
+
+## What is CRAN
+
+It is the Comprehensive R Archive Network which is the central repository of R packages.
+
+* Maintained by the R Foundation and run by a team of volunteers, ~22k packages 
+
+* Retains all current versions of released packages as well as archives of previous versions
+
+* Similar in spirit to Perl's CPAN, TeX's CTAN, and Python's PyPI
+
+* Some important features:
+  
+  * All submissions are reviewed by humans + automated checks
+  
+  * Strictly enforced submission policies and package requiements
+  
+  * All packages must be actively maintained and support upstream and downstream changes
+
+.footnote[
+See [Writing R Extensions](https://cran.r-project.org/doc/manuals/r-release/R-exts.html)
+]
+
+---
+
+## Structure of an R Package
+
+&lt;br/&gt;
+&lt;br/&gt;
+
+&lt;img src="imgs/r_pkg_struct.jpeg" width="80%" style="display: block; margin: auto;" /&gt;
+
+.footnote[
+From [A Quickstart Guide for Building Your First R Package](https://methodsblog.com/2015/11/30/building-your-first-r-package/)
+]
+
+---
+
+## Core components
+
+* `DESCRIPTION` - file containing package metadata (e.g. package name, description, version, license, and author details). Also specifies package dependencies,
+
+* `NAMESPACE` - details which functions and objects are exported by your package
+
+* `R/` - folder containing R script files (`.R`)
+
+* `man/` - folder containing R documentation files (`.Rd`)
+
+--
+
+The following components are optional, but quite common:
+
+* `tests/` - folder contain unit tests
+
+* `src/` - folder containing code to be compiled (usually C / C++)
+
+* `data/` - folder containing example data sets (exported as `.Rdata` via `save()`)
+
+* `inst/` - files that will be copied to the package's top-level directory when it is installed (e.g. examples or data files that don't belong in `data/`)
+
+* `vignettes/` - file implementing long form documentation, can be static (`.pdf` or `.html`) or literate documents (e.g. `.Rmd` or `.Rnw`)
+
+---
+
+## Package contents
+
+.pull-left[
+.small[
+Source Package
+
+```r
+fs::dir_tree("~/Desktop/Projects/diffmatchpatch/")
+```
+
+```
+## ~/Desktop/Projects/diffmatchpatch/
+## ├── DESCRIPTION
+## ├── LICENSE.md
+## ├── NAMESPACE
+## ├── NEWS.md
+## ├── R
+## │   ├── RcppExports.R
+## │   ├── diff.R
+## │   ├── diffmatchpatch-package.R
+## │   ├── match.R
+## │   ├── options.R
+## │   ├── patch.R
+## │   └── print.R
+## ├── README.Rmd
+## ├── README.md
+## ├── cran-comments.md
+## ├── diffmatchpatch.Rproj
+## ├── inst
+## │   └── include
+## │       └── diff_match_patch.h
+## ├── man
+## │   ├── diff.Rd
+## │   ├── dmp_options.Rd
+## │   ├── match.Rd
+## │   └── patch.Rd
+## └── src
+##     ├── Makevars
+##     ├── Makevars.win
+##     ├── RcppExports.cpp
+##     ├── RcppExports.o
+##     ├── common.h
+##     ├── diff.cpp
+##     ├── diff.o
+##     ├── diffmatchpatch.so
+##     ├── match.cpp
+##     ├── match.o
+##     ├── options.cpp
+##     ├── options.o
+##     ├── patch.cpp
+##     └── patch.o
+```
+] ]
+
+.pull-right[
+.small[
+Installed Package
+
+```r
+fs::dir_tree(system.file(package="diffmatchpatch"))
+```
+
+```
+## /opt/homebrew/lib/R/4.1/site-library/diffmatchpatch
+## ├── DESCRIPTION
+## ├── INDEX
+## ├── Meta
+## │   ├── Rd.rds
+## │   ├── features.rds
+## │   ├── hsearch.rds
+## │   ├── links.rds
+## │   ├── nsInfo.rds
+## │   └── package.rds
+## ├── NAMESPACE
+## ├── NEWS.md
+## ├── R
+## │   ├── diffmatchpatch
+## │   ├── diffmatchpatch.rdb
+## │   └── diffmatchpatch.rdx
+## ├── help
+## │   ├── AnIndex
+## │   ├── aliases.rds
+## │   ├── diffmatchpatch.rdb
+## │   ├── diffmatchpatch.rdx
+## │   └── paths.rds
+## ├── html
+## │   ├── 00Index.html
+## │   └── R.css
+## ├── include
+## │   └── diff_match_patch.h
+## └── libs
+##     └── diffmatchpatch.so
+```
+] ]
+
+
+---
+class: center, middle
+
+## A deeper dive on [diffmatchpatch](https://github.com/rundel/diffmatchpatch)
+
+---
+
+## Package Installation
+
+&lt;img src="imgs/r_pkg_install.png" width="80%" style="display: block; margin: auto;" /&gt;
+
+.footnote[
+From [R Packages - Chap. 4](https://r-pkgs.org/package-structure-state.html#installed-package)
+]
+
+---
+
+## Package Installion - Files
+
+
+&lt;img src="imgs/r_pkgs_fig.png" width="55%" style="display: block; margin: auto;" /&gt;
+
+.footnote[
+From [R Packages - Chap. 4.5](https://r-pkgs.org/package-structure-state.html#bundled-package)
+]
+
+
+---
+
+## Package development
+
+What follows is an *opinionated* introduction to package development, 
+
+* this is not the only way to do thing (none of the following are required)
+
+* I would strongly recommend using:
+  * RStudio
+  * RStudio projects
+  * GitHub
+  * usethis
+  * roxygen2
+
+
+---
+class: center, middle
+
+&lt;img src="imgs/hex_usethis.png" width="45%" style="display: block; margin: auto;" /&gt;
+
+---
+
+## `usethis`
+
+This is an immensely useful package for automating all kinds of routine (and tedious) tasks within R
+
+* Tools for managing git and GitHub configuration
+
+* Tools for managing collaboration on GitHub via pull requests (see `pr_*()`)
+
+* Tools for creating and configuring packages
+
+* Tools for configuring your R environment (e.g. `.Rprofile` and `.Renviron`)
+
+* and much much more
+
+---
+class: center, middle
+
+## Live demo - Building a Package
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "solarized-light",
+"highlightLines": true,
+"countIncrementalSlides": false,
+"ratio": "16:9"
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
